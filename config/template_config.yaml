@@ -1,0 +1,20 @@
+samples:
+  - ERR1855257
+
+################################################################################
+#                                Preprocessing                                 #        
+################################################################################ 
+
+fastp:
+  compression: 2 # --compression command of fastp
+  minimal_read_length: 50 # --length_required command of fastp
+  qualified_quality_phred: 15 # quality value (phred) that a base is qualified
+
+################################################################################
+#                                   Assembly                                   #        
+################################################################################        
+assembler: megahit # to be implemented (megahit, metaspades, idbaud...)
+
+# MEGAHIT configuration
+megahit:
+  threads: 1
