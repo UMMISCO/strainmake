@@ -1,0 +1,5 @@
+name: megahit
+channels:
+  - bioconda
+dependencies:
+  - megahit=1.2.*

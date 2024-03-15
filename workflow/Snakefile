@@ -1,0 +1,31 @@
+configfile: "config/template_config.yaml"
+
+include: "rules/01_qc.smk"
+include: "rules/02_prepocess.smk"
+include: "rules/03_assembly.smk"
+
+################################################################################
+#                                Config options                                #
+################################################################################
+
+SAMPLES = config['samples']
+READS = [1, 2]
+MIN_READ_LENGTH = config['fastp']['minimal_read_length']
+MIN_PHRED = config['fastp']['qualified_quality_phred']
+MEGAHIT_THREADS = config['megahit']['threads']
+
+################################################################################
+#                                   Workflow                                   #
+################################################################################
+
+rule all:
+        input:
+            # QC before preprocessing
+            expand("results/01_qc/fastqc/{sample}_{read}_fastqc.html", 
+                sample=SAMPLES, read=READS),
+            # QC after preprocessing
+            expand("results/02_preprocess/fastqc/{sample}_{read}_fastqc.html", 
+                sample=SAMPLES, read=READS),
+            expand("results/03_assembly/{sample}_assembly", 
+                sample=SAMPLES, read=READS),
+
