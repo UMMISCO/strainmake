@@ -10,8 +10,6 @@ include: "rules/03_assembly.smk"
 
 SAMPLES = config['samples']
 READS = [1, 2]
-MIN_READ_LENGTH = config['fastp']['minimal_read_length']
-MIN_PHRED = config['fastp']['qualified_quality_phred']
 MEGAHIT_THREADS = config['megahit']['threads']
 
 ################################################################################

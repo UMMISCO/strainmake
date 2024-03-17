@@ -1,0 +1,5 @@
+name: bowtie2
+channels:
+  - bioconda
+dependencies:
+  - bowtie2=2.5.*

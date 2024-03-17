@@ -1,8 +1,8 @@
 rule megahit_assembly:
     input:
-        # files produced by fastp
-        r1 = "results/02_preprocess/fastp/{sample}_1.fastq.gz",
-        r2 = "results/02_preprocess/fastp/{sample}_2.fastq.gz"
+        # files produced by fastp and decontaminated using bowtie2
+        r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
+        r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
         touch("results/03_assembly/{sample}_assembly")
     conda:

@@ -10,6 +10,10 @@ fastp:
   minimal_read_length: 50 # --length_required command of fastp
   qualified_quality_phred: 15 # quality value (phred) that a base is qualified
 
+bowtie2:
+  index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
+  threads: 4
+
 ################################################################################
 #                                   Assembly                                   #        
 ################################################################################        
