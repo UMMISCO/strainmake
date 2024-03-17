@@ -1,3 +1,4 @@
 .snakemake/
 logs/
 results/
+*.fastq.gz
