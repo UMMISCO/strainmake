@@ -21,4 +21,8 @@ assembler: megahit # to be implemented (megahit, metaspades, idbaud...)
 
 # MEGAHIT configuration
 megahit:
-  threads: 1
+  threads: 4
+
+# SPAdes configuration
+metaspades:
+  threads: 4

@@ -1,0 +1,5 @@
+name: spades
+channels:
+  - bioconda
+dependencies:
+  - spades=3.15.*
