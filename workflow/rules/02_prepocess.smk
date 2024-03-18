@@ -99,8 +99,8 @@ rule fastqc_after_preprocessing:
     conda: 
         "../envs/fastqc.yaml"
     log:
-        stdout = "logs/02_preprocess/fastqc/{sample}_{read}.stdout",
-        stderr = "logs/02_preprocess/fastqc/{sample}_{read}.stderr"
+        stdout = "logs/02_preprocess/fastqc/{sample}_{read}.clean.stdout",
+        stderr = "logs/02_preprocess/fastqc/{sample}_{read}.clean.stderr"
     shell:
         """
         fastqc {input} -o results/02_preprocess/fastqc/ \
