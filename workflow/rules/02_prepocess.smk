@@ -11,7 +11,7 @@ rule fastp:
         "../envs/fastp.yaml"
     log:
         stdout = "logs/02_preprocess/fastp/{sample}.stdout",
-        stderr = "logs/02_preprocess/fastp/{sample}.stdout"
+        stderr = "logs/02_preprocess/fastp/{sample}.stderr"
     params:
         compression_level = config['fastp']['compression'],
         min_phred = config['fastp']['qualified_quality_phred'],
@@ -41,7 +41,7 @@ rule host_decontamination:
         "../envs/bowtie2.yaml"
     log:
         stdout = "logs/02_preprocess/bowtie2/{sample}.stdout",
-        stderr = "logs/02_preprocess/bowtie2/{sample}.stdout"
+        stderr = "logs/02_preprocess/bowtie2/{sample}.stderr"
     params:
         threads = config['bowtie2']['threads'],
         organism_name = config['bowtie2']['index_name'],
@@ -59,8 +59,17 @@ rule get_bowtie_index:
     output:
         directory("results/02_preprocess/bowtie2/index")
     log:
-        stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.stdout",
-        stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.stdout"
+        wget_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.wget.stdout",
+        wget_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.wget.stderr",
+        unzip_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.unzip.stdout",
+        unzip_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.unzip.stderr",
+        mv_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.mv.stdout",
+        mv_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.mv.stderr",
+        rm_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.rm.stdout",
+        rm_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.rm.stderr"
+
+    conda:
+        "../envs/get_bowtie_index.yaml"
     params:
         organism_name = config['bowtie2']['index_name']
     shell:
@@ -70,12 +79,15 @@ rule get_bowtie_index:
         mkdir -p results/02_preprocess/bowtie2 \
         && wget -O results/02_preprocess/bowtie2/{params.organism_name}.zip \
             https://genome-idx.s3.amazonaws.com/bt/{params.organism_name}.zip \
-            > {log.stdout} 2> {log.stderr} \
+            > {log.wget_stdout} 2> {log.wget_stderr} \
         && unzip -d results/02_preprocess/bowtie2/index \
-            results/02_preprocess/bowtie2/{params.organism_name}.zip \ 
+            results/02_preprocess/bowtie2/{params.organism_name}.zip \
+            > {log.unzip_stdout} 2> {log.unzip_stderr} \
         && mv results/02_preprocess/bowtie2/index/{params.organism_name}/* \
             results/02_preprocess/bowtie2/index/ \
-        && rm -r results/02_preprocess/bowtie2/index/{params.organism_name}
+            > {log.mv_stdout} 2> {log.mv_stderr} \
+        && rm -r results/02_preprocess/bowtie2/index/{params.organism_name} \
+            > {log.rm_stdout} 2> {log.rm_stderr}
         """
 
 rule fastqc_after_preprocessing:

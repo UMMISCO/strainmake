@@ -1,0 +1,5 @@
+name: get_bowtie_index
+channels:
+  - conda-forge
+dependencies:
+  - unzip=6.*
