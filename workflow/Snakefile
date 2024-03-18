@@ -10,7 +10,6 @@ include: "rules/03_assembly.smk"
 
 SAMPLES = config['samples']
 READS = [1, 2]
-MEGAHIT_THREADS = config['megahit']['threads']
 
 ################################################################################
 #                                   Workflow                                   #
@@ -24,6 +23,7 @@ rule all:
             # QC after preprocessing
             expand("results/02_preprocess/fastqc/{sample}_{read}_fastqc.html", 
                 sample=SAMPLES, read=READS),
+            # assembly part
             expand("results/03_assembly/{sample}_assembly", 
                 sample=SAMPLES, read=READS),
 
