@@ -94,8 +94,8 @@ rule fastqc_after_preprocessing:
     input:
         "results/02_preprocess/bowtie2/{sample}_{read}.clean.fastq.gz"
     output:
-        html_report="results/02_preprocess/fastqc/{sample}_{read}_fastqc.html",
-        zip_report="results/02_preprocess/fastqc/{sample}_{read}_fastqc.zip"
+        html_report="results/02_preprocess/fastqc/{sample}_{read}.clean_fastqc.html",
+        zip_report="results/02_preprocess/fastqc/{sample}_{read}.clean_fastqc.zip"
     conda: 
         "../envs/fastqc.yaml"
     log:

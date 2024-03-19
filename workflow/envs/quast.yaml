@@ -1,0 +1,5 @@
+name: quast
+channels:
+  - bioconda
+dependencies:
+  -  quast=5.2.*

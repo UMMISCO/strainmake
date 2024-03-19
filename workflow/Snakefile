@@ -3,6 +3,7 @@ configfile: "config/template_config.yaml"
 include: "rules/01_qc.smk"
 include: "rules/02_prepocess.smk"
 include: "rules/03_assembly.smk"
+include: "rules/04_assembly_qc.smk"
 
 ################################################################################
 #                                Config options                                #
@@ -21,9 +22,12 @@ rule all:
             expand("results/01_qc/fastqc/{sample}_{read}_fastqc.html", 
                 sample=SAMPLES, read=READS),
             # QC after preprocessing
-            expand("results/02_preprocess/fastqc/{sample}_{read}_fastqc.html", 
+            expand("results/02_preprocess/fastqc/{sample}_{read}.clean_fastqc.html", 
                 sample=SAMPLES, read=READS),
             # assembly part
             expand("results/03_assembly/{sample}_assembly", 
-                sample=SAMPLES, read=READS),
+                sample=SAMPLES),
+            # assembly qc
+            expand("results/04_assembly_qc/{sample}_assembly_qc", 
+                sample=SAMPLES),
 
