@@ -34,3 +34,20 @@ metaspades:
 
 quast:
   threads: 4
+
+################################################################################
+#                                   Binning                                    #
+################################################################################
+
+binning:
+  binner: metabat2 # to be implemented (vamb, semibin2...)
+  # bowtie2 configuration for both indexing and mapping
+  bowtie2:
+    threads: 4 # for both indexing and mapping
+    seed: 199999
+  # MetaBAT 2 configuration
+  metabat2:
+    min_contig_size: 1500 # minimun size of 1500 bp per the MetaBAT 2 doc
+    minimum_mean_coverage: 1 # minimum mean coverage of a contig in each library for binning
+    min_bin_size: 200000 # minimum size of a bin as the output
+    threads: 4 # put 0 for using all cores

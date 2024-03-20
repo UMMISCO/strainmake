@@ -33,8 +33,15 @@ Human assembly for mapping:
 
 | Tool  | Original year                                         | Conda available?                           | Link                           | Implemented? |
 | :---- | :---------------------------------------------------- | :----------------------------------------- | :----------------------------- | :----------- |
-| QUAST | [2013](https://doi.org/10.1093/bioinformatics/btt086) | [Yes](https://anaconda.org/bioconda/quast) | https://github.com/ablab/quast | No           |
+| QUAST | [2013](https://doi.org/10.1093/bioinformatics/btt086) | [Yes](https://anaconda.org/bioconda/quast) | https://github.com/ablab/quast | Yes          |
 
 ## Binning
+
+| Tool      | Original year                                          | Conda available?                              | Link                                                  | Implemented? |
+| :-------- | :----------------------------------------------------- | :-------------------------------------------- | :---------------------------------------------------- | :----------- |
+| MetaBAT 2 | [2019](https://doi.org/10.7717%2Fpeerj.7359)           | [Yes](https://anaconda.org/bioconda/metabat2) | https://bitbucket.org/berkeleylab/metabat/src/master/ | Yes          |
+| SemiBin2  | [2023](https://doi.org/10.1093/bioinformatics/btad209) | [Yes](https://anaconda.org/bioconda/semibin)  | https://github.com/BigDataBiology/SemiBin             | No           |
+| VAMB      | [2019](https://doi.org/10.1038/s41587-020-00777-4)     | [Yes](https://anaconda.org/bioconda/vamb)     | https://github.com/RasmussenLab/vamb                  | No           |
+| COMEBin   | [2024](https://doi.org/10.1038/s41467-023-44290-z)     | [Yes](https://anaconda.org/bioconda/comebin)  | https://github.com/ziyewang/COMEBin                   | No           |
 
 ## Gene prediction, functional annotation and taxonomy classification

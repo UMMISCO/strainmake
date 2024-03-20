@@ -7,7 +7,7 @@ rule megahit_assembly:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
-        # touch("results/03_assembly/{sample}_assembly"),
+        touch("results/03_assembly/{sample}_assembly"),
         assembly = f'results/03_assembly/assembly/{assembly_name}'
     conda:
         "../envs/megahit.yaml"
@@ -35,8 +35,8 @@ rule metaspades_assembly:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
-        touch("results/03_assembly/{sample}_assembly"),
-        assembly = f'results/03_assembly/assembly/{assembly_name}'
+        # touch("results/03_assembly/{sample}_assembly"),
+        # assembly = f'results/03_assembly/assembly/{assembly_name}'
     conda:
         "../envs/spades.yaml"
     log:
@@ -54,3 +54,18 @@ rule metaspades_assembly:
         mv results/03_assembly/metaspades/scaffolds.fasta \
             {output.assembly}
         """
+
+# needed for some binner (e.g. metabat 2)
+rule contigs_gzipping:
+    input:
+        # assembly produced in step 03
+        f'results/03_assembly/assembly/{assembly_name}'
+    output:
+        f'results/03_assembly/assembly/{assembly_name}.gz',
+    conda:
+        f'../envs/pigz.yaml'
+    log:
+        stdout = "logs/03_assembly/pigz/{sample}.stdout",
+        stderr = "logs/03_assembly/pigz/{sample}.stderr"
+    shell:
+        "pigz -k --verbose {input} > {log.stdout} 2> {log.stderr}"
