@@ -5,6 +5,7 @@ include: "rules/02_prepocess.smk"
 include: "rules/03_assembly.smk"
 include: "rules/04_assembly_qc.smk"
 include: "rules/05_binning.smk"
+include: "rules/06_binning_qc.smk"
 
 ################################################################################
 #                                Config options                                #
@@ -33,4 +34,5 @@ rule all:
                 sample=SAMPLES),
             # binning
             expand("results/05_binning/{sample}_binning", sample=SAMPLES),
-
+            # bins qc
+            expand("results/06_binning_qc/checkm2/{sample}", sample=SAMPLES),

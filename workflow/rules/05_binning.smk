@@ -139,3 +139,15 @@ rule metabat2_binning:
             --verbose \
             > {log.stdout} 2> {log.stderr}
         """
+
+# copy bins into a results folder
+rule metabat2_move_bins:
+    input:
+        expand("results/05_binning/metabat2/bins/{sample}", sample=SAMPLES)
+    output:
+        directory("results/05_binning/bins/{sample}")
+    log:
+        stdout = "logs/05_binning/bins/{sample}.stdout",
+        stderr = "logs/05_binning/bins/{sample}.stderr"
+    shell:
+       "mkdir -p {output} && cp {input}/*.fa {output}/"

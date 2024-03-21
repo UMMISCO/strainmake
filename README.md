@@ -44,4 +44,10 @@ Human assembly for mapping:
 | VAMB      | [2019](https://doi.org/10.1038/s41587-020-00777-4)     | [Yes](https://anaconda.org/bioconda/vamb)     | https://github.com/RasmussenLab/vamb                  | No           |
 | COMEBin   | [2024](https://doi.org/10.1038/s41467-023-44290-z)     | [Yes](https://anaconda.org/bioconda/comebin)  | https://github.com/ziyewang/COMEBin                   | No           |
 
+## Bins quality assessment
+
+| Tool    | Original year                                      | Conda available?                             | Link                                 | Implemented? |
+| :------ | :------------------------------------------------- | :------------------------------------------- | :----------------------------------- | :----------- |
+| CheckM2 | [2023](https://doi.org/10.1038/s41592-023-01940-w) | [Yes](https://anaconda.org/bioconda/checkm2) | https://github.com/chklovski/CheckM2 | Yes          |
+
 ## Gene prediction, functional annotation and taxonomy classification
