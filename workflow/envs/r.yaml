@@ -1,0 +1,7 @@
+name: r
+channels:
+  - conda-forge
+dependencies:  
+  - r-ggpubr
+  - r-ggplot2
+  - r-vroom

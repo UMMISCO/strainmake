@@ -65,3 +65,20 @@ rule checkm2_merge_results:
             --output {output} \
         > {log.stdout} 2> {log.stderr}
         """
+
+rule checkm2_plot_results:
+    input:
+        "results/06_binning_qc/checkm2/all_quality_reports.tsv"
+    output:
+        "results/06_binning_qc/checkm2/all_quality_reports.pdf"
+    conda:
+        "../envs/r.yaml"
+    log:
+        stdout = "logs/06_binning_qc/checkm2/plot_reports.stdout",
+        stderr = "logs/06_binning_qc/checkm2/plot_reports.stderr"
+    shell:
+        """
+        Rscript workflow/scripts/checkm2_assessment_plots.R \
+            {input} {output} \
+        > {log.stdout} 2> {log.stderr}
+        """
