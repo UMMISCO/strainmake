@@ -35,4 +35,4 @@ rule all:
             # binning
             expand("results/05_binning/{sample}_binning", sample=SAMPLES),
             # bins qc
-            expand("results/06_binning_qc/checkm2/{sample}", sample=SAMPLES),
+            "results/06_binning_qc/checkm2/all_quality_reports.tsv",

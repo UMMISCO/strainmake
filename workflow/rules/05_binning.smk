@@ -3,7 +3,7 @@ assembly_name = "{sample}.final_assembly.fasta"
 
 SAMPLES = config['samples']
 
-# rules for mapping reads on assembly and producing a .SAM file
+# rules for mapping reads on assembly and producing a .BAM file
 rule bowtie_assembly_index:
     input:
         # assembly produced in step 03
@@ -14,7 +14,7 @@ rule bowtie_assembly_index:
         "../envs/bowtie2.yaml"
     log:
         stdout = "logs/05_binning/bowtie2/{sample}.indexing.stdout",
-        stderr = "logs/05_binning/bowtie2/{sample}.indexing.stdout"
+        stderr = "logs/05_binning/bowtie2/{sample}.indexing.stderr"
     params:
         threads = config['binning']['bowtie2']['threads'],
         seed = config['binning']['bowtie2']['seed'],
@@ -42,7 +42,7 @@ rule reads_mapping:
         "../envs/bowtie2.yaml"
     log:
         stdout = "logs/05_binning/bowtie2/{sample}.mapping.stdout",
-        stderr = "logs/05_binning/bowtie2/{sample}.mapping.stdout"
+        stderr = "logs/05_binning/bowtie2/{sample}.mapping.stderr"
     params:
         threads = config['binning']['bowtie2']['threads'],
         index_basename = "{sample}"
@@ -64,7 +64,7 @@ rule sam_to_bam:
         "../envs/samtools.yaml"
     log:
         stdout = "logs/05_binning/samtools/{sample}.sam_to_bam.stdout",
-        stderr = "logs/05_binning/samtools/{sample}.sam_to_bam.stdout"
+        stderr = "logs/05_binning/samtools/{sample}.sam_to_bam.stderr"
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -116,12 +116,14 @@ rule metabat2_binning:
         bam_depth_matrix = "results/05_binning/metabat2/{sample}.depth_matrix.tab"
     output:
         # touch("results/05_binning/{sample}_binning"),
-        output = directory("results/05_binning/metabat2/bins/{sample}/")
+        output = directory("results/05_binning/metabat2/bins/{sample}")
     conda:
         "../envs/metabat.yaml"
     log:
         stdout = "logs/05_binning/metabat2/{sample}.binning.stdout",
-        stderr = "logs/05_binning/metabat2/{sample}.binning.stderr"
+        stderr = "logs/05_binning/metabat2/{sample}.binning.stderr",
+        stdout_gz = "logs/05_binning/metabat2/{sample}.gzipping.stdout",
+        stderr_gz = "logs/05_binning/metabat2/{sample}.gzipping.stderr"
     params:
         min_contig_size = config['binning']['metabat2']['min_contig_size'],
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
@@ -137,20 +139,10 @@ rule metabat2_binning:
             --minClsSize {params.min_bin_size} \
             --numThreads {params.threads} \
             --verbose \
-            > {log.stdout} 2> {log.stderr}
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        pigz --verbose {output}/* > {log.stdout_gz} 2> {log.stderr_gz}
         """
-
-# copy bins into a results folder
-rule metabat2_move_bins:
-    input:
-        expand("results/05_binning/metabat2/bins/{sample}", sample=SAMPLES)
-    output:
-        directory("results/05_binning/bins/{sample}")
-    log:
-        stdout = "logs/05_binning/bins/{sample}.stdout",
-        stderr = "logs/05_binning/bins/{sample}.stderr"
-    shell:
-       "mkdir -p {output} && cp {input}/*.fa {output}/"
 
 # semibin2
 rule semibin2_binning:
@@ -164,7 +156,9 @@ rule semibin2_binning:
         "../envs/semibin.yaml"
     log:
         stdout = "logs/05_binning/semibin2/{sample}.binning.stdout",
-        stderr = "logs/05_binning/semibin2/{sample}.binning.stderr"
+        stderr = "logs/05_binning/semibin2/{sample}.binning.stderr",
+        stdout_move = "logs/05_binning/semibin2/{sample}.move.stdout",
+        stderr_move = "logs/05_binning/semibin2/{sample}.move.stderr"
     params:
         environment = config['binning']['semibin2']['environment'],
         threads = config['binning']['semibin2']['threads']
@@ -177,5 +171,8 @@ rule semibin2_binning:
                 -o {output.output} \
                 --threads {params.threads} \
                 --verbose \
-            > {log.stdout} 2> {log.stderr} 
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        mv --verbose {output.output}/output_bins/* {output.output} \
+            > {log.stdout_move} 2> {log.stderr_move}
         """

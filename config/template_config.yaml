@@ -40,7 +40,9 @@ quast:
 ################################################################################
 
 binning:
-  binner: metabat2 # to be implemented (vamb, semibin2...)
+  binner: # currently: metabat2, semibin2. Others to be implemented (vamb, ...)
+    - metabat2 
+    - semibin2
   # bowtie2 configuration for both indexing and mapping
   bowtie2:
     threads: 4 # for both indexing and mapping
