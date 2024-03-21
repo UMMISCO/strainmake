@@ -115,7 +115,7 @@ rule metabat2_binning:
         assembly = f"results/03_assembly/assembly/{assembly_name}.gz",
         bam_depth_matrix = "results/05_binning/metabat2/{sample}.depth_matrix.tab"
     output:
-        touch("results/05_binning/{sample}_binning"),
+        # touch("results/05_binning/{sample}_binning"),
         output = directory("results/05_binning/metabat2/bins/{sample}/")
     conda:
         "../envs/metabat.yaml"
@@ -151,3 +151,31 @@ rule metabat2_move_bins:
         stderr = "logs/05_binning/bins/{sample}.stderr"
     shell:
        "mkdir -p {output} && cp {input}/*.fa {output}/"
+
+# semibin2
+rule semibin2_binning:
+    input:
+        assembly = f"results/03_assembly/assembly/{assembly_name}.gz",
+        bam = "results/05_binning/bowtie2/{sample}.sorted.bam"
+    output:
+        touch("results/05_binning/{sample}_binning"),
+        output = directory("results/05_binning/semibin2/bins/{sample}")
+    conda:
+        "../envs/semibin.yaml"
+    log:
+        stdout = "logs/05_binning/semibin2/{sample}.binning.stdout",
+        stderr = "logs/05_binning/semibin2/{sample}.binning.stderr"
+    params:
+        environment = config['binning']['semibin2']['environment'],
+        threads = config['binning']['semibin2']['threads']
+    shell:
+        """
+        SemiBin2 single_easy_bin \
+                --environment {params.environment} \
+                -i {input.assembly} \
+                -b {input.bam} \
+                -o {output.output} \
+                --threads {params.threads} \
+                --verbose \
+            > {log.stdout} 2> {log.stderr} 
+        """

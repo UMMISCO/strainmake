@@ -1,0 +1,5 @@
+name: semibin
+channels:
+  - bioconda
+dependencies:
+  - semibin=2.1.*
