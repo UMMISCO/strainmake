@@ -50,10 +50,8 @@ def main():
     parser.add_argument("--output", help="Output merged TSV report.", 
                         required=True)
     
-    # Analyse des arguments de la ligne de commande
     args = parser.parse_args()
     
-    # Appel de la fonction de fusion
     merged_reports = merge_reports(args.input)
 
     # saving the merged reports
