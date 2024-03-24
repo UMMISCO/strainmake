@@ -18,15 +18,17 @@ bowtie2:
 #                                   Assembly                                   #        
 ################################################################################        
 
-assembler: megahit # to be implemented (megahit, metaspades, idbaud...)
-
-# MEGAHIT configuration
-megahit:
-  threads: 4
-
-# SPAdes configuration
-metaspades:
-  threads: 4
+assembly:
+  assembler: # to be implemented (megahit, metaspades, idbaud...)
+    - megahit 
+    - metaspades
+  # MEGAHIT configuration
+  megahit:
+    threads: 4
+  # SPAdes configuration
+  metaspades:
+    threads: 4
+    memory_limit: 50 # in GB
 
 ################################################################################
 #                               Assembly quality                               #

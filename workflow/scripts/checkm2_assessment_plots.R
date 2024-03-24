@@ -16,23 +16,27 @@ report <- vroom(path_to_report, delim="\t")
 theme_set(theme_pubclean())
 
 # plotting the results
-completeness <- ggplot(report, aes(x=tool, y=Completeness, color=tool)) + 
+completeness <- ggplot(report, aes(x=binning, y=Completeness, color=binning)) + 
                 geom_boxplot() + 
                 geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5) +
                 labs(x = "Tool", y = "Predicted completeness") +
-                ylim(0, 100)
-contamination <- ggplot(report, aes(x=tool, y=Contamination, color=tool)) + 
+                ylim(0, 100) +
+                facet_grid(. ~ assembly)
+contamination <- ggplot(report, aes(x=binning, y=Contamination, color=binning)) + 
                  geom_boxplot() + 
                  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5) +
                  labs(x = "Tool", y = "Predicted contamination") +
-                 ylim(0, 100)                  
-n50 <- ggplot(report, aes(x=tool, y=Contig_N50, color=tool)) + 
+                 ylim(0, 100)  +
+                 facet_grid(. ~ assembly)                
+n50 <- ggplot(report, aes(x=binning, y=Contig_N50, color=binning)) + 
        geom_boxplot() + 
        geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5) +
-       labs(x = "Tool", y = "N50")
-nb_bins <- ggplot(report, aes(x = tool, fill = tool)) +
+       labs(x = "Tool", y = "N50") +
+       facet_grid(. ~ assembly)
+nb_bins <- ggplot(report, aes(x = binning, fill = binning)) +
            geom_bar() + 
-           labs(x = "Tool", y = "Number of bins")
+           labs(x = "Tool", y = "Number of bins") +
+           facet_grid(. ~ assembly)
 
 # making the figure with the plots
 arrange <- ggarrange(completeness, contamination, n50, nb_bins,

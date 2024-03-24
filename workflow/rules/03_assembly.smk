@@ -7,16 +7,17 @@ rule megahit_assembly:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
-        touch("results/03_assembly/{sample}_assembly"),
-        assembly = f'results/03_assembly/assembly/{assembly_name}'
+        assembly = "results/03_assembly/megahit/{sample}/assembly.fa.gz"
     conda:
         "../envs/megahit.yaml"
     log:
         stdout = "logs/03_assembly/megahit/{sample}.stdout",
         stderr = "logs/03_assembly/megahit/{sample}.stdout"
     params:
-        threads = config['megahit']['threads'],
-        tmp_dir = "tmp/"
+        out_dir = "results/03_assembly/megahit/{sample}",
+        threads = config['assembly']['megahit']['threads'],
+        tmp_dir = "tmp/",
+        tmp_output = "{sample}_tmp_megahit_output/"
     shell:
         """
         mkdir -p {params.tmp_dir} \
@@ -24,9 +25,15 @@ rule megahit_assembly:
         megahit -1 {input.r1} -2 {input.r2} \
             --num-cpu-threads {params.threads} \
             --tmp-dir {params.tmp_dir} \
-            --out-dir results/03_assembly/megahit > {log.stdout} 2> {log.stderr} \
+            --out-dir {params.tmp_output} > {log.stdout} 2> {log.stderr} \
         && \
-        mv results/03_assembly/megahit/final.contigs.fa {output.assembly}
+        mv {params.tmp_output}/* {params.out_dir} \
+        && \
+        rm -r {params.tmp_output} \
+        && \
+        mv {params.out_dir}/final.contigs.fa {params.out_dir}/assembly.fa \
+        && \
+        pigz {params.out_dir}/assembly.fa
         """
 
 rule metaspades_assembly:
@@ -35,37 +42,25 @@ rule metaspades_assembly:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
-        # touch("results/03_assembly/{sample}_assembly"),
-        # assembly = f'results/03_assembly/assembly/{assembly_name}'
+        assembly = "results/03_assembly/metaspades/{sample}/assembly.fa.gz"
     conda:
         "../envs/spades.yaml"
     log:
         stdout = "logs/03_assembly/metaspades/{sample}.stdout",
         stderr = "logs/03_assembly/metaspades/{sample}.stdout"
     params:
-        threads = config['metaspades']['threads']
+        out_dir = "results/03_assembly/metaspades/{sample}",
+        threads = config['assembly']['metaspades']['threads'],
+        memory_limit = config['assembly']['metaspades']['memory_limit']
     shell:
         """
         spades.py --meta -1 {input.r1} -2 {input.r2} \
             --threads {params.threads} \
-            -o results/03_assembly/metaspades \
+            -o {params.out_dir} \
+            -m {params.memory_limit} \
             > {log.stdout} 2> {log.stderr} \
         && \
-        mv results/03_assembly/metaspades/scaffolds.fasta \
-            {output.assembly}
+        mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
+        && \
+        pigz {params.out_dir}/assembly.fa
         """
-
-# needed for some binner (e.g. metabat 2)
-rule contigs_gzipping:
-    input:
-        # assembly produced in step 03
-        f'results/03_assembly/assembly/{assembly_name}'
-    output:
-        f'results/03_assembly/assembly/{assembly_name}.gz',
-    conda:
-        f'../envs/pigz.yaml'
-    log:
-        stdout = "logs/03_assembly/pigz/{sample}.stdout",
-        stderr = "logs/03_assembly/pigz/{sample}.stderr"
-    shell:
-        "pigz -k --verbose {input} > {log.stdout} 2> {log.stderr}"

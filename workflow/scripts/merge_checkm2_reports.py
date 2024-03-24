@@ -1,11 +1,26 @@
 """
 Script for merging CheckM2 quality reports and adding a new column with binning
-program name, extracted from the table path
+program name and a new column with assembly program, extracted from the 
+table path
 """
 
 import argparse
 import pandas as pd
 
+def identify_assembly_program(report_path: str):
+    """
+    Returns the assembly program it identified from the report path
+    """
+
+    print(f'Extracting assembly program name from: {report_path}')
+
+    if 'metaspades' in report_path:
+        return 'metaspades'
+    elif 'megahit' in report_path:
+        return 'megahit'
+    else:
+        return None
+    
 def identify_binning_program(report_path: str):
     """
     Returns the binning program it identified from the report path
@@ -31,7 +46,8 @@ def merge_reports(input_files: list):
     # identifying the binning program
     df_with_binning_program = []
     for df, path_to_report in zip(df_list, input_files):
-        df['tool'] = identify_binning_program(path_to_report)
+        df['assembly'] = identify_assembly_program(path_to_report)
+        df['binning'] = identify_binning_program(path_to_report)
 
         print(f'Will be merged:\n\n{df}')
 

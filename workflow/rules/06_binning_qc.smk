@@ -20,21 +20,23 @@ rule checkm2_database:
 rule checkm2_assessment:
     input:
         # folder with bins created in step 05. One folder per binning program
-        bins = "results/05_binning/{binner}/bins/{sample}", 
+        bins = "results/05_binning/{binner}/bins/{assembler}/{sample}", 
         diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
     output:
-        "results/06_binning_qc/checkm2/{binner}/{sample}/quality_report.tsv",
-        out_dir = directory("results/06_binning_qc/checkm2/{binner}/{sample}")
+        "results/06_binning_qc/checkm2/{binner}/{assembler}/{sample}/quality_report.tsv",
+        out_dir = directory("results/06_binning_qc/checkm2/{binner}/{assembler}/{sample}")
     conda:
         "../envs/checkm2.yaml"
     log:
-        stdout = "logs/06_binning_qc/checkm2/{binner}_{sample}.assessment.stdout",
-        stderr = "logs/06_binning_qc/checkm2/{binner}_{sample}.assessment.stderr"
+        stdout = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stdout",
+        stderr = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stderr"
     params:
         binner = config['binning']['binner'],
+        assembler = config['assembly']['assembler'],
         threads = config['checkm2']['threads']
     wildcard_constraints:
         sample="|".join(config['samples'])
+    threads: 1
     shell:
         """
         echo {input.bins} \
@@ -48,7 +50,8 @@ rule checkm2_assessment:
 # this rule merges CheckM2 quality reports into a single table
 rule checkm2_merge_results:
     input:
-        expand("results/06_binning_qc/checkm2/{binner}/{sample}/quality_report.tsv",
+        expand("results/06_binning_qc/checkm2/{binner}/{assembler}/{sample}/quality_report.tsv",
+               assembler = config['assembly']['assembler'],
                binner = config['binning']['binner'],
                sample = config['samples'])
     output:

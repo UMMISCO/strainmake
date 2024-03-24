@@ -1,30 +1,28 @@
-# no matter the assembler used next is the assembly name to obtain
-assembly_name = "{sample}.final_assembly.fasta"
-
 SAMPLES = config['samples']
 
 # rules for mapping reads on assembly and producing a .BAM file
 rule bowtie_assembly_index:
     input:
-        # assembly produced in step 03
-        assembly = f"results/03_assembly/assembly/{assembly_name}.gz"
+        # assemblies produced in step 03
+        "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
     output:
-        directory("results/05_binning/bowtie2/index/{sample}")
+        directory("results/05_binning/bowtie2/index/{assembler}/{sample}")
     conda:
         "../envs/bowtie2.yaml"
     log:
-        stdout = "logs/05_binning/bowtie2/{sample}.indexing.stdout",
-        stderr = "logs/05_binning/bowtie2/{sample}.indexing.stderr"
+        stdout = "logs/05_binning/bowtie2/{assembler}/{sample}.indexing.stdout",
+        stderr = "logs/05_binning/bowtie2/{assembler}/{sample}.indexing.stderr"
     params:
         threads = config['binning']['bowtie2']['threads'],
         seed = config['binning']['bowtie2']['seed'],
-        index_basename = "{sample}"
+        index_basename = "{sample}",
+        assembler = config['assembly']['assembler']
     shell:
         """
         mkdir -p {output} \
         && \
         bowtie2-build --threads {params.threads} --seed {params.seed} \
-            {input.assembly} "{output}/{params.index_basename}" \
+            {input} "{output}/{params.index_basename}" \
             > {log.stdout} 2> {log.stderr}
         """
 
@@ -33,19 +31,19 @@ rule reads_mapping:
         # metagenome reads
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-        # assembly index
-        bowtie_index = expand("results/05_binning/bowtie2/index/{sample}",
-                              sample=SAMPLES)
+        # assemblies index produced in rule "bowtie_assembly_index"
+        bowtie_index = "results/05_binning/bowtie2/index/{assembler}/{sample}"
     output:
-        sam = "results/05_binning/bowtie2/{sample}.sam"
+        sam = "results/05_binning/bowtie2/{assembler}/{sample}.sam"
     conda:
         "../envs/bowtie2.yaml"
     log:
-        stdout = "logs/05_binning/bowtie2/{sample}.mapping.stdout",
-        stderr = "logs/05_binning/bowtie2/{sample}.mapping.stderr"
+        stdout = "logs/05_binning/bowtie2/{assembler}/{sample}.mapping.stdout",
+        stderr = "logs/05_binning/bowtie2/{assembler}/{sample}.mapping.stderr"
     params:
         threads = config['binning']['bowtie2']['threads'],
-        index_basename = "{sample}"
+        index_basename = "{sample}",
+        assembler = config['assembly']['assembler']
     shell:
         """
         bowtie2 -p {params.threads} \
@@ -57,14 +55,14 @@ rule reads_mapping:
 
 rule sam_to_bam:
     input:
-        sam = "results/05_binning/bowtie2/{sample}.sam"
+        sam = "results/05_binning/bowtie2/{assembler}/{sample}.sam"
     output:
-        bam = "results/05_binning/bowtie2/{sample}.bam"
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.bam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/05_binning/samtools/{sample}.sam_to_bam.stdout",
-        stderr = "logs/05_binning/samtools/{sample}.sam_to_bam.stderr"
+        stdout = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stdout",
+        stderr = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stderr"
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -75,14 +73,14 @@ rule sam_to_bam:
 rule bam_sorting:
     input:
         # reads mapped on the assembly
-        bam = "results/05_binning/bowtie2/{sample}.bam"
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.bam"
     output:
-        bam = "results/05_binning/bowtie2/{sample}.sorted.bam"
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/05_binning/samtools/{sample}.sorting.stdout",
-        stderr = "logs/05_binning/samtools/{sample}.sorting.stderr"
+        stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stdout",
+        stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stderr"
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -96,14 +94,14 @@ rule bam_sorting:
 # metabat2
 rule get_contigs_depth:
     input:
-        bam = "results/05_binning/bowtie2/{sample}.sorted.bam"
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
     output:
-        bam_depth_matrix = "results/05_binning/metabat2/{sample}.depth_matrix.tab"
+        bam_depth_matrix = "results/05_binning/metabat2/{assembler}/{sample}.depth_matrix.tab"
     conda:
         "../envs/metabat.yaml"
     log:
-        stdout = "logs/05_binning/metabat2/{sample}.depth_matrix.stdout",
-        stderr = "logs/05_binning/metabat2/{sample}.depth_matrix.stderr"
+        stdout = "logs/05_binning/metabat2/{assembler}/{sample}.depth_matrix.stdout",
+        stderr = "logs/05_binning/metabat2/{assembler}/{sample}.depth_matrix.stderr"
     shell:
         """
         jgi_summarize_bam_contig_depths --outputDepth {output.bam_depth_matrix} \
@@ -112,24 +110,24 @@ rule get_contigs_depth:
 
 rule metabat2_binning:
     input:
-        assembly = f"results/03_assembly/assembly/{assembly_name}.gz",
-        bam_depth_matrix = "results/05_binning/metabat2/{sample}.depth_matrix.tab"
+        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
+        bam_depth_matrix = "results/05_binning/metabat2/{assembler}/{sample}.depth_matrix.tab"
     output:
-        # touch("results/05_binning/{sample}_binning"),
-        output = directory("results/05_binning/metabat2/bins/{sample}")
+        output = directory("results/05_binning/metabat2/bins/{assembler}/{sample}")
     conda:
         "../envs/metabat.yaml"
     log:
-        stdout = "logs/05_binning/metabat2/{sample}.binning.stdout",
-        stderr = "logs/05_binning/metabat2/{sample}.binning.stderr",
-        stdout_gz = "logs/05_binning/metabat2/{sample}.gzipping.stdout",
-        stderr_gz = "logs/05_binning/metabat2/{sample}.gzipping.stderr"
+        stdout = "logs/05_binning/metabat2/{assembler}/{sample}.binning.stdout",
+        stderr = "logs/05_binning/metabat2/{assembler}/{sample}.binning.stderr",
+        stdout_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stdout",
+        stderr_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stderr"
     params:
         min_contig_size = config['binning']['metabat2']['min_contig_size'],
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
         min_bin_size = config['binning']['metabat2']['min_bin_size'],
         threads = config['binning']['metabat2']['threads'],
-        bin_basename = "{sample}"
+        bin_basename = "{sample}",
+        assembler = config['assembly']['assembler']
     shell:
         """
         metabat2 -i {input.assembly} -o "{output.output}/{params.bin_basename}" \
@@ -147,21 +145,21 @@ rule metabat2_binning:
 # semibin2
 rule semibin2_binning:
     input:
-        assembly = f"results/03_assembly/assembly/{assembly_name}.gz",
-        bam = "results/05_binning/bowtie2/{sample}.sorted.bam"
+        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
     output:
-        touch("results/05_binning/{sample}_binning"),
-        output = directory("results/05_binning/semibin2/bins/{sample}")
+        output = directory("results/05_binning/semibin2/bins/{assembler}/{sample}")
     conda:
         "../envs/semibin.yaml"
     log:
-        stdout = "logs/05_binning/semibin2/{sample}.binning.stdout",
-        stderr = "logs/05_binning/semibin2/{sample}.binning.stderr",
-        stdout_move = "logs/05_binning/semibin2/{sample}.move.stdout",
-        stderr_move = "logs/05_binning/semibin2/{sample}.move.stderr"
+        stdout = "logs/05_binning/semibin2/{assembler}/{sample}.binning.stdout",
+        stderr = "logs/05_binning/semibin2/{assembler}/{sample}.binning.stderr",
+        stdout_move = "logs/05_binning/semibin2/{assembler}/{sample}.move.stdout",
+        stderr_move = "logs/05_binning/semibin2/{assembler}/{sample}.move.stderr"
     params:
         environment = config['binning']['semibin2']['environment'],
-        threads = config['binning']['semibin2']['threads']
+        threads = config['binning']['semibin2']['threads'],
+        assembler = config['assembly']['assembler']
     shell:
         """
         SemiBin2 single_easy_bin \

@@ -1,23 +1,20 @@
-# no matter the assembler used next is the assembly name to obtain
-assembly_name = "{sample}.final_assembly.fasta"
-
-
 rule quast_qc:
     input:
-        # assembly produced in step 03
-        f'results/03_assembly/assembly/{assembly_name}'
+        # assemblies produced in step 03
+        "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
     output:
-        touch("results/04_assembly_qc/{sample}_assembly_qc")
+        "results/04_assembly_qc/quast/{assembler}/{sample}/report.html"
     conda:
         "../envs/quast.yaml"
     log:
-        stdout = "logs/04_assembly_qc/quast/{sample}.stdout",
-        stderr = "logs/04_assembly_qc/quast/{sample}.stdout"
+        stdout = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout",
+        stderr = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout"
     params:
+        out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}",
         threads = config['quast']['threads']
     shell:
         """
-        metaquast.py -t {threads} -o results/04_assembly_qc/quast \
+        metaquast.py -t {threads} -o {params.out_dir} \
             --max-ref-number 0 \
             {input} \
             > {log.stdout} 2> {log.stderr} 

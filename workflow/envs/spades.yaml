@@ -1,5 +1,7 @@
 name: spades
 channels:
   - bioconda
+  - conda-forge
 dependencies:
   - spades=3.15.*
+  - pigz=2.*
