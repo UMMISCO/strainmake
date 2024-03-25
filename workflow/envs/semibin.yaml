@@ -1,5 +1,6 @@
 name: semibin
 channels:
   - bioconda
+  - conda-forge
 dependencies:
   - semibin=2.1.*

@@ -1,5 +1,6 @@
 name: bowtie2
 channels:
   - bioconda
+  - conda-forge # for libgcc-ng
 dependencies:
   - bowtie2=2.5.*
