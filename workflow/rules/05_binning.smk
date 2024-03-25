@@ -174,3 +174,53 @@ rule semibin2_binning:
         mv --verbose {output.output}/output_bins/* {output.output} \
             > {log.stdout_move} 2> {log.stderr_move}
         """
+
+# basalt binning
+rule basalt_binning:
+    input:
+        assembly = expand("results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
+                          assembler=config['assembly']['assembler'],
+                          sample=config['samples']),
+        r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
+        r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
+    output:
+        output = touch("results/05_binning/basalt/bins/{sample}")
+    conda:
+        "../envs/basalt.yaml"
+    log:
+        stdout = "logs/05_binning/basalt/{sample}.binning.stdout",
+        stderr = "logs/05_binning/basalt/{sample}.binning.stderr",
+        stdout_unzip = "logs/05_binning/basalt/{sample}.unzip.stdout",
+        stderr_unzip = "logs/05_binning/basalt/{sample}.unzip.stderr",
+    params:
+        threads = config['binning']['basalt']['threads'],
+        memory = config['binning']['basalt']['memory'],
+        # joining the assemblies' path with using a comma
+        assemblies = lambda wildcards, input: ','.join(input.assembly),
+        basalt_zip_path = "BASALT_script.zip",
+        basalt_exe_path = "BASALT_script/BASALT",
+        r1_copy = "r1.fa.gz",
+        r2_copy = "r2.fa.gz"
+    shell:
+        # https://github.com/EMBL-PKU/BASALT/issues/11
+        """
+        wget -O {params.basalt_zip_path} \
+            https://github.com/EMBL-PKU/BASALT/raw/master/BASALT_script.zip \
+        && \
+        unzip -o {params.basalt_zip_path} \
+            > {log.stdout_unzip} 2> {log.stderr} \
+        && \
+        chmod 777 {params.basalt_exe_path} \
+        && \
+        mkdir -p /root/.cache/BASALT \
+        && \
+        cp {input.r1} {params.r1_copy} \
+        && \
+        cp {input.r2} {params.r2_copy} \
+        && \
+        ./{params.basalt_exe_path} --assemblies {params.assemblies} \
+            --shortreads '{params.r1_copy}'/'{params.r2_copy}' \
+            --threads {params.threads} \
+            --ram {params.memory} \
+            > {log.stdout} 2> {log.stderr}
+        """

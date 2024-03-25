@@ -58,6 +58,9 @@ binning:
   semibin2:
     environment: ocean # (human_gut, dog_cut, ocean...) see https://semibin.readthedocs.io/en/latest/usage/#easy-single-binning-mode
     threads: 4 # put 0 for using all cores
+  basalt:
+    threads: 4
+    memory: 50 # in GB
 
 ################################################################################
 #                                 Bins quality                                 #
