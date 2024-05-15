@@ -174,3 +174,35 @@ rule semibin2_binning:
         mv --verbose {output.output}/output_bins/* {output.output} \
             > {log.stdout_move} 2> {log.stderr_move}
         """
+
+# vamb
+rule vamb_binning:
+    input:
+        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
+    output:
+        output = directory("results/05_binning/vamb/bins/{assembler}/{sample}")
+    conda:
+        "../envs/vamb.yaml"
+    log:
+        stdout = "logs/05_binning/vamb/{assembler}/{sample}.binning.stdout",
+        stderr = "logs/05_binning/vamb/{assembler}/{sample}.binning.stderr",
+        stdout_move = "logs/05_binning/vamb/{assembler}/{sample}.move.stdout",
+        stderr_move = "logs/05_binning/vamb/{assembler}/{sample}.move.stderr"
+    params:
+        minfasta = config['binning']['vamb']['minfasta'],
+        gpu = config['binning']['vamb']['gpu'],
+        assembler = config['assembly']['assembler']
+    shell:
+        """
+        vamb --outdir {output.output} \
+            --fasta {input.assembly} \
+            --bamfiles {input.bam} \
+            -o C \
+            --minfasta {params.minfasta} \
+            --cuda {params.gpu} \
+            > {log.stdout} 2> {log.stderr} \
+        # && \
+        # mv --verbose {output.output}/output_bins/* {output.output} \
+        #     > {log.stdout_move} 2> {log.stderr_move}
+        """

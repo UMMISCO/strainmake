@@ -1,0 +1,6 @@
+name: vamb
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - vamb
