@@ -42,9 +42,10 @@ quast:
 ################################################################################
 
 binning:
-  binner: # currently: metabat2, semibin2. Others to be implemented (vamb, ...)
+  binner: # currently: metabat2, semibin2. Others to be implemented
     - metabat2 
     - semibin2
+    - vamb
   # bowtie2 configuration for both indexing and mapping
   bowtie2:
     threads: 4 # for both indexing and mapping
@@ -58,6 +59,13 @@ binning:
   semibin2:
     environment: ocean # (human_gut, dog_cut, ocean...) see https://semibin.readthedocs.io/en/latest/usage/#easy-single-binning-mode
     threads: 4 # put 0 for using all cores
+  vamb:
+    minfasta: 200000 # minimum bin size to output as fasta
+    # gpu: false # whether to use GPU or not (to implement)
+    epochs: 500 # number of epochs for VAE training
+    threads: 4
+    batch_sizes: [25 75 150 300]
+    start_batch_size: 2
 
 ################################################################################
 #                                 Bins quality                                 #
