@@ -84,9 +84,24 @@ rule bam_sorting:
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
-            > {log.stdout} 2> {log.stderr} \
-        && \
-            rm {input.bam}
+            > {log.stdout} 2> {log.stderr}
+        """
+
+# sorting BAM by read name (for VAMB)
+rule bam_sorting_by_readname:
+    input:
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.bam"
+    output:
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted_by_readname.bam"
+    conda:
+        "../envs/samtools.yaml"
+    log:
+        stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting_by_readname.stdout",
+        stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting_by_readname.stderr"
+    shell:
+        """
+        samtools sort -n -o {output.bam} {input.bam} \
+            > {log.stdout} 2> {log.stderr}
         """
 
 # binning rules
@@ -179,7 +194,7 @@ rule semibin2_binning:
 rule vamb_binning:
     input:
         assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted_by_readname.bam"
     output:
         output = directory("results/05_binning/vamb/bins/{assembler}/{sample}")
     conda:
@@ -192,17 +207,29 @@ rule vamb_binning:
     params:
         minfasta = config['binning']['vamb']['minfasta'],
         gpu = config['binning']['vamb']['gpu'],
-        assembler = config['assembly']['assembler']
+        epochs = config['binning']['vamb']['epochs'],
+        batch_sizes = config['binning']['vamb']['batch_sizes'],
+        start_batch_size = config['binning']['vamb']['start_batch_size'],
+        threads = config['binning']['vamb']['threads'],
+        assembler = config['assembly']['assembler'],
     shell:
         """
         vamb --outdir {output.output} \
             --fasta {input.assembly} \
             --bamfiles {input.bam} \
-            -o C \
             --minfasta {params.minfasta} \
-            --cuda {params.gpu} \
+            -e {params.epochs} \
+            -p {params.threads} \
+            -q {params.batch_sizes} \
+            -t {params.start_batch_size} \
             > {log.stdout} 2> {log.stderr} \
-        # && \
-        # mv --verbose {output.output}/output_bins/* {output.output} \
-        #     > {log.stdout_move} 2> {log.stderr_move}
+        && \
+        mkdir -p {output.output}/vamb_files \
+        && \
+        mv {output.output}/*.npz {output.output}/*.txt {output.output}/*.pt {output.output}/*.tsv {output.output}/vamb_files \
+        && \
+        pigz --verbose {output.output}/bins/* \
+        && \
+        mv --verbose {output.output}/bins/* {output.output} \
+            > {log.stdout_move} 2> {log.stderr_move}
         """

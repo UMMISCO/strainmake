@@ -32,6 +32,8 @@ def identify_binning_program(report_path: str):
         return 'sembin2'
     elif 'metabat2' in report_path:
         return 'metabat2'
+    elif 'vamb' in report_path:
+        return 'vamb'
     else:
         return None
     
