@@ -61,11 +61,11 @@ binning:
     threads: 4 # put 0 for using all cores
   vamb:
     minfasta: 200000 # minimum bin size to output as fasta
-    # gpu: false # whether to use GPU or not (to implement)
-    epochs: 500 # number of epochs for VAE training
-    threads: 4
-    batch_sizes: [25 75 150 300]
-    start_batch_size: 2
+    gpu: "" # if you don't want to use GPU, just let a "", if you want put "--cuda"
+    epochs: 50 # number of epochs for VAE training
+    threads: 10
+    batch_sizes: [5 10 30]
+    start_batch_size: 10
 
 ################################################################################
 #                                 Bins quality                                 #

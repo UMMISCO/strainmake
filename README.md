@@ -50,4 +50,10 @@ Human assembly for mapping:
 | :------ | :------------------------------------------------- | :------------------------------------------- | :----------------------------------- | :----------- |
 | CheckM2 | [2023](https://doi.org/10.1038/s41592-023-01940-w) | [Yes](https://anaconda.org/bioconda/checkm2) | https://github.com/chklovski/CheckM2 | Yes          |
 
+## Bins refinement
+
+| Tool    | Original year                                     | Conda available?                             | Link                                        | Implemented? |
+|:------- |:------------------------------------------------- |:-------------------------------------------- |:------------------------------------------- |:------------ |
+| Binette | [2024](https://doi.org/10.1101/2024.04.20.585171) | [Yes](https://anaconda.org/bioconda/binette) | https://github.com/genotoul-bioinfo/Binette | Yes           |
+
 ## Gene prediction, functional annotation and taxonomy classification
