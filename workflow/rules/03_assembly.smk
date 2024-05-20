@@ -34,7 +34,7 @@ rule megahit_assembly:
         mv {params.out_dir}/final.contigs.fa {params.out_dir}/assembly.fa \
         """
 
-# for VAMB for example. It will replace the spaces in the headers an gzip the asssembly
+# for VAMB for example. It will replace the spaces in the FASTA headers and gzip the asssembly
 rule megahit_fasta_headers_renaming:
     input: "results/03_assembly/megahit/{sample}/assembly.fa"
     output: "results/03_assembly/megahit/{sample}/assembly.fa.gz"
