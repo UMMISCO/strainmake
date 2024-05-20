@@ -135,7 +135,11 @@ rule metabat2_binning:
         stdout = "logs/05_binning/metabat2/{assembler}/{sample}.binning.stdout",
         stderr = "logs/05_binning/metabat2/{assembler}/{sample}.binning.stderr",
         stdout_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stdout",
-        stderr_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stderr"
+        stderr_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stderr",
+        stdout_mk = "logs/05_binning/metabat2/{assembler}/{sample}.mkdir.stdout",
+        stderr_mk = "logs/05_binning/metabat2/{assembler}/{sample}.mkdir.stderr",
+        stdout_mv = "logs/05_binning/metabat2/{assembler}/{sample}.moving.stdout",
+        stderr_mv = "logs/05_binning/metabat2/{assembler}/{sample}.moving.stderr"
     params:
         min_contig_size = config['binning']['metabat2']['min_contig_size'],
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
@@ -154,7 +158,11 @@ rule metabat2_binning:
             --verbose \
             > {log.stdout} 2> {log.stderr} \
         && \
-        pigz --verbose {output}/* > {log.stdout_gz} 2> {log.stderr_gz}
+        pigz --verbose {output.output}/* > {log.stdout_gz} 2> {log.stderr_gz} \
+        && \
+        mkdir --verbose {output.output}/bins > {log.stdout_mk} 2> {log.stderr_mk} \
+        && \
+        mv --verbose {output.output}/*.gz {output.output}/bins > {log.stdout_mv} 2> {log.stderr_mv} \
         """
 
 # semibin2
@@ -186,7 +194,9 @@ rule semibin2_binning:
                 --verbose \
             > {log.stdout} 2> {log.stderr} \
         && \
-        mv --verbose {output.output}/output_bins/* {output.output} \
+        mkdir {output.output}/bins \
+        && \
+        mv --verbose {output.output}/output_bins/* {output.output}/bins \
             > {log.stdout_move} 2> {log.stderr_move}
         """
 
@@ -202,8 +212,6 @@ rule vamb_binning:
     log:
         stdout = "logs/05_binning/vamb/{assembler}/{sample}.binning.stdout",
         stderr = "logs/05_binning/vamb/{assembler}/{sample}.binning.stderr",
-        stdout_move = "logs/05_binning/vamb/{assembler}/{sample}.move.stdout",
-        stderr_move = "logs/05_binning/vamb/{assembler}/{sample}.move.stderr"
     params:
         minfasta = config['binning']['vamb']['minfasta'],
         gpu = config['binning']['vamb']['gpu'],
@@ -222,6 +230,7 @@ rule vamb_binning:
             -p {params.threads} \
             -q {params.batch_sizes} \
             -t {params.start_batch_size} \
+            {params.gpu} \
             > {log.stdout} 2> {log.stderr} \
         && \
         mkdir -p {output.output}/vamb_files \
@@ -229,7 +238,4 @@ rule vamb_binning:
         mv {output.output}/*.npz {output.output}/*.txt {output.output}/*.pt {output.output}/*.tsv {output.output}/vamb_files \
         && \
         pigz --verbose {output.output}/bins/* \
-        && \
-        mv --verbose {output.output}/bins/* {output.output} \
-            > {log.stdout_move} 2> {log.stderr_move}
         """

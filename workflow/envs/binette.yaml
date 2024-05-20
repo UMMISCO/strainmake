@@ -1,0 +1,6 @@
+name: binette
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - binette=1.0.*
