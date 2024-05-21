@@ -56,4 +56,10 @@ Human assembly for mapping:
 |:------- |:------------------------------------------------- |:-------------------------------------------- |:------------------------------------------- |:------------ |
 | Binette | [2024](https://doi.org/10.1101/2024.04.20.585171) | [Yes](https://anaconda.org/bioconda/binette) | https://github.com/genotoul-bioinfo/Binette | Yes           |
 
-## Gene prediction, functional annotation and taxonomy classification
+## Bins post-processing(gene prediction, functional annotation and taxonomy classification)
+
+### Taxonomic annotation
+
+| Tool    | Original year  | Conda available?                            | Link                                  | Implemented? |
+|:------- |:-------------- |:------------------------------------------- |:------------------------------------- |:------------ |
+| GTDB-Tk | [2022](gtdbtk) | [Yes](https://anaconda.org/bioconda/gtdbtk) | https://github.com/Ecogenomics/GTDBTk | No           |

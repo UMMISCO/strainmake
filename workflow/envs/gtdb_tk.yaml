@@ -1,0 +1,9 @@
+name: gtdbtk
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - gtdbtk=2.4.*
+  - pigz=2.*
+variables:
+  GTDBTK_DATA_PATH: results/08_bins_postprocessing/gtdb_tk/reference/data/release220
