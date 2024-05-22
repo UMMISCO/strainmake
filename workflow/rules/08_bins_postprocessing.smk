@@ -6,9 +6,11 @@ rule gtdb_tk_download_ref_data:
     params:
         ref_data_online = "https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz",
         save_location = "results/08_bins_postprocessing/gtdb_tk/reference/data/gtdbtk_data"
+    threads: 2
     shell:
         """
-        curl -L --output {params.save_location}.tar.gz {params.ref_data_online} \
+        curl -C - -L --retry 10 --retry-all-errors \
+            --output {params.save_location}.tar.gz {params.ref_data_online} \
             > {log.stdout} 2> {log.stderr} \
         && \
         tar -I pigz -xvf {params.save_location}.tar.gz -C results/08_bins_postprocessing/gtdb_tk/reference/data/ \
