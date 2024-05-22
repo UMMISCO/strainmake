@@ -9,13 +9,11 @@ rule gtdb_tk_download_ref_data:
     threads: 2
     shell:
         """
-        curl -C - -L --retry 10 --retry-all-errors \
+        curl -C - -L --retry 10 \
             --output {params.save_location}.tar.gz {params.ref_data_online} \
             > {log.stdout} 2> {log.stderr} \
         && \
         tar -I pigz -xvf {params.save_location}.tar.gz -C results/08_bins_postprocessing/gtdb_tk/reference/data/ \
-        && \
-        export GTDBTK_DATA_PATH=${output}
         """
 
 rule gtdb_tk_taxonomic_annotation:
