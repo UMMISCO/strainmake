@@ -1,0 +1,5 @@
+sample	sample_id	type
+data/ERR1855257_1.fastq.gz	ERR1855257	R1
+data/ERR1855257_2.fastq.gz	ERR1855257	R2
+data/ERR1855263_1.fastq.gz	ERR1855263	R1
+data/ERR1855263_2.fastq.gz	ERR1855263	R2

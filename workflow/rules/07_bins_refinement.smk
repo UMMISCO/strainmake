@@ -1,6 +1,10 @@
+include: "../Snakefile"
+
 ASSEMBLER = config['assembly']['assembler'] 
 BINNER = config['binning']['binner'] 
-SAMPLES = config['samples']
+
+SAMPLES_TABLE = config['samples']
+SAMPLES = read_table(SAMPLES_TABLE)
 
 rule binette_refinement:
     input: 

@@ -1,4 +1,7 @@
-SAMPLES = config['samples']
+include: "../Snakefile"
+
+SAMPLES_TABLE = config['samples']
+SAMPLES = read_table(SAMPLES_TABLE)
 
 # rules for mapping reads on assembly and producing a .BAM file
 rule bowtie_assembly_index:

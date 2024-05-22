@@ -1,9 +1,15 @@
+include: "../Snakefile"
+
+import pandas as pd
+
+SAMPLES_TABLE = config['samples']
+SAMPLES_DF = pd.read_csv(SAMPLES_DF, sep="\t")
+FASTQ_FILES = SAMPLES_DF['sample'].tolist()
+
 rule fastqc_before_preprocessing:
     input:
-        "data/{sample}_{read}.fastq.gz",
-    output:
-        html_report="results/01_qc/fastqc/{sample}_{read}_fastqc.html",
-        zip_report="results/01_qc/fastqc/{sample}_{read}_fastqc.zip"
+        expand("{FASTQ_FILES}", fastq_files=FASTQ_FILES)
+    output: directory("results/01_qc/fastqc/")
     conda: 
         "../envs/fastqc.yaml"
     log:

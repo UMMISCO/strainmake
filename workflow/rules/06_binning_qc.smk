@@ -1,4 +1,7 @@
-SAMPLES = config['samples']
+include: "../Snakefile"
+
+SAMPLES_TABLE = config['samples']
+SAMPLES = read_table(SAMPLES_TABLE)
 
 # download the database for CheckM2
 rule checkm2_database:
