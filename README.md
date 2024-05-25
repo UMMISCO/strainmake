@@ -62,4 +62,4 @@ Human assembly for mapping:
 
 | Tool    | Original year  | Conda available?                            | Link                                  | Implemented? |
 |:------- |:-------------- |:------------------------------------------- |:------------------------------------- |:------------ |
-| GTDB-Tk | [2022](gtdbtk) | [Yes](https://anaconda.org/bioconda/gtdbtk) | https://github.com/Ecogenomics/GTDBTk | No           |
+| GTDB-Tk | [2022](gtdbtk) | [Yes](https://anaconda.org/bioconda/gtdbtk) | https://github.com/Ecogenomics/GTDBTk | Yes          |
