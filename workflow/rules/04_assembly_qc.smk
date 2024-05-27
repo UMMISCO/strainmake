@@ -10,8 +10,8 @@ rule quast_qc:
         stdout = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout",
         stderr = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout"
     params:
-        out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}",
-        threads = config['quast']['threads']
+        out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}"
+    threads: threads = config['quast']['threads']
     shell:
         """
         metaquast.py -t {threads} -o {params.out_dir} \

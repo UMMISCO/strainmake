@@ -41,12 +41,12 @@ rule host_decontamination:
         stdout = "logs/02_preprocess/bowtie2/{sample}.stdout",
         stderr = "logs/02_preprocess/bowtie2/{sample}.stderr"
     params:
-        threads = config['bowtie2']['threads'],
         organism_name = config['bowtie2']['index_name'],
         bowtie_output_name = "results/02_preprocess/bowtie2/{sample}_%.clean.fastq.gz"
+    threads: config['bowtie2']['threads']
     shell:
         """
-        bowtie2 -p {params.threads} -x "{input.index}/{params.organism_name}" \
+        bowtie2 -p {threads} -x "{input.index}/{params.organism_name}" \
             -1 {input.r1} -2 {input.r2} \
             --un-conc-gz {params.bowtie_output_name} \
             > {log.stdout} 2> {log.stderr}

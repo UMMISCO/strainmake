@@ -15,15 +15,15 @@ rule megahit_assembly:
         stderr = "logs/03_assembly/megahit/{sample}.stdout"
     params:
         out_dir = "results/03_assembly/megahit/{sample}",
-        threads = config['assembly']['megahit']['threads'],
         tmp_dir = "tmp/",
         tmp_output = "{sample}_tmp_megahit_output/"
+    threads: config['assembly']['megahit']['threads']
     shell:
         """
         mkdir -p {params.tmp_dir} \
         && \
         megahit -1 {input.r1} -2 {input.r2} \
-            --num-cpu-threads {params.threads} \
+            --num-cpu-threads {threads} \
             --tmp-dir {params.tmp_dir} \
             --out-dir {params.tmp_output} > {log.stdout} 2> {log.stderr} \
         && \
@@ -74,12 +74,12 @@ rule metaspades_assembly:
         stderr = "logs/03_assembly/metaspades/{sample}.stdout"
     params:
         out_dir = "results/03_assembly/metaspades/{sample}",
-        threads = config['assembly']['metaspades']['threads'],
         memory_limit = config['assembly']['metaspades']['memory_limit']
+    threads: config['assembly']['metaspades']['threads']
     shell:
         """
         spades.py --meta -1 {input.r1} -2 {input.r2} \
-            --threads {params.threads} \
+            --threads {threads} \
             -o {params.out_dir} \
             -m {params.memory_limit} \
             > {log.stdout} 2> {log.stderr} \

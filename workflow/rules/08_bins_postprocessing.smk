@@ -9,13 +9,11 @@ rule gtdb_tk_taxonomic_annotation:
     log:
         stdout = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}/classify.stdout",
         stderr = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}/classify.stderr"
-    params:
-        threads = config['bins_postprocessing']['gtdbtk']['threads']
-    threads: 4
+    threads: config['bins_postprocessing']['gtdbtk']['threads']
     shell:
         """
-        gtdbtk classify_wf --genome_dir {input.refined_bins}/final_bins --cpus {params.threads} --out_dir {output} \
+        gtdbtk classify_wf --genome_dir {input.refined_bins}/final_bins --cpus {threads} --out_dir {output} \
             --extension ".fa" \
-            --skip_ani_screen \
+            --skip_ani_screen --pplacer_cpus 1 \
             > {log.stdout} 2> {log.stderr}
         """
