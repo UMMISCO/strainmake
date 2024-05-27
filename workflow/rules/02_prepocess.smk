@@ -1,7 +1,5 @@
 rule fastp:
-    input:
-       r1 = "data/{sample}_1.fastq.gz",
-       r2 = "data/{sample}_2.fastq.gz"
+    input: lambda wildcards: get_fastq_pair(SAMPLES_DF, wildcards.sample)
     output:
         r1 = "results/02_preprocess/fastp/{sample}_1.fastq.gz",
         r2 = "results/02_preprocess/fastp/{sample}_2.fastq.gz",
@@ -18,7 +16,7 @@ rule fastp:
         min_read_length = config['fastp']['minimal_read_length']
     shell:
         """
-        fastp -i {input.r1} -I {input.r2} -o {output.r1} -O {output.r2} \
+        fastp -i {input[0]} -I {input[1]} -o {output.r1} -O {output.r2} \
             --detect_adapter_for_pe \
             --length_required {params.min_read_length} \
             --qualified_quality_phred {params.min_phred} \
@@ -43,12 +41,12 @@ rule host_decontamination:
         stdout = "logs/02_preprocess/bowtie2/{sample}.stdout",
         stderr = "logs/02_preprocess/bowtie2/{sample}.stderr"
     params:
-        threads = config['bowtie2']['threads'],
         organism_name = config['bowtie2']['index_name'],
         bowtie_output_name = "results/02_preprocess/bowtie2/{sample}_%.clean.fastq.gz"
+    threads: config['bowtie2']['threads']
     shell:
         """
-        bowtie2 -p {params.threads} -x "{input.index}/{params.organism_name}" \
+        bowtie2 -p {threads} -x "{input.index}/{params.organism_name}" \
             -1 {input.r1} -2 {input.r2} \
             --un-conc-gz {params.bowtie_output_name} \
             > {log.stdout} 2> {log.stderr}

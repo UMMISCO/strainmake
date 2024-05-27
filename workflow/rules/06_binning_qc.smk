@@ -1,4 +1,5 @@
-SAMPLES = config['samples']
+SAMPLES_TABLE = config['samples']
+SAMPLES = read_table(SAMPLES_TABLE)
 
 # download the database for CheckM2
 rule checkm2_database:
@@ -32,16 +33,15 @@ rule checkm2_assessment:
         stderr = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stderr"
     params:
         binner = config['binning']['binner'],
-        assembler = config['assembly']['assembler'],
-        threads = config['checkm2']['threads']
+        assembler = config['assembly']['assembler']
+    threads: config['checkm2']['threads']
     wildcard_constraints:
-        sample="|".join(config['samples'])
-    threads: 1
+        sample="|".join(SAMPLES)
     shell:
         """
         echo {input.bins} \
         && \
-        checkm2 predict --input {input.bins}/bins --threads {params.threads} \
+        checkm2 predict --input {input.bins}/bins --threads {threads} \
             -x .gz \
             --database_path {input.diamond_database} \
             --output-directory {output.out_dir} > {log.stdout} 2> {log.stderr}
