@@ -1,4 +1,4 @@
-include: "../Snakefile"
+from utils import *
 
 ASSEMBLER = config['assembly']['assembler'] 
 BINNER = config['binning']['binner'] 

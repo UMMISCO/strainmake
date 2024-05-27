@@ -1,10 +1,3 @@
-include: "../Snakefile"
-
-import pandas as pd
-
-SAMPLES_TABLE = config['samples']
-SAMPLES_DF = pd.read_csv(SAMPLES_DF, sep="\t")
-
 rule fastp:
     input: lambda wildcards: get_fastq_pair(SAMPLES_DF, wildcards.sample)
     output:
@@ -36,7 +29,8 @@ rule fastp:
 # keeps reads that don't map on human genome to decontaminate the metagenome
 rule host_decontamination:
     input:
-        reads_pair = lambda wildcards: get_fastq_pair(SAMPLES_DF, wildcards.sample),
+        r1 = "results/02_preprocess/fastp/{sample}_1.fastq.gz",
+        r2 = "results/02_preprocess/fastp/{sample}_2.fastq.gz",
         index = directory("results/02_preprocess/bowtie2/index")
     output:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
@@ -53,7 +47,7 @@ rule host_decontamination:
     shell:
         """
         bowtie2 -p {params.threads} -x "{input.index}/{params.organism_name}" \
-            -1 {input.reads_pair[0]} -2 {input.reads_pair[1]} \
+            -1 {input.r1} -2 {input.r2} \
             --un-conc-gz {params.bowtie_output_name} \
             > {log.stdout} 2> {log.stderr}
         """

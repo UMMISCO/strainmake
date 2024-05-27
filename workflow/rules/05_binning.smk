@@ -1,4 +1,4 @@
-include: "../Snakefile"
+from utils import * 
 
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
@@ -66,6 +66,8 @@ rule sam_to_bam:
     log:
         stdout = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stdout",
         stderr = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stderr"
+    wildcard_constraints:
+        sample="|".join(SAMPLES)
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -84,6 +86,8 @@ rule bam_sorting:
     log:
         stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stdout",
         stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stderr"
+    wildcard_constraints:
+        sample="|".join(SAMPLES)
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -150,6 +154,7 @@ rule metabat2_binning:
         threads = config['binning']['metabat2']['threads'],
         bin_basename = "{sample}",
         assembler = config['assembly']['assembler']
+    threads: 3
     shell:
         """
         metabat2 -i {input.assembly} -o "{output.output}/{params.bin_basename}" \
@@ -186,6 +191,7 @@ rule semibin2_binning:
         environment = config['binning']['semibin2']['environment'],
         threads = config['binning']['semibin2']['threads'],
         assembler = config['assembly']['assembler']
+    threads: 3
     shell:
         """
         SemiBin2 single_easy_bin \
@@ -223,6 +229,7 @@ rule vamb_binning:
         start_batch_size = config['binning']['vamb']['start_batch_size'],
         threads = config['binning']['vamb']['threads'],
         assembler = config['assembly']['assembler'],
+    threads: 3
     shell:
         """
         vamb --outdir {output.output} \

@@ -1,5 +1,3 @@
-include: "../Snakefile"
-
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
 
@@ -38,7 +36,7 @@ rule checkm2_assessment:
         assembler = config['assembly']['assembler'],
         threads = config['checkm2']['threads']
     wildcard_constraints:
-        sample="|".join(config['samples'])
+        sample="|".join(SAMPLES)
     threads: 1
     shell:
         """
