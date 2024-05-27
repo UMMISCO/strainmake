@@ -7,6 +7,7 @@ include: "rules/04_assembly_qc.smk"
 include: "rules/05_binning.smk"
 include: "rules/06_binning_qc.smk"
 include: "rules/07_bins_refinement.smk"
+include: "rules/08_bins_postprocessing.smk"
 
 from rules.utils import *
 
@@ -45,4 +46,7 @@ rule all:
                    sample=SAMPLES),
             # bins refinement
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
+                   assembler=ASSEMBLER, sample=SAMPLES),
+            # bins post-processing
+            expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
                    assembler=ASSEMBLER, sample=SAMPLES),
