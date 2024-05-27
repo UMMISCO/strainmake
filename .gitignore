@@ -2,4 +2,5 @@
 logs/
 results/
 *.fastq.gz
+tmp/
 data/gtdb_tk

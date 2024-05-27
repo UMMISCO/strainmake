@@ -1,7 +1,5 @@
 rule fastp:
-    input:
-       r1 = "data/{sample}_1.fastq.gz",
-       r2 = "data/{sample}_2.fastq.gz"
+    input: lambda wildcards: get_fastq_pair(SAMPLES_DF, wildcards.sample)
     output:
         r1 = "results/02_preprocess/fastp/{sample}_1.fastq.gz",
         r2 = "results/02_preprocess/fastp/{sample}_2.fastq.gz",
@@ -18,7 +16,7 @@ rule fastp:
         min_read_length = config['fastp']['minimal_read_length']
     shell:
         """
-        fastp -i {input.r1} -I {input.r2} -o {output.r1} -O {output.r2} \
+        fastp -i {input[0]} -I {input[1]} -o {output.r1} -O {output.r2} \
             --detect_adapter_for_pe \
             --length_required {params.min_read_length} \
             --qualified_quality_phred {params.min_phred} \

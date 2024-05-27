@@ -1,4 +1,5 @@
-SAMPLES = config['samples']
+SAMPLES_TABLE = config['samples']
+SAMPLES = read_table(SAMPLES_TABLE)
 
 # download the database for CheckM2
 rule checkm2_database:
@@ -35,7 +36,7 @@ rule checkm2_assessment:
         assembler = config['assembly']['assembler'],
         threads = config['checkm2']['threads']
     wildcard_constraints:
-        sample="|".join(config['samples'])
+        sample="|".join(SAMPLES)
     threads: 1
     shell:
         """
@@ -50,17 +51,16 @@ rule checkm2_assessment:
 # this rule merges CheckM2 quality reports into a single table
 rule checkm2_merge_results:
     input:
-        expand("results/06_binning_qc/checkm2/{binner}/{assembler}/{sample}/quality_report.tsv",
+        expand("results/06_binning_qc/checkm2/{binner}/{assembler}/{{sample}}/quality_report.tsv",
                assembler = config['assembly']['assembler'],
-               binner = config['binning']['binner'],
-               sample = config['samples'])
+               binner = config['binning']['binner'])
     output:
-        "results/06_binning_qc/checkm2/all_quality_reports.tsv"
+        "results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.tsv"
     conda:
         "../envs/python.yaml"
     log:
-        stdout = "logs/06_binning_qc/checkm2/merge_reports.stdout",
-        stderr = "logs/06_binning_qc/checkm2/merge_reports.stderr"
+        stdout = "logs/06_binning_qc/checkm2/samples/{sample}/merge_reports.stdout",
+        stderr = "logs/06_binning_qc/checkm2/samples/{sample}/merge_reports.stderr"
     shell:
         """
         python workflow/scripts/merge_checkm2_reports.py \
@@ -71,14 +71,14 @@ rule checkm2_merge_results:
 
 rule checkm2_plot_results:
     input:
-        "results/06_binning_qc/checkm2/all_quality_reports.tsv"
+        "results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.tsv"
     output:
-        "results/06_binning_qc/checkm2/all_quality_reports.pdf"
+        "results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.pdf"
     conda:
         "../envs/r.yaml"
     log:
-        stdout = "logs/06_binning_qc/checkm2/plot_reports.stdout",
-        stderr = "logs/06_binning_qc/checkm2/plot_reports.stderr"
+        stdout = "logs/06_binning_qc/checkm2/samples/{sample}/plot_reports.stdout",
+        stderr = "logs/06_binning_qc/checkm2/samples/{sample}/plot_reports.stderr"
     shell:
         """
         Rscript workflow/scripts/checkm2_assessment_plots.R \
