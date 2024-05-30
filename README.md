@@ -63,3 +63,9 @@ Human assembly for mapping:
 | Tool    | Original year  | Conda available?                            | Link                                  | Implemented? |
 |:------- |:-------------- |:------------------------------------------- |:------------------------------------- |:------------ |
 | GTDB-Tk | [2022](gtdbtk) | [Yes](https://anaconda.org/bioconda/gtdbtk) | https://github.com/Ecogenomics/GTDBTk | Yes          |
+
+### Dereplication
+
+| Tool | Original year                                            | Conda available?                          | Link                          | Implemented? |
+|:---- |:-------------------------------------------------------- |:----------------------------------------- |:----------------------------- |:------------ |
+| dRep | [2017]([gtdbtk](https://doi.org/10.1038/ismej.2017.126)) | [Yes](https://anaconda.org/bioconda/drep) | https://github.com/MrOlm/drep | Yes          |

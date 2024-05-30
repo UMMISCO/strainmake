@@ -50,3 +50,5 @@ rule all:
             # bins post-processing
             expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
                    assembler=ASSEMBLER, sample=SAMPLES),
+            expand("results/08_bins_postprocessing/dRep/{assembler}",
+                   assembler=ASSEMBLER)
