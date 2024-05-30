@@ -16,7 +16,9 @@ rule binette_refinement:
         "../envs/binette.yaml"
     log:
         stdout = "logs/07_bins_refinement/binette/{assembler}/{sample}/bins_refinement.stdout",
-        stderr = "logs/07_bins_refinement/binette/{assembler}/{sample}/bins_refinement.stderr"
+        stderr = "logs/07_bins_refinement/binette/{assembler}/{sample}/bins_refinement.stderr",
+        stdout_check = "logs/07_bins_refinement/binette/{assembler}/{sample}/check.stdout",
+        stderr_check = "logs/07_bins_refinement/binette/{assembler}/{sample}/check.stderr"
     params:
         # constructing the precise folder path with bins from the input
         bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input.bins_dirs]
@@ -24,5 +26,8 @@ rule binette_refinement:
         """
         binette --bin_dirs {params.bins_folder} --contigs {input.assembly} \
         --checkm2_db {input.checkm2_database} --outdir {output} \
-        > {log.stdout} 2> {log.stderr}
+        > {log.stdout} 2> {log.stderr} \
+        && \
+        bash workflow/scripts/check_binette_produced_files.sh {output}/final_bins {input.bins_dirs} \
+        > {log.stdout_check} 2> {log.stderr_check}
         """
