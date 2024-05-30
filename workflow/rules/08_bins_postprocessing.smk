@@ -29,9 +29,12 @@ rule list_refined_genomes:
     log:
         stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stdout",
         stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stderr"
+    params:
+        # constructing the precise folder path with bins from the input
+        bins_folder = lambda wildcards, input: [f"{dir}/final_bins" for dir in input]
     shell:
         """
-        bash workflow/scripts/list_refined_genomes.sh {output} {input}/final_bins \
+        bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
             > {log.stdout} 2> {log.stderr}
         """
 
