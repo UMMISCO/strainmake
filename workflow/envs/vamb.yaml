@@ -3,5 +3,9 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - vamb
   - pigz=2.*
+  - python=3.11
+  - gcc_linux-64
+  - pip
+  - pip:
+    - vamb==4.1.*
