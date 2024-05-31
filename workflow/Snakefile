@@ -31,7 +31,7 @@ ASSEMBLER = config['assembly']['assembler']
 rule all:
         input:
             # QC before preprocessing
-            expand("results/01_qc/fastqc/{fastq_files}/", fastq_files=FASTQ_FILES),
+            expand("results/01_qc/fastqc/{sample}", sample=SAMPLES),
             # QC after preprocessing
             expand("results/02_preprocess/fastqc/{sample}_{read}.clean_fastqc.html", 
                 sample=SAMPLES, read=READS),
