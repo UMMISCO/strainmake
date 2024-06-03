@@ -18,12 +18,14 @@ from rules.utils import *
 
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
+SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
 SAMPLES_DF = pd.read_csv(SAMPLES_TABLE, sep="\t")
 FASTQ_FILES = SAMPLES_DF['sample'].tolist()
 FASTQ_FILES = [f[:-9] for f in FASTQ_FILES]
 
 READS = [1, 2]
 ASSEMBLER = config['assembly']['assembler']
+LONG_READ_ASSEMBLER = config['assembly']['long_read_assembler']
 
 ################################################################################
 #                                   Workflow                                   #
@@ -39,6 +41,8 @@ rule all:
             # assembly part
             expand("results/03_assembly/{assembler}/{sample}/assembly.fa.gz", 
                    assembler=ASSEMBLER, sample=SAMPLES),
+            expand("results/03_assembly/{assembler_long_read}/{sample_lr}/assembly.fa.gz", 
+                   assembler_long_read=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             # assembly qc
             expand("results/04_assembly_qc/quast/{assembler}/{sample}/report.html", 
                    assembler=ASSEMBLER, sample=SAMPLES),
