@@ -46,6 +46,8 @@ rule all:
             # assembly qc
             expand("results/04_assembly_qc/quast/{assembler}/{sample}/report.html", 
                    assembler=ASSEMBLER, sample=SAMPLES),
+            expand("results/04_assembly_qc/quast_long_read/{assembler_long_read}/{sample_lr}/report.html", 
+                   assembler_long_read=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             # binning (step 05) + bins qc (step 06)
             expand("results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.pdf",
                    sample=SAMPLES),
