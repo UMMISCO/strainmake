@@ -69,3 +69,9 @@ Human assembly for mapping:
 | Tool | Original year                                            | Conda available?                          | Link                          | Implemented? |
 |:---- |:-------------------------------------------------------- |:----------------------------------------- |:----------------------------- |:------------ |
 | dRep | [2017]([gtdbtk](https://doi.org/10.1038/ismej.2017.126)) | [Yes](https://anaconda.org/bioconda/drep) | https://github.com/MrOlm/drep | Yes          |
+
+## Taxonomic profiling
+
+| Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |
+|:--------- |:-------------------------------------------------- |:---------------------------------------------- |:-------------------------------------- |:------------ |
+| MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn | Yes          |
