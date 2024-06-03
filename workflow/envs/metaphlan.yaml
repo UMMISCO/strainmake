@@ -1,0 +1,6 @@
+name: metaphlan
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - metaphlan=4.*
