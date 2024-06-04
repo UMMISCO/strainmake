@@ -56,10 +56,15 @@ binning:
     - metabat2 
     - semibin2
     - vamb
+  long_read_binner:
+    - semibin2
   # bowtie2 configuration for both indexing and mapping
   bowtie2:
     threads: 4 # for both indexing and mapping
     seed: 199999
+  # minimap2 configuration for long reads mapping
+  minimap2:
+    threads: 4
   # MetaBAT 2 configuration
   metabat2:
     min_contig_size: 1500 # minimun size of 1500 bp per the MetaBAT 2 doc

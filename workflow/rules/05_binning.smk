@@ -2,6 +2,7 @@ from utils import *
 
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
+ASSEMBLER = config['assembly']['assembler']
 
 # rules for mapping reads on assembly and producing a .BAM file
 rule bowtie_assembly_index:
@@ -19,6 +20,8 @@ rule bowtie_assembly_index:
         seed = config['binning']['bowtie2']['seed'],
         index_basename = "{sample}",
         assembler = config['assembly']['assembler']
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER)
     threads: config['binning']['bowtie2']['threads']
     shell:
         """
@@ -46,6 +49,8 @@ rule reads_mapping:
     params:
         index_basename = "{sample}",
         assembler = config['assembly']['assembler']
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER)
     threads: config['binning']['bowtie2']['threads']
     shell:
         """
@@ -66,8 +71,11 @@ rule sam_to_bam:
     log:
         stdout = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stdout",
         stderr = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stderr"
+    params:
+        assembler = config['assembly']['assembler']
     wildcard_constraints:
-        sample="|".join(SAMPLES)
+        sample="|".join(SAMPLES),
+        assembler = "|".join(ASSEMBLER)
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -86,8 +94,11 @@ rule bam_sorting:
     log:
         stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stdout",
         stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stderr"
+    params:
+        assembler = config['assembly']['assembler']
     wildcard_constraints:
-        sample="|".join(SAMPLES)
+        sample="|".join(SAMPLES),
+        assembler = "|".join(ASSEMBLER)
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -124,6 +135,11 @@ rule get_contigs_depth:
     log:
         stdout = "logs/05_binning/metabat2/{assembler}/{sample}.depth_matrix.stdout",
         stderr = "logs/05_binning/metabat2/{assembler}/{sample}.depth_matrix.stderr"
+    params:
+        assembler = config['assembly']['assembler']
+    wildcard_constraints:
+        sample="|".join(SAMPLES),
+        assembler = "|".join(ASSEMBLER)
     shell:
         """
         jgi_summarize_bam_contig_depths --outputDepth {output.bam_depth_matrix} \
@@ -153,6 +169,8 @@ rule metabat2_binning:
         min_bin_size = config['binning']['metabat2']['min_bin_size'],
         bin_basename = "{sample}",
         assembler = config['assembly']['assembler']
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER)
     threads: config['binning']['metabat2']['threads']
     shell:
         """

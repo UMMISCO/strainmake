@@ -1,5 +1,7 @@
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
+SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
+ASSEMBLER = config['assembly']['assembler']
 
 # download the database for CheckM2
 rule checkm2_database:
@@ -36,7 +38,8 @@ rule checkm2_assessment:
         assembler = config['assembly']['assembler']
     threads: config['checkm2']['threads']
     wildcard_constraints:
-        sample="|".join(SAMPLES)
+        sample="|".join(SAMPLES),
+        assembler = "|".join(ASSEMBLER)
     shell:
         """
         echo {input.bins} \
@@ -52,7 +55,11 @@ rule checkm2_merge_results:
     input:
         expand("results/06_binning_qc/checkm2/{binner}/{assembler}/{{sample}}/quality_report.tsv",
                assembler = config['assembly']['assembler'],
-               binner = config['binning']['binner'])
+               binner = config['binning']['binner']),
+        # long reads based results
+        expand("results/06_binning_qc/checkm2/LR/{long_read_binner}/{assembler_lr}/{{sample}}/quality_report.tsv",
+               assembler_lr = config['assembly']['long_read_assembler'],
+               long_read_binner = config['binning']['long_read_binner'])
     output:
         "results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.tsv"
     conda:
