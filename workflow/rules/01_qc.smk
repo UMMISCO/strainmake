@@ -1,23 +1,24 @@
 import pandas as pd 
+from utils import *
 
 SAMPLES_TABLE = config['samples']
-SAMPLES_DF = pd.read_csv(SAMPLES_TABLE, sep="\t")
-FASTQ_FILES = SAMPLES_DF['sample'].tolist()
-FASTQ_FILES = [f[:-9] for f in FASTQ_FILES]
+SAMPLES = read_table(SAMPLES_TABLE)
 
 rule fastqc_before_preprocessing:
-    input: expand("{fastq}.fastq.gz", fastq=FASTQ_FILES)
-    output: directory("results/01_qc/fastqc/{fastq_files}/")
+    input: lambda wildcards: get_fastq_pair(SAMPLES_DF, wildcards.sample)
+    output: directory("results/01_qc/fastqc/{sample}")
     conda: 
         "../envs/fastqc.yaml"
     log:
-        stdout = "logs/01_qc/fastqc/{fastq_files}.stdout",
-        stderr = "logs/01_qc/fastqc/{fastq_files}.stderr"   
-    wildcard_constraints:
-        fastq_files="|".join(FASTQ_FILES)
+        stdout = "logs/01_qc/fastqc/{sample}.stdout",
+        stderr = "logs/01_qc/fastqc/{sample}.stderr"   
+    params:
+        out_dir = "results/01_qc/fastqc/{sample}"
     shell:
         """
-        mkdir results/01_qc/fastqc/{wildcards.fastq_files} \
+        mkdir {params.out_dir} \
         && \
-        fastqc {input} -o results/01_qc/fastqc/{wildcards.fastq_files} > {log.stdout} 2> {log.stderr}
+        fastqc {input[0]} -o {params.out_dir} > {log.stdout} 2> {log.stderr} \
+        && \
+        fastqc {input[1]} -o {params.out_dir} >> {log.stdout} 2>> {log.stderr}
         """
