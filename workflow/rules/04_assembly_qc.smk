@@ -11,11 +11,12 @@ rule quast_qc:
         stderr = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout"
     params:
         out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}"
-    threads: threads = config['quast']['threads']
+    threads: config['quast']['threads']
     shell:
         """
         metaquast.py -t {threads} -o {params.out_dir} \
             --max-ref-number 0 \
+            --circos \
             {input} \
             > {log.stdout} 2> {log.stderr} 
         """

@@ -9,6 +9,12 @@ fastp:
   minimal_read_length: 50 # --length_required command of fastp
   qualified_quality_phred: 15 # quality value (phred) that a base is qualified
 
+# the same, but for long reads
+fastp_long_read:
+  compression: 2 # --compression command of fastp
+  minimal_read_length: 1000 # --length_required command of fastp
+  qualified_quality_phred: 12 # quality value (phred) that a base is qualified
+
 bowtie2:
   index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
   threads: 4
@@ -21,6 +27,8 @@ assembly:
   assembler: # to be implemented (megahit, metaspades, idbaud...)
     - megahit 
     - metaspades
+  long_read_assembler:
+    - metaflye
   # MEGAHIT configuration
   megahit:
     threads: 4
@@ -28,6 +36,9 @@ assembly:
   metaspades:
     threads: 4
     memory_limit: 50 # in GB
+  metaflye:
+    threads: 4
+    method: nanopore # or "pacbio"
 
 ################################################################################
 #                               Assembly quality                               #
@@ -45,10 +56,15 @@ binning:
     - metabat2 
     - semibin2
     - vamb
+  long_read_binner:
+    - semibin2
   # bowtie2 configuration for both indexing and mapping
   bowtie2:
     threads: 4 # for both indexing and mapping
     seed: 199999
+  # minimap2 configuration for long reads mapping
+  minimap2:
+    threads: 4
   # MetaBAT 2 configuration
   metabat2:
     min_contig_size: 1500 # minimun size of 1500 bp per the MetaBAT 2 doc
