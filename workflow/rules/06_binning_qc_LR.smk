@@ -2,6 +2,10 @@ SAMPLES_TABLE = config['samples']
 SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
 ASSEMBLER_LR = config['assembly']['long_read_assembler']
 
+# taking into account the case where we don't have LR
+if ASSEMBLER_LR == None:
+       ASSEMBLER_LR = []
+
 rule checkm2_assessment_LR:
     input:
         # folder with bins created in step 05. One folder per binning program

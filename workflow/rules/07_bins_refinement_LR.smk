@@ -1,4 +1,9 @@
 ASSEMBLER_LR = config['assembly']['long_read_assembler'] 
+
+# taking into account the case where we don't have LR
+if ASSEMBLER_LR == None:
+       ASSEMBLER_LR = []
+
 BINNER = config['binning']['long_read_binner'] 
 
 SAMPLES_TABLE = config['samples']

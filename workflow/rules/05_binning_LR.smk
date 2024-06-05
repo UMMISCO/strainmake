@@ -1,5 +1,10 @@
 SAMPLES_TABLE = config['samples']
 SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
+ASSEMBLER_LR = config['assembly']['long_read_assembler']
+
+# taking into account the case where we don't have LR
+if ASSEMBLER_LR == None:
+       ASSEMBLER_LR = []
 
 # using minimap2 to map the long reads on the assembly
 rule reads_mapping_LR:
@@ -16,10 +21,9 @@ rule reads_mapping_LR:
         stdout = "logs/05_binning/minimap2/{assembler_lr}/{sample_lr}.mapping.stdout",
         stderr = "logs/05_binning/minimap2/{assembler_lr}/{sample_lr}.mapping.stderr"
     params:
-        assembler_lr = config['assembly']['long_read_assembler'],
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
     wildcard_constraints:
-        assembler = "|".join("{params.assembler}")    
+        assembler = "|".join(ASSEMBLER_LR)    
     threads: config['binning']['minimap2']['threads']
     shell:
         """

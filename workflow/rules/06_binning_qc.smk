@@ -2,6 +2,7 @@ SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
 SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
 ASSEMBLER = config['assembly']['assembler']
+ASSEMBLER_LR = config['assembly']['long_read_assembler']
 
 # download the database for CheckM2
 rule checkm2_database:
@@ -58,8 +59,13 @@ rule checkm2_merge_results:
                binner = config['binning']['binner']),
         # long reads based results
         expand("results/06_binning_qc/checkm2/LR/{long_read_binner}/{assembler_lr}/{{sample}}/quality_report.tsv",
-               assembler_lr = config['assembly']['long_read_assembler'],
-               long_read_binner = config['binning']['long_read_binner'])
+               assembler_lr = config['assembly']['long_read_assembler'] if ASSEMBLER_LR != None else [],
+               long_read_binner = config['binning']['long_read_binner'] if ASSEMBLER_LR != None else []) # the conditions
+                                                                                                         # are for requiring such
+                                                                                                         # inputs
+                                                                                                         # only if the user has 
+                                                                                                         # long reads to
+                                                                                                         # analyze 
     output:
         "results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.tsv"
     conda:
