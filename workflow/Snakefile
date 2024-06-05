@@ -2,11 +2,17 @@ configfile: "config/template_config.yaml"
 
 include: "rules/01_qc.smk"
 include: "rules/02_prepocess.smk"
+include: "rules/02_preprocess_LR.smk"
 include: "rules/03_assembly.smk"
+include: "rules/03_assembly_LR.smk"
 include: "rules/04_assembly_qc.smk"
+include: "rules/04_assembly_qc_LR.smk"
 include: "rules/05_binning.smk"
+include: "rules/05_binning_LR.smk"
 include: "rules/06_binning_qc.smk"
+include: "rules/06_binning_qc_LR.smk"
 include: "rules/07_bins_refinement.smk"
+include: "rules/07_bins_refinement_LR.smk"
 include: "rules/08_bins_postprocessing.smk"
 include: "rules/09_taxonomic_profiling.smk"
 
@@ -41,7 +47,7 @@ rule all:
             # assembly part
             expand("results/03_assembly/{assembler}/{sample}/assembly.fa.gz", 
                    assembler=ASSEMBLER, sample=SAMPLES),
-            expand("results/03_assembly/{assembler_long_read}/{sample_lr}/assembly.fa.gz", 
+            expand("results/03_assembly/LR/{assembler_long_read}/{sample_lr}/assembly.fa.gz", 
                    assembler_long_read=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             # assembly qc
             expand("results/04_assembly_qc/quast/{assembler}/{sample}/report.html", 
@@ -53,7 +59,7 @@ rule all:
                    sample=SAMPLES),
             # bins refinement
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
-                   assembler=ASSEMBLER, sample=SAMPLES),
+                   assembler=ASSEMBLER + ASSEMBLER_LR, sample=SAMPLES + SAMPLES_LR),
             # bins post-processing
             expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
                    assembler=ASSEMBLER, sample=SAMPLES),
