@@ -94,6 +94,71 @@ rule bam_sorting_by_readname_LR:
             > {log.stdout} 2> {log.stderr}
         """
         
+# binning rules
+
+# metabat2
+rule get_contigs_depth_LR:
+    input:
+        bam = "results/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.sorted.bam"
+    output:
+        bam_depth_matrix = "results/05_binning/LR/metabat2/{assembler_lr}/{sample_lr}.depth_matrix.tab"
+    conda:
+        "../envs/metabat.yaml"
+    log:
+        stdout = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.depth_matrix.stdout",
+        stderr = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.depth_matrix.stderr"
+    wildcard_constraints:
+        sample_lr = "|".join(SAMPLES_LR),
+        assembler_lr   = "|".join(ASSEMBLER_LR)
+    shell:
+        """
+        jgi_summarize_bam_contig_depths --outputDepth {output.bam_depth_matrix} \
+            {input.bam} > {log.stdout} 2> {log.stderr}
+        """
+
+rule metabat2_binning_LR:
+    input:
+        assembly = "results/03_assembly/LR/{assembler_lr}/{sample_lr}/assembly.fa.gz",
+        bam_depth_matrix = "results/05_binning/LR/metabat2/{assembler_lr}/{sample_lr}.depth_matrix.tab"
+    output:
+        output = directory("results/05_binning/LR/metabat2/bins/{assembler_lr}/{sample_lr}")
+    conda:
+        "../envs/metabat.yaml"
+    log:
+        stdout = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.binning.stdout",
+        stderr = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.binning.stderr",
+        stdout_gz = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.gzipping.stdout",
+        stderr_gz = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.gzipping.stderr",
+        stdout_mk = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.mkdir.stdout",
+        stderr_mk = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.mkdir.stderr",
+        stdout_mv = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.moving.stdout",
+        stderr_mv = "logs/05_binning/metabat2/{assembler_lr}/{sample_lr}.moving.stderr"
+    params:
+        min_contig_size = config['binning']['metabat2']['min_contig_size'],
+        minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
+        min_bin_size = config['binning']['metabat2']['min_bin_size'],
+        bin_basename = "{sample_lr}"
+    wildcard_constraints:
+        assembler_lr = "|".join(ASSEMBLER_LR)
+    threads: config['binning']['metabat2']['threads']
+    shell:
+        """
+        metabat2 -i {input.assembly} -o "{output.output}/{params.bin_basename}" \
+            --abdFile {input.bam_depth_matrix} \
+            --minContig {params.min_contig_size} \
+            --minCV {params.minimum_mean_coverage} \
+            --minClsSize {params.min_bin_size} \
+            --numThreads {threads} \
+            --verbose \
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        pigz --verbose {output.output}/* > {log.stdout_gz} 2> {log.stderr_gz} \
+        && \
+        mkdir --verbose {output.output}/bins > {log.stdout_mk} 2> {log.stderr_mk} \
+        && \
+        mv --verbose {output.output}/*.gz {output.output}/bins > {log.stdout_mv} 2> {log.stderr_mv} \
+        """
+
 # semibin2
 rule semibin2_binning_LR:
     input:
@@ -128,4 +193,44 @@ rule semibin2_binning_LR:
         && \
         mv --verbose {output.output}/output_bins/* {output.output}/bins \
             > {log.stdout_move} 2> {log.stderr_move}
+        """
+
+# vamb
+rule vamb_binning_LR:
+    input:
+        assembly = "results/03_assembly/LR/{assembler_lr}/{sample_lr}/assembly.fa.gz",
+        bam = "results/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.sorted_by_readname.bam"
+    output:
+        output = directory("results/05_binning/LR/vamb/bins/{assembler_lr}/{sample_lr}")
+    conda:
+        "../envs/vamb.yaml"
+    log:
+        stdout = "logs/05_binning/vamb/{assembler_lr}/{sample_lr}.binning.stdout",
+        stderr = "logs/05_binning/vamb/{assembler_lr}/{sample_lr}.binning.stderr",
+    params:
+        minfasta = config['binning']['vamb']['minfasta'],
+        gpu = config['binning']['vamb']['gpu'],
+        epochs = config['binning']['vamb']['epochs'],
+        batch_sizes = config['binning']['vamb']['batch_sizes'],
+        start_batch_size = config['binning']['vamb']['start_batch_size'],
+        assembler_lr = config['assembly']['assembler'],
+    threads: config['binning']['vamb']['threads']
+    shell:
+        """
+        vamb --outdir {output.output} \
+            --fasta {input.assembly} \
+            --bamfiles {input.bam} \
+            --minfasta {params.minfasta} \
+            -e {params.epochs} \
+            -p {threads} \
+            -q {params.batch_sizes} \
+            -t {params.start_batch_size} \
+            {params.gpu} \
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        mkdir -p {output.output}/vamb_files \
+        && \
+        mv {output.output}/*.npz {output.output}/*.txt {output.output}/*.pt {output.output}/*.tsv {output.output}/vamb_files \
+        && \
+        pigz --verbose {output.output}/bins/* \
         """

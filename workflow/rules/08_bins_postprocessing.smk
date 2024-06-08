@@ -59,5 +59,6 @@ rule genomes_dereplication:
             --S_algorithm {params.comparison_algorithm} \
             {params.other_args} \
             {output} \
-        > {log.stdout} 2> {log.stderr}
+        > {log.stdout} 2> {log.stderr} \
+        || true
         """
