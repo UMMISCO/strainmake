@@ -1,11 +1,16 @@
 name: vamb
 channels:
   - bioconda
+  - pytorch
+  - nvidia
   - conda-forge
 dependencies:
   - pigz=2.*
-  - python=3.11
-  - gcc_linux-64
+  - pytorch=1.13 
+  - torchvision=0.14
+  - cudatoolkit=10.2
+  - pytorch-cuda=11.7
   - pip
   - pip:
+    - mkl==2024.0.0 # https://github.com/pytorch/pytorch/issues/123097
     - vamb==4.1.*
