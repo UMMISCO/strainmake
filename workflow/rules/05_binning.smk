@@ -105,22 +105,6 @@ rule bam_sorting:
             > {log.stdout} 2> {log.stderr}
         """
 
-# sorting BAM by read name (for VAMB)
-rule bam_sorting_by_readname:
-    input:
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.bam"
-    output:
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted_by_readname.bam"
-    conda:
-        "../envs/samtools.yaml"
-    log:
-        stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting_by_readname.stdout",
-        stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting_by_readname.stderr"
-    shell:
-        """
-        samtools sort -n -o {output.bam} {input.bam} \
-            > {log.stdout} 2> {log.stderr}
-        """
 
 # binning rules
 
@@ -229,7 +213,7 @@ rule semibin2_binning:
 rule vamb_binning:
     input:
         assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted_by_readname.bam"
+        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
     output:
         output = directory("results/05_binning/vamb/bins/{assembler}/{sample}")
     conda:
