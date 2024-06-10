@@ -21,13 +21,16 @@ rule binette_refinement:
         stderr_check = "logs/07_bins_refinement/binette/{assembler}/{sample}/check.stderr"
     params:
         # constructing the precise folder path with bins from the input
-        bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input.bins_dirs]
+        bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input.bins_dirs],
+        low_mem = config["bins_refinement"]["binette"]["low_mem"]
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER)
+    threads: config["bins_refinement"]["binette"]["threads"]
     shell:
         """
         binette --bin_dirs {params.bins_folder} --contigs {input.assembly} \
         --checkm2_db {input.checkm2_database} --outdir {output} \
+        --threads {threads} {params.low_mem} --verbose \
         > {log.stdout} 2> {log.stderr} \
         && \
         bash workflow/scripts/check_binette_produced_files.sh {output}/final_bins {input.bins_dirs} \

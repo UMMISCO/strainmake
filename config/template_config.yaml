@@ -90,6 +90,15 @@ checkm2:
   threads: 4
 
 ################################################################################
+#                               Bins refinement                                #
+################################################################################
+
+bins_refinement:
+  binette:
+    threads: 4
+    low_mem: "" # if you want to run DIAMOND in low memory mode replace "" by "--low_mem"
+
+################################################################################
 #                             Bins post-processing                             #
 ################################################################################
 
@@ -100,6 +109,10 @@ bins_postprocessing:
     comparison_algorithm: "ANImf" # comparison algorithm used by dRep (goANI, ANIn, gANI, ANImf, fastANI)
     other_args: "" # write there others params you'd want to use (for example "--SkipMash --completeness 90"...)
     threads: 4
+
+################################################################################
+#                             Taxonomic profiling                              #
+################################################################################
 
 taxonomic_profiling:
   metaphlan:
