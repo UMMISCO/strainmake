@@ -248,5 +248,5 @@ rule vamb_binning:
         && \
         pigz --verbose {output.output}/bins/* \
         && \
-        for file in {output.output}/bins/*.fna.gz; do mv "$file" "${file%.fna.gz}.fa.gz"; done
+        for file in {output.output}/bins/*.fna.gz; do mv "$file" "${{file%.fna.gz}}.fa.gz"; done
         """

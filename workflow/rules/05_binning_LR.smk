@@ -216,4 +216,6 @@ rule vamb_binning_LR:
         mv {output.output}/*.npz {output.output}/*.txt {output.output}/*.pt {output.output}/*.tsv {output.output}/vamb_files \
         && \
         pigz --verbose {output.output}/bins/* \
+        && \
+        for file in {output.output}/bins/*.fna.gz; do mv "$file" "${{file%.fna.gz}}.fa.gz"; done
         """
