@@ -18,6 +18,10 @@ def identify_assembly_program(report_path: str):
         return 'metaspades'
     elif 'megahit' in report_path:
         return 'megahit'
+    elif 'metaflye' in report_path:
+        return 'metaflye'
+    elif 'hybridspades' in report_path:
+        return 'hybridspades'
     else:
         return None
     
