@@ -68,7 +68,7 @@ rule all:
             expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
                    assembler=ASSEMBLER, sample=SAMPLES),
             expand("results/08_bins_postprocessing/dRep/{assembler}",
-                   assembler=ASSEMBLER),
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
                    sample=SAMPLES)

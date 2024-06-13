@@ -21,8 +21,7 @@ rule gtdb_tk_taxonomic_annotation:
             > {log.stdout} 2> {log.stderr}
         """
 
-# this rule produces text files with list of refined genomes for use
-# in dRep
+# this rule produces text files with list of refined genomes
 rule list_refined_genomes:
     input: expand("results/07_bins_refinement/binette/{{assembler}}/{sample}", sample=SAMPLES)
     output: "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
@@ -38,11 +37,42 @@ rule list_refined_genomes:
             > {log.stdout} 2> {log.stderr}
         """
 
+# copying bins into another foler and renaming them if needed to avoid duplicated names 
+# (what makes dRep fail)
+# the copied bins will be removed once dRep is done
+rule copy_and_rename_bins:
+    input:
+        "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
+    output:
+        bins_dest = directory("results/08_bins_postprocessing/genomes_list/genomes/{assembler}"),
+        bins_name_link_table = "results/08_bins_postprocessing/genomes_list/{assembler}/unduplicated.tsv"
+    log:
+        stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/copy_and_rename.stdout",
+        stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/copy_and_rename.stderr"
+    shell:
+        """
+        python3 workflow/scripts/make_bin_names_unambiguous.py {input} {output.bins_name_link_table} \
+            {output.bins_dest} > {log.stdout} 2> {log.stderr}
+        """
+
+# this rule produces text files with list of refined genomes that have been copied and renamed
+# to avoid bins name duplication for using dRep
+rule list_refined_genomes_after_unduplicating_filenames:
+    input: "results/08_bins_postprocessing/genomes_list/genomes/{assembler}"
+    output: "results/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.txt"
+    log:
+        stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.stdout",
+        stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.stderr"
+    shell:
+        """
+        bash workflow/scripts/list_refined_genomes.sh {output} {input} \
+            > {log.stdout} 2> {log.stderr}
+        """
 
 rule genomes_dereplication:
     # input is formed of every refined produced no matter the sample
     # it is, however, assembler specific
-    input: "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
+    input: "results/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.txt"
     output: directory("results/08_bins_postprocessing/dRep/{assembler}")
     conda:
         "../envs/drep.yaml"
