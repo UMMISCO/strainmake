@@ -29,6 +29,7 @@ assembly:
     - metaspades
   long_read_assembler:
     - metaflye
+    - hybridspades
   # MEGAHIT configuration
   megahit:
     threads: 4
@@ -39,6 +40,9 @@ assembly:
   metaflye:
     threads: 4
     method: nanopore # or "pacbio"
+  hybridspades:
+    threads: 4
+    memory_limit: 50 # in GB
 
 ################################################################################
 #                               Assembly quality                               #
