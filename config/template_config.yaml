@@ -113,6 +113,12 @@ bins_postprocessing:
     comparison_algorithm: "ANImf" # comparison algorithm used by dRep (goANI, ANIn, gANI, ANImf, fastANI)
     other_args: "" # write there others params you'd want to use (for example "--SkipMash --completeness 90"...)
     threads: 4
+  genomes_quality_filtration:
+    checkm2:
+      threads: 15
+    filtration:
+      min_completeness: 75
+      max_contamination: 10
 
 ################################################################################
 #                             Taxonomic profiling                              #

@@ -91,3 +91,40 @@ rule genomes_dereplication:
             {output} \
         > {log.stdout} 2> {log.stderr}
         """
+
+# this rule will perform dereplicated bins quality estimation 
+# and filter the bins based on user settings
+rule dereplicated_genomes_quality_and_filtering:
+    input:
+        # folder with dereplicated bins
+        bins = "results/08_bins_postprocessing/dRep/{assembler}", 
+        diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+    output:
+        out_dir = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/checkm2"),
+        selected_bins = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins")
+    conda:
+        "../envs/checkm2.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/checkm2/{assembler}.assessment.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm2/{assembler}.assessment.stderr",
+        stdout_filtration = "logs/08_bins_postprocessing/genomes_filtration/{assembler}.filtration.stdout",
+        stderr_filtration = "logs/08_bins_postprocessing/genomes_filtration/{assembler}.filtration.stderr"
+    params:
+        minimal_completeness = config['bins_postprocessing']['genomes_quality_filtration']['filtration']['min_completeness'],
+        maximal_contamination = config['bins_postprocessing']['genomes_quality_filtration']['filtration']['max_contamination']
+    threads: config['bins_postprocessing']['genomes_quality_filtration']['checkm2']['threads']
+    shell:
+        """
+        checkm2 predict --input {input.bins}/dereplicated_genomes --threads {threads} \
+            -x .fa \
+            --database_path {input.diamond_database} \
+            --output-directory {output.out_dir} > {log.stdout} 2> {log.stderr} \
+        && \
+        python3 workflow/scripts/filter_dereplicated_bins_by_quality.py \
+            --checkm-report {output.out_dir}/quality_report.tsv \
+            --bins-directory {input.bins}/dereplicated_genomes \
+            --min-comp {params.minimal_completeness} \
+            --max-cont {params.maximal_contamination} \
+            --outdir {output.selected_bins} \
+            > {log.stdout_filtration} 2> {log.stderr_filtration}
+        """
