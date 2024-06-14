@@ -66,7 +66,7 @@ rule all:
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER, sample=SAMPLES + SAMPLES_LR),
             # bins post-processing
             expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
-                   assembler=ASSEMBLER, sample=SAMPLES),
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER, sample=SAMPLES),
             expand("results/08_bins_postprocessing/dRep/{assembler}",
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER),
             # taxonomic profiling
