@@ -8,7 +8,7 @@ rule quast_qc:
         "../envs/quast.yaml"
     log:
         stdout = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout",
-        stderr = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout"
+        stderr = "logs/04_assembly_qc/quast/{assembler}/{sample}.stderr"
     params:
         out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}"
     threads: config['quast']['threads']

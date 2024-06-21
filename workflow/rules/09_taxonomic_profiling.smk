@@ -5,7 +5,7 @@ rule metaphlan_profiling:
         "../envs/metaphlan.yaml"
     log:
         stdout = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stdout",
-        stderr = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stdout"
+        stderr = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stderr"
     threads: config['taxonomic_profiling']['metaphlan']['threads']
     shell:
         """
