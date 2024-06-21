@@ -30,8 +30,8 @@ def filter_bins(checkm_report, bins_directory, min_comp, max_cont, outdir):
     
     # copy the selected bins to the output directory
     for bin_name in filtered_df['Name']:
-        src_path = os.path.join(bins_directory, bin_name)
-        dest_path = os.path.join(outdir, bin_name)
+        src_path = os.path.join(bins_directory, f"{bin_name}.fa")
+        dest_path = os.path.join(outdir, f"{bin_name}.fa")
         if os.path.exists(src_path):
             shutil.copy(src_path, dest_path)
         else:
