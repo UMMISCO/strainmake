@@ -3,6 +3,12 @@ from utils import *
 ASSEMBLER = config['assembly']['assembler'] 
 BINNER = config['binning']['binner'] 
 
+HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler'] 
+
+# taking into account the case where we don't have LR
+if HYBRID_ASSEMBLER == None:
+       HYBRID_ASSEMBLER = []
+
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
 
@@ -24,7 +30,7 @@ rule binette_refinement:
         bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input.bins_dirs],
         low_mem = config["bins_refinement"]["binette"]["low_mem"]
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     threads: config["bins_refinement"]["binette"]["threads"]
     shell:
         """

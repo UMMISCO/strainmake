@@ -32,10 +32,15 @@ FASTQ_FILES = [f[:-9] for f in FASTQ_FILES]
 READS = [1, 2]
 ASSEMBLER = config['assembly']['assembler']
 LONG_READ_ASSEMBLER = config['assembly']['long_read_assembler']
+HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler']
 
 # taking into account the case where we don't have LR
 if LONG_READ_ASSEMBLER == None:
        LONG_READ_ASSEMBLER = []
+
+# taking into account the case where we don't have hybrid assembler
+if HYBRID_ASSEMBLER == None:
+       HYBRID_ASSEMBLER = []
 
 ################################################################################
 #                                   Workflow                                   #
@@ -50,12 +55,12 @@ rule all:
                 sample=SAMPLES, read=READS),
             # assembly part
             expand("results/03_assembly/{assembler}/{sample}/assembly.fa.gz", 
-                   assembler=ASSEMBLER, sample=SAMPLES),
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             expand("results/03_assembly/LR/{assembler_long_read}/{sample_lr}/assembly.fa.gz", 
                    assembler_long_read=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             # assembly qc
             expand("results/04_assembly_qc/quast/{assembler}/{sample}/report.html", 
-                   assembler=ASSEMBLER, sample=SAMPLES),
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             expand("results/04_assembly_qc/quast_long_read/{assembler_long_read}/{sample_lr}/report.html", 
                    assembler_long_read=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             # binning (step 05) + bins qc (step 06)
@@ -63,12 +68,12 @@ rule all:
                    sample=SAMPLES),
             # bins refinement
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER, sample=SAMPLES + SAMPLES_LR),
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR),
             # bins post-processing
             expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER, sample=SAMPLES),
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             expand("results/08_bins_postprocessing/dRep/{assembler}",
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER),
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
                    sample=SAMPLES)

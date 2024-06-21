@@ -29,6 +29,7 @@ assembly:
     - metaspades
   long_read_assembler:
     - metaflye
+  hybrid_assembler: # ensure you have long reads data for it to work
     - hybridspades
   # MEGAHIT configuration
   megahit:
