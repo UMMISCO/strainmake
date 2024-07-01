@@ -6,7 +6,9 @@ import shutil
 import subprocess
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from tqdm import tqdm
+from venn import venn
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Perform Skani analysis on bins.')
@@ -16,6 +18,7 @@ def parse_arguments():
     parser.add_argument('--output_file', required=True, help='File to save the output results')
     parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
     parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
+    parser.add_argument('--ani-threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
     return parser.parse_args()
 
 def copy_and_rename_bins_refined(src_dir, tmp_dir):
@@ -112,6 +115,62 @@ def read_phylip_lower_triangular(filepath):
 
     return skani_results
 
+def build_shared_bins_dictionary_dereplicated(skani_results, threshold=99.9):
+    """
+    Builds a dictionary with each key being a bin and the values being the 
+    assemblies where a bin was found with identity >= `threshold`
+
+    Will only works on dereplicated bins set
+    """
+    # initialize an empty dictionary to store shared bins
+    shared_bins_dict = {}
+
+    # iterate over rows (bins)
+    for i in range(skani_results.shape[0]):
+        bin_name = skani_results.index[i]
+        shared_with = []
+
+        print(f"Current bin {bin_name}")
+
+        # iterate over columns (bins)
+        for j in range(skani_results.shape[1]):
+            if i != j:
+                percentage_identity = skani_results.iloc[i, j]
+                if percentage_identity >= threshold:
+                    print(f"Found identity of {threshold}% between {bin_name} and {skani_results.columns[j].split('.')[1]}")
+                    other_bin_name = skani_results.columns[j].split('.')[0]  # Get the bin name with assembly prefix
+                    shared_with.append(other_bin_name)
+
+        # add the original assembly (index name) to the list
+        original_assembly = bin_name.split('.')[0]
+        shared_with.append(original_assembly)
+
+        # convert the list to a sorted unique list of strings
+        shared_with = sorted(set(shared_with))
+
+        # add to the dictionary with the bin number as key
+        shared_bins_dict[i + 1] = shared_with
+
+    return shared_bins_dict
+
+def build_assembly_bins_dictionary_dereplicated(shared_bins_dict):
+    """
+    Builds a dictionary of set with each key being an assembly method
+    and the value the bins identified as the same
+
+    Will only works on dereplicated bins set
+    """
+    assembly_bins_dict = {}
+
+    # iterate over each bin number and its shared assemblies
+    for bin_num, shared_assemblies in shared_bins_dict.items():
+        for assembly in shared_assemblies:
+            if assembly not in assembly_bins_dict:
+                assembly_bins_dict[assembly] = set()
+            assembly_bins_dict[assembly].add(bin_num)
+
+    return assembly_bins_dict
+
 def main():
     args = parse_arguments()
 
@@ -124,11 +183,19 @@ def main():
 
     run_skani(list_bins_path, args.output_file, args.cpu)
 
-    # read the skani result and save as tsv
+    # Read the Skani result and save as TSV
     skani_matrix = read_phylip_lower_triangular(args.output_file)
     skani_matrix.to_csv(args.tsv_output, sep='\t', index=True, header=True)
 
     print(f"Skani matrix saved to {args.tsv_output}")
+
+    print(f"Now drawing a Venn diagram if possible")
+    if args.bins == 'dereplicated':
+        shared_bins = build_shared_bins_dictionary_dereplicated(skani_matrix, args.ani_threshold)
+        bins_by_assembly = build_assembly_bins_dictionary_dereplicated(shared_bins)
+        # plotting the data using a Venn diagram
+        venn(bins_by_assembly)
+        plt.savefig("plot.png")
 
 if __name__ == "__main__":
     main()
