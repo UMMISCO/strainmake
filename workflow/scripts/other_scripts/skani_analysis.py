@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import json
 import shutil
 import subprocess
 import numpy as np
@@ -18,7 +19,8 @@ def parse_arguments():
     parser.add_argument('--output_file', required=True, help='File to save the output results')
     parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
     parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
-    parser.add_argument('--ani-threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
+    parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
+    parser.add_argument('--json_output', required=True, help='File to save the bins similarity results')
     return parser.parse_args()
 
 def copy_and_rename_bins_refined(src_dir, tmp_dir):
@@ -137,7 +139,7 @@ def build_shared_bins_dictionary_dereplicated(skani_results, threshold=99.9):
             if i != j:
                 percentage_identity = skani_results.iloc[i, j]
                 if percentage_identity >= threshold:
-                    print(f"Found identity of {threshold}% between {bin_name} and {skani_results.columns[j].split('.')[1]}")
+                    print(f"Found identity of {percentage_identity}% between {bin_name} and {skani_results.columns[j]}")
                     other_bin_name = skani_results.columns[j].split('.')[0]  # Get the bin name with assembly prefix
                     shared_with.append(other_bin_name)
 
@@ -148,8 +150,8 @@ def build_shared_bins_dictionary_dereplicated(skani_results, threshold=99.9):
         # convert the list to a sorted unique list of strings
         shared_with = sorted(set(shared_with))
 
-        # add to the dictionary with the bin number as key
-        shared_bins_dict[i + 1] = shared_with
+        # add to the dictionary with the bin name as key
+        shared_bins_dict[bin_name] = shared_with
 
     return shared_bins_dict
 
@@ -163,13 +165,18 @@ def build_assembly_bins_dictionary_dereplicated(shared_bins_dict):
     assembly_bins_dict = {}
 
     # iterate over each bin number and its shared assemblies
-    for bin_num, shared_assemblies in shared_bins_dict.items():
+    for bin_name, shared_assemblies in shared_bins_dict.items():
         for assembly in shared_assemblies:
             if assembly not in assembly_bins_dict:
                 assembly_bins_dict[assembly] = set()
-            assembly_bins_dict[assembly].add(bin_num)
+            assembly_bins_dict[assembly].add(bin_name)
 
     return assembly_bins_dict
+
+def save_assembly_bins_dict_to_json(assembly_bins_dict, output_path):
+    print(assembly_bins_dict)
+    with open(output_path, 'w') as json_file:
+        json.dump(assembly_bins_dict, json_file, indent=4, default=list)
 
 def main():
     args = parse_arguments()
@@ -193,6 +200,10 @@ def main():
     if args.bins == 'dereplicated':
         shared_bins = build_shared_bins_dictionary_dereplicated(skani_matrix, args.ani_threshold)
         bins_by_assembly = build_assembly_bins_dictionary_dereplicated(shared_bins)
+
+        # exporting the bins_by_assembly into a JSON
+        save_assembly_bins_dict_to_json(bins_by_assembly, args.json_output)
+        
         # plotting the data using a Venn diagram
         venn(bins_by_assembly)
         plt.savefig("plot.png")
