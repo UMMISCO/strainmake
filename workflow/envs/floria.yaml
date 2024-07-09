@@ -1,0 +1,6 @@
+name: floria
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - floria=0.0.*
