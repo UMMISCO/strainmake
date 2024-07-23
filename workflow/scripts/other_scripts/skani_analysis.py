@@ -21,6 +21,8 @@ def parse_arguments():
     parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
     parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
     parser.add_argument('--json_output', required=True, help='File to save the bins similarity results')
+    parser.add_argument('--venn_plot', required=True, help='Where to save the Venn plot diagram')
+
     return parser.parse_args()
 
 def copy_and_rename_bins_refined(src_dir, tmp_dir):
@@ -88,7 +90,7 @@ def run_skani(list_bins_path, output_file, cpu):
 def read_phylip_lower_triangular(filepath):
     """
     A function to read the Skani results (Phylip lower triangular matrix) into a 
-    numpy matrix and returns it as a pandas dataframe for having the dimensions
+    numpy matrix and to return it as a pandas dataframe for having the dimensions
     names
     """
     with open(filepath, 'r') as file:
@@ -122,7 +124,7 @@ def build_shared_bins_dictionary_dereplicated(skani_results, threshold=99.9):
     Builds a dictionary with each key being a bin and the values being the 
     assemblies where a bin was found with identity >= `threshold`
 
-    Will only works on dereplicated bins set
+    Will only work on dereplicated bins set
     """
     # initialize an empty dictionary to store shared bins
     shared_bins_dict = {}
@@ -160,7 +162,7 @@ def build_assembly_bins_dictionary_dereplicated(shared_bins_dict):
     Builds a dictionary of set with each key being an assembly method
     and the value the bins identified as the same
 
-    Will only works on dereplicated bins set
+    Will only work on dereplicated bins set
     """
     assembly_bins_dict = {}
 
@@ -206,7 +208,11 @@ def main():
         
         # plotting the data using a Venn diagram
         venn(bins_by_assembly)
-        plt.savefig("plot.png")
+        plt.savefig(args.venn_plot)
+
+        print(f"Venn plot saved to {args.venn_plot}")
+    else:
+        print(f"Venn plot for refined bins identity was not implemented")
 
 if __name__ == "__main__":
     main()
