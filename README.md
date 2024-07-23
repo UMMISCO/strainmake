@@ -112,11 +112,12 @@ options:
   --cpu CPU             Number of CPU cores to use
 ```
 
-`calculated_binned_contigs.py` allows to compute the binned rate of contigs, i.e. the percentage of contigs from an assembly that is found in at least one bin at the end.
+`calculate_binned_contigs.py` allows to compute the binned rate of contigs, i.e. the percentage of contigs from an assembly that is found in at least one bin at the end.
 The script can do it for each sample and its generated contigs for a given assembly method.
 
 ```
-usage: calculated_binned_contigs.py [-h] --assembler {megahit,metaflye,hybridspades,metaspades} --results-dir RESULTS_DIR --type {binette,dereplicated_and_filtered} --tsv_output_binned_contigs TSV_OUTPUT_BINNED_CONTIGS --tsv_output_binned_rate TSV_OUTPUT_BINNED_RATE
+usage: calculate_binned_contigs.py [-h] --assembler {megahit,metaflye,hybridspades,metaspades} --results-dir RESULTS_DIR --type {binette,dereplicated_and_filtered} --tsv_output_binned_contigs TSV_OUTPUT_BINNED_CONTIGS
+                                   --tsv_output_binned_rate TSV_OUTPUT_BINNED_RATE
 
 Count assembly contigs assigned to a bin.
 
@@ -131,5 +132,5 @@ options:
   --tsv_output_binned_contigs TSV_OUTPUT_BINNED_CONTIGS
                         File to save the list of contigs and their number of assignation in bins in TSV format
   --tsv_output_binned_rate TSV_OUTPUT_BINNED_RATE
-                        File to save the binning rate of contigs in TSV format                   
+                        File to save the binning rate of contigs in TSV format
 ```
