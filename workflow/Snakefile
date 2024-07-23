@@ -15,6 +15,7 @@ include: "rules/07_bins_refinement.smk"
 include: "rules/07_bins_refinement_LR.smk"
 include: "rules/08_bins_postprocessing.smk"
 include: "rules/09_taxonomic_profiling.smk"
+include: "rules/10_strains_profiling.smk"
 
 from rules.utils import *
 
@@ -74,6 +75,15 @@ rule all:
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             expand("results/08_bins_postprocessing/dRep/{assembler}",
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER),
+            expand("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
-                   sample=SAMPLES)
+                   sample=SAMPLES),
+            # strains profiling
+            #      -> inStrain
+            expand("results/10_strain_profiling/inStrain/{assembler}/compare",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER),
+            #      -> Floria
+            expand("results/10_strain_profiling/floria/{assembler}/{sample}/contig_ploidy_info.tsv",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER, sample = SAMPLES)
