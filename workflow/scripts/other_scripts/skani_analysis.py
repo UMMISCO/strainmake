@@ -21,7 +21,7 @@ def parse_arguments():
     parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
     parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
     parser.add_argument('--json_output', required=True, help='File to save the bins similarity results')
-    parser.add_argument('--venn_plot', required=True, help='Where to save the Venn plot diagram')
+    parser.add_argument('--venn_diagram', required=True, help='Where to save the Venn diagram')
 
     return parser.parse_args()
 
@@ -208,11 +208,11 @@ def main():
         
         # plotting the data using a Venn diagram
         venn(bins_by_assembly)
-        plt.savefig(args.venn_plot)
+        plt.savefig(args.venn_diagram)
 
-        print(f"Venn plot saved to {args.venn_plot}")
+        print(f"Venn diagram saved to {args.venn_diagram}")
     else:
-        print(f"Venn plot for refined bins identity was not implemented")
+        print(f"Venn diagram for refined bins identity was not implemented")
 
 if __name__ == "__main__":
     main()
