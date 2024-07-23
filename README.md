@@ -75,3 +75,32 @@ Human assembly for mapping:
 | Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |
 |:--------- |:-------------------------------------------------- |:---------------------------------------------- |:-------------------------------------- |:------------ |
 | MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn | Yes          |
+
+## More scripts
+
+You can find in [`workflow/scripts/other_scripts`](workflow/scripts/other_scripts/) scripts made for processing some results produced by this pipeline.
+
+`skani_analysis.py` performs bins pairwise comparison using Skani (https://doi.org/10.1038/s41592-023-02018-3). It can also produce a Venn diagram for results derived from dereplicated bins.
+
+```
+usage: skani_analysis.py [-h] --bins {refined,dereplicated} --tmp TMP --output_file OUTPUT_FILE --tsv_output TSV_OUTPUT --ani_threshold ANI_THRESHOLD --json_output JSON_OUTPUT --venn_diagram VENN_DIAGRAM --cpu CPU
+
+Perform Skani analysis on bins.
+
+options:
+  -h, --help            show this help message and exit
+  --bins {refined,dereplicated}
+                        Type of bins to analyze
+  --tmp TMP             Temporary directory for intermediate files
+  --output_file OUTPUT_FILE
+                        File to save the output results (Skani matrix)
+  --tsv_output TSV_OUTPUT
+                        File to save the Skani matrix in TSV format
+  --ani_threshold ANI_THRESHOLD
+                        Minimal ANI to consider two bins as the same
+  --json_output JSON_OUTPUT
+                        File to save the bins similarity results according to assembly methods (JSON)
+  --venn_diagram VENN_DIAGRAM
+                        Where to save the Venn diagram
+  --cpu CPU             Number of CPU cores to use
+```

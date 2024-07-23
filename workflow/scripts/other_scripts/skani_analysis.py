@@ -16,12 +16,12 @@ def parse_arguments():
     parser.add_argument('--bins', required=True, choices=['refined', 'dereplicated'], 
                         help='Type of bins to analyze')
     parser.add_argument('--tmp', required=True, help='Temporary directory for intermediate files')
-    parser.add_argument('--output_file', required=True, help='File to save the output results')
-    parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
+    parser.add_argument('--output_file', required=True, help='File to save the output results (Skani matrix)')
     parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
     parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
-    parser.add_argument('--json_output', required=True, help='File to save the bins similarity results')
+    parser.add_argument('--json_output', required=True, help='File to save the bins similarity results according to assembly methods (JSON)')
     parser.add_argument('--venn_diagram', required=True, help='Where to save the Venn diagram')
+    parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
 
     return parser.parse_args()
 
@@ -176,7 +176,6 @@ def build_assembly_bins_dictionary_dereplicated(shared_bins_dict):
     return assembly_bins_dict
 
 def save_assembly_bins_dict_to_json(assembly_bins_dict, output_path):
-    print(assembly_bins_dict)
     with open(output_path, 'w') as json_file:
         json.dump(assembly_bins_dict, json_file, indent=4, default=list)
 
