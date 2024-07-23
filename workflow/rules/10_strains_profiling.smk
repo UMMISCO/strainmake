@@ -175,7 +175,7 @@ rule instrain_profiling:
 
 rule instrain_comparing: 
     input:
-        instrain_results = expand("results/10_strain_profiling/{{assembler}}/{sample}",
+        instrain_results = expand("results/10_strain_profiling/inStrain/{{assembler}}/{sample}",
                                   sample=SAMPLES)
     output:
         directory("results/10_strain_profiling/inStrain/{assembler}/compare")
