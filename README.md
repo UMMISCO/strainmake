@@ -75,3 +75,10 @@ Human assembly for mapping:
 | Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |
 |:--------- |:-------------------------------------------------- |:---------------------------------------------- |:-------------------------------------- |:------------ |
 | MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn | Yes          |
+
+## Strains profiling
+
+| Tool     | Original year                                          | Conda available?                              | Link                                    | Implemented?      |
+|:-------- |:------------------------------------------------------ |:--------------------------------------------- |:--------------------------------------- |:----------------- |
+| inStrain | [2021](https://doi.org/10.1038/s41587-020-00797-0)     | [Yes](https://anaconda.org/bioconda/instrain) | https://github.com/MrOlm/inStrain       | Yes (for SR only) |
+| Floria   | [2024](https://doi.org/10.1093/bioinformatics/btae252) | [Yes](https://anaconda.org/bioconda/floria)   | https://github.com/bluenote-1577/floria | Yes (for SR only) |
