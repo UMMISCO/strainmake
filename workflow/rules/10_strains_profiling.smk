@@ -56,7 +56,6 @@ rule reads_mapping_on_reference:
     conda:
         "../envs/minimap2.yaml"
     log:
-        stdout = "logs/10_strain_profiling/minimap2/{assembler}/{sample}.stdout",
         stderr = "logs/10_strain_profiling/minimap2/{assembler}/{sample}.stderr"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
@@ -65,7 +64,7 @@ rule reads_mapping_on_reference:
     shell:
         """
         minimap2 -ax sr -t {threads} \
-            {input.refs} {input.r1} {input.r2} > {output}
+            {input.refs} {input.r1} {input.r2} > {output} 2> {log.stderr}
         """
 
 rule sam_to_bam_strains_profiling:
@@ -157,22 +156,41 @@ rule instrain_profiling:
         # scaffolds to bin file
         stb = "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb"
     output:
-        directory("results/10_strain_profiling/inStrain/{assembler}/{sample}/output")
+        directory("results/10_strain_profiling/inStrain/{assembler}/{sample}")
     conda:
         "../envs/instrain.yaml"
     log:
         stdout = "logs/10_strain_profiling/inStrain/{assembler}/{sample}.profile.stdout",
         stderr = "logs/10_strain_profiling/inStrain/{assembler}/{sample}.profile.stderr"
-    params:
-        out_dir = "results/10_strain_profiling/inStrain/{assembler}/{sample}"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     threads: config['strains_profiling']['instrain']['threads']
     shell:
         """
-        inStrain profile --output {params.out_dir} -p {threads} \
+        inStrain profile --output {output} -p {threads} \
+            -s {input.stb} \
             {input.bam} {input.refs} > {log.stdout} 2> {log.stderr}
+        """
+
+rule instrain_comparing: 
+    input:
+        instrain_results = expand("results/10_strain_profiling/{{assembler}}/{sample}",
+                                  sample=SAMPLES)
+    output:
+        directory("results/10_strain_profiling/inStrain/{assembler}/compare")
+    conda:
+        "../envs/instrain.yaml"
+    log:
+        stdout = "logs/10_strain_profiling/inStrain/{assembler}/compare.stdout",
+        stderr = "logs/10_strain_profiling/inStrain/{assembler}/compare.stderr"
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+    threads: config['strains_profiling']['instrain']['threads']
+    shell:
+        """
+        inStrain compare -i {input.instrain_results} --output {output} \
+            > {log.stdout} 2> {log.stderr}
         """
 
 rule floria_profiling:
