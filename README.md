@@ -70,6 +70,12 @@ Human assembly for mapping:
 |:---- |:---------------------------------------------- |:----------------------------------------- |:----------------------------- |:------------ |
 | dRep | [2017](https://doi.org/10.1038/ismej.2017.126) | [Yes](https://anaconda.org/bioconda/drep) | https://github.com/MrOlm/drep | Yes          |
 
+### Genes prediction
+
+| Tool     | Original year                                    | Conda available?                              | Link                                | Implemented? |
+| :------- | :----------------------------------------------- | :-------------------------------------------- | :---------------------------------- | :----------- |
+| Prodigal | [2010](https://doi.org/10.1186/1471-2105-11-119) | [Yes][https://anaconda.org/bioconda/prodigal] | https://github.com/hyattpd/Prodigal | Yes          |
+
 ## Taxonomic profiling
 
 | Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |

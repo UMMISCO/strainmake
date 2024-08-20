@@ -131,3 +131,24 @@ rule dereplicated_genomes_quality_and_filtering:
             --outdir {output.selected_bins} \
             > {log.stdout_filtration} 2> {log.stderr_filtration}
         """
+
+# predicting genes in dereplicated genomes
+rule genes_calling:
+    input:
+        # it is better to run Prodigal on each genome individually in normal mode, than running it on 
+        # a multiple FASTA file 
+        # (https://github.com/hyattpd/prodigal/wiki/Advice-by-Input-Type#metagenomes)
+        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins"
+    output:
+        directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/genes")
+    conda:
+        "../envs/prodigal.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/prodigal/{assembler}.stdout",
+        stderr = "logs/08_bins_postprocessing/prodigal/{assembler}.stderr"
+    threads: config['bins_postprocessing']['genes_prediction']['prodigal']['threads']
+    shell:
+        """
+        python3 workflow/scripts/genes_prediction.py --cpu {threads} {input} {output} \
+            > {log.stdout} 2> {log.stderr}
+        """

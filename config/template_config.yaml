@@ -121,6 +121,9 @@ bins_postprocessing:
     filtration:
       min_completeness: 75
       max_contamination: 10
+  genes_prediction:
+    prodigal:
+      threads: 5
 
 ################################################################################
 #                             Taxonomic profiling                              #
