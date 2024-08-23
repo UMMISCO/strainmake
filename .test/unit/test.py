@@ -29,6 +29,9 @@ class TestPipeline(unittest.TestCase):
 
         cls.case5 = "5._LR_fail_if_SR_only"
         os.makedirs(cls.case5, exist_ok=True)
+
+        cls.case6 = "6._SR_not_paired"
+        os.makedirs(cls.case6, exist_ok=True)
         
     @classmethod
     def tearDownClass(cls):
@@ -207,6 +210,9 @@ class TestPipeline(unittest.TestCase):
         
         # check if Snakemake command was not successful
         self.assertEqual(result.returncode, 1, f"Test failed: {result.stderr} {result.stdout}")
+
+        # check if a ValueError was raised for this problem
+        self.assertIn("ValueError", result.stdout)
         
     def test_long_reads_fail_if_short_reads_only_dryrun(self): 
         """
@@ -232,6 +238,37 @@ class TestPipeline(unittest.TestCase):
         
         # check if Snakemake command was not successful
         self.assertEqual(result.returncode, 1, f"Test failed: {result.stderr} {result.stdout}")
+
+        # check if a ValueError was raised for this problem
+        self.assertIn("ValueError", result.stdout)
+
+    def test_if_fail_if_no_pair_dryrun(self): 
+        """
+        Pipeline should fail if only one (eg. R1) of SR FASTQ is given since we should have
+        R1 and R2 FASTQ in this case
+        """
+        # run Snakemake with the specified configuration file
+        config_path = os.path.join(self.case6, "config.yaml")
+        result = subprocess.run(
+            [
+                "snakemake", 
+                "-c", "4", 
+                "-p", 
+                "--conda-frontend", "conda", 
+                "--use-conda", 
+                "--configfile", config_path,
+                "-s", "../../workflow/Snakefile",
+                "--directory", "../../",
+                "-n"
+            ],
+            capture_output=True, text=True
+        )
+        
+        # check if Snakemake command was not successful
+        self.assertEqual(result.returncode, 1, f"Test failed: {result.stderr} {result.stdout}")
+
+        # check if a ValueError was raised for this problem
+        self.assertIn("ValueError", result.stdout)
 
 if __name__ == "__main__":
     unittest.main()
