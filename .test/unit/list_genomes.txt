@@ -1,0 +1,5 @@
+https://www.ebi.ac.uk/metagenomics/api/v1/genomes/MGYG000473082/downloads/MGYG000473082.fna
+https://www.ebi.ac.uk/metagenomics/api/v1/genomes/MGYG000476633/downloads/MGYG000476633.fna
+https://www.ebi.ac.uk/metagenomics/api/v1/genomes/MGYG000473072/downloads/MGYG000473072.fna
+https://www.ebi.ac.uk/metagenomics/api/v1/genomes/MGYG000476766/downloads/MGYG000476766.fna
+https://www.ebi.ac.uk/metagenomics/api/v1/genomes/MGYG000479092/downloads/MGYG000479092.fna
