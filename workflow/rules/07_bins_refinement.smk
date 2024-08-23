@@ -5,6 +5,10 @@ BINNER = config['binning']['binner']
 
 HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler'] 
 
+# taking into account the case where we don't have SR
+if ASSEMBLER == None:
+       ASSEMBLER = []
+
 # taking into account the case where we don't have LR
 if HYBRID_ASSEMBLER == None:
        HYBRID_ASSEMBLER = []

@@ -35,6 +35,10 @@ ASSEMBLER = config['assembly']['assembler']
 LONG_READ_ASSEMBLER = config['assembly']['long_read_assembler']
 HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler']
 
+# taking into account the case where we don't have SR
+if ASSEMBLER == None:
+       ASSEMBLER = []
+
 # taking into account the case where we don't have LR
 if LONG_READ_ASSEMBLER == None:
        LONG_READ_ASSEMBLER = []
@@ -42,6 +46,11 @@ if LONG_READ_ASSEMBLER == None:
 # taking into account the case where we don't have hybrid assembler
 if HYBRID_ASSEMBLER == None:
        HYBRID_ASSEMBLER = []
+
+# validating that we can run the pipeline using the given FASTQ
+samples_table_df = pd.read_csv(SAMPLES_TABLE, sep="\t")
+validate_assemblers(samples_table_df, 
+                    ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER)
 
 ################################################################################
 #                                   Workflow                                   #

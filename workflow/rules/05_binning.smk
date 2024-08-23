@@ -6,6 +6,10 @@ ASSEMBLER = config['assembly']['assembler']
 
 HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler'] 
 
+# taking into account the case where we don't have SR assembly
+if ASSEMBLER == None:
+       ASSEMBLER = []
+
 # taking into account the case where we don't have hybrid assembly
 if HYBRID_ASSEMBLER == None:
        HYBRID_ASSEMBLER = []
