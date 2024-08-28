@@ -74,7 +74,7 @@ Human assembly for mapping:
 
 | Tool     | Original year                                    | Conda available?                              | Link                                | Implemented? |
 | :------- | :----------------------------------------------- | :-------------------------------------------- | :---------------------------------- | :----------- |
-| Prodigal | [2010](https://doi.org/10.1186/1471-2105-11-119) | [Yes][https://anaconda.org/bioconda/prodigal] | https://github.com/hyattpd/Prodigal | Yes          |
+| Prodigal | [2010](https://doi.org/10.1186/1471-2105-11-119) | [Yes](https://anaconda.org/bioconda/prodigal) | https://github.com/hyattpd/Prodigal | Yes          |
 
 ## Taxonomic profiling
 
@@ -96,9 +96,8 @@ You can find in [`workflow/scripts/other_scripts`](workflow/scripts/other_script
 `skani_analysis.py` performs bins pairwise comparison using Skani (https://doi.org/10.1038/s41592-023-02018-3). It can also produce a Venn diagram for results derived from dereplicated bins.
 
 ```
-usage: skani_analysis.py [-h] --bins {refined,dereplicated} --tmp TMP --output_file OUTPUT_FILE --tsv_output TSV_OUTPUT --ani_threshold ANI_THRESHOLD --json_output JSON_OUTPUT --venn_diagram VENN_DIAGRAM --cpu CPU
-
-Perform Skani analysis on bins.
+usage: skani_analysis.py compare [-h] --bins {refined,dereplicated} --tmp TMP --output_file OUTPUT_FILE --tsv_output TSV_OUTPUT --ani_threshold ANI_THRESHOLD --json_output JSON_OUTPUT --venn_diagram
+                                 VENN_DIAGRAM --cpu CPU
 
 options:
   -h, --help            show this help message and exit
@@ -116,6 +115,19 @@ options:
   --venn_diagram VENN_DIAGRAM
                         Where to save the Venn diagram
   --cpu CPU             Number of CPU cores to use
+```
+
+We can then check bins found from one assembly method only.
+
+```
+usage: skani_analysis.py check [-h] --json_results JSON_RESULTS --tsv_output TSV_OUTPUT
+
+options:
+  -h, --help            show this help message and exit
+  --json_results JSON_RESULTS
+                        Path to the JSON produced using "skani_analysis.py compare"
+  --tsv_output TSV_OUTPUT
+                        File to save the results in TSV format
 ```
 
 `calculate_binned_contigs.py` allows to compute the binned rate of contigs, i.e. the percentage of contigs from an assembly that is found in at least one bin at the end.

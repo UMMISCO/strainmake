@@ -5,6 +5,7 @@ import os
 import json
 import shutil
 import subprocess
+import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,16 +13,27 @@ from tqdm import tqdm
 from venn import venn
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Perform Skani analysis on bins.')
-    parser.add_argument('--bins', required=True, choices=['refined', 'dereplicated'], 
+    parser = argparse.ArgumentParser(description='Perform Skani analysis on bins.\nRetrieves info related to bins recovered from one assembly approach.')
+    subparsers = parser.add_subparsers(dest = 'subparser')
+
+    # comparing and generating Venn diagram
+    compare_parser = subparsers.add_parser('compare', help="Performing genomic comparison of dereplicated bins using Skani in order to identify 'shared' bins between assembly methods")
+
+    compare_parser.add_argument('--bins', required=True, choices=['refined', 'dereplicated'], 
                         help='Type of bins to analyze')
-    parser.add_argument('--tmp', required=True, help='Temporary directory for intermediate files')
-    parser.add_argument('--output_file', required=True, help='File to save the output results (Skani matrix)')
-    parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
-    parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
-    parser.add_argument('--json_output', required=True, help='File to save the bins similarity results according to assembly methods (JSON)')
-    parser.add_argument('--venn_diagram', required=True, help='Where to save the Venn diagram')
-    parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
+    compare_parser.add_argument('--tmp', required=True, help='Temporary directory for intermediate files')
+    compare_parser.add_argument('--output_file', required=True, help='File to save the output results (Skani matrix)')
+    compare_parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
+    compare_parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
+    compare_parser.add_argument('--json_output', required=True, help='File to save the bins similarity results according to assembly methods (JSON)')
+    compare_parser.add_argument('--venn_diagram', required=True, help='Where to save the Venn diagram')
+    compare_parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
+
+    # checking results
+    check_parser = subparsers.add_parser('check', help="Recovering the taxonomical annotation and quality of bins obtained from only one assembly approach")
+
+    check_parser.add_argument('--json_results', required=True, help='Path to the JSON produced using "skani_analysis.py compare"')
+    check_parser.add_argument('--tsv_output', required=True, help='File to save the results in TSV format')
 
     return parser.parse_args()
 
@@ -179,9 +191,169 @@ def save_assembly_bins_dict_to_json(assembly_bins_dict, output_path):
     with open(output_path, 'w') as json_file:
         json.dump(assembly_bins_dict, json_file, indent=4, default=list)
 
-def main():
-    args = parse_arguments()
+def identify_unique_bins(assembly_bins_dict):
+    """
+    Takes in input a dictionary of compared bins and returns a dictionary of bins that
+    were recovered from an assembly approach only
+    """
 
+    # creating a set of bins , using all data
+    all_values = set()
+    for values in assembly_bins_dict.values():
+        all_values.update(values)
+
+    value_count = {value: 0 for value in all_values}
+
+    # counting the occurrence of bins in each list
+    for values in assembly_bins_dict.values():
+        for value in values:
+            value_count[value] += 1
+
+    # identifying bins recovered only from an assembly approach 
+    unique_values = {}
+    for key, values in assembly_bins_dict.items():
+        unique_values[key] = [value for value in values if value_count[value] == 1]
+
+    return unique_values
+
+def get_original_bin_name(corresponding_df: pd.DataFrame, bin_name: str):
+    return corresponding_df[corresponding_df['unambiguous_filename'] == bin_name]['filename'].values[0]
+
+def get_original_bin_path(corresponding_df: pd.DataFrame, bin_name: str):
+    return corresponding_df[corresponding_df['unambiguous_filename'] == bin_name]['path'].values[0]
+
+def get_sample_name_from_bins_refinement_path(path):
+    pattern = re.compile("(megahit|metaspades|hybridspades|metaflye)\/(.*)\/final")
+    match = pattern.search(path)
+
+    if match:
+        sample_name = match.group(2)
+        return sample_name
+    
+def get_gtdb_taxo_from_bin_name(gtdb_tk_res: pd.DataFrame, bin: str):
+    bin_without_extension = bin.replace(".fa", "")
+    
+    try:
+        taxonomical_classification = gtdb_tk_res[gtdb_tk_res["user_genome"] == bin_without_extension]["classification"].values[0]
+        return taxonomical_classification
+    except IndexError:
+        # if nothing was found, it returns None
+        return None
+
+def get_bins_taxo(assembly_bins_dict):
+    """
+    Gets the bin taxonomy using the GTDB-Tk annotation obtained by the pipeline.
+    The function is generalized to handle any assembly method provided in assembly_bins_dict.
+    """
+    gtdb_tk_results_dir = "results/08_bins_postprocessing/gtdb_tk/"
+    
+    # dictionary to store paths for corresponding name files based on assembly method
+    corresponding_names_paths = {
+        'hybridspades': "results/08_bins_postprocessing/genomes_list/hybridspades/unduplicated.tsv",
+        'metaflye': "results/08_bins_postprocessing/genomes_list/metaflye/unduplicated.tsv",
+        'megahit': "results/08_bins_postprocessing/genomes_list/megahit/unduplicated.tsv",
+        'metaspades': "results/08_bins_postprocessing/genomes_list/metaspades/unduplicated.tsv"
+    }
+
+    # checking if the GTDB-Tk results directory exists
+    if not os.path.isdir(gtdb_tk_results_dir):
+        raise FileNotFoundError(f"Folder '{gtdb_tk_results_dir}' does not exist.")
+    
+    # checking if the corresponding name files exist for the provided assembly methods
+    for method in assembly_bins_dict.keys():
+        if method in corresponding_names_paths:
+            file_path = corresponding_names_paths[method]
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError(f"File '{file_path}' does not exist.")
+            # load the corresponding names DataFrame for the current method
+            corresponding_names_paths[method] = pd.read_csv(file_path, sep="\t")
+        else:
+            raise ValueError(f"No corresponding name file defined for assembly method '{method}'.")
+
+    # preparing a dictionary to store the results
+    results = {
+        'assembly': [],
+        'original_bin_name': [],
+        'renamed_bin': [],
+        'gtdb_classification': []
+    }
+
+    # looping over each assembly method in the dictionary
+    for method, bins in tqdm(assembly_bins_dict.items()):
+        for bin in bins:
+            bin = bin.replace(f"{method}.", "")
+
+            # getting the original name of the bin before renaming
+            original_name = get_original_bin_name(corresponding_names_paths[method], bin)
+            # getting the original path to determine the sample name
+            path = get_original_bin_path(corresponding_names_paths[method], bin)
+            # extracting the sample name from the bin's path
+            sample_name = get_sample_name_from_bins_refinement_path(path)
+
+            # constructing the path to the GTDB-Tk bacterial summary file and loading it
+            gtdb_taxo_annotation_bact = os.path.join(gtdb_tk_results_dir, method, sample_name, "gtdbtk.bac120.summary.tsv")
+            gtdb_taxo_annotation_bact_df = pd.read_csv(gtdb_taxo_annotation_bact, sep="\t")
+
+            # trying to retrieve the taxonomy using the bacterial GTDB-Tk output
+            taxonomy = get_gtdb_taxo_from_bin_name(gtdb_taxo_annotation_bact_df, original_name)
+            # if no taxonomy was found, check if the bin might be archaeal
+            if taxonomy is None:
+                gtdb_taxo_annotation_arch = os.path.join(gtdb_tk_results_dir, method, sample_name, "gtdbtk.ar53.summary.tsv")
+                gtdb_taxo_annotation_arch_df = pd.read_csv(gtdb_taxo_annotation_arch, sep="\t")
+                taxonomy = get_gtdb_taxo_from_bin_name(gtdb_taxo_annotation_arch_df, original_name)
+
+            # storing the results
+            results['assembly'].append(method)
+            results['original_bin_name'].append(original_name)
+            results['renamed_bin'].append(bin)
+            results['gtdb_classification'].append(taxonomy)
+
+    # returning the results as a DataFrame
+    return pd.DataFrame(results)
+
+def get_bins_quality(bins_taxonomy: pd.DataFrame):
+    """
+    Gets the bin quality check using the CheckM2 results obtained by the pipeline
+
+    `bins_taxonomy` is the DataFrame returned by the `get_bins_taxo` function
+    """
+
+    # ensuring we have the folder containing the CheckM2 results for dereplicated bins
+    dereplication_checkm_qc_dir = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality"
+    
+    if not os.path.isdir(dereplication_checkm_qc_dir):
+        raise FileNotFoundError(f"Folder '{dereplication_checkm_qc_dir}' does not exist.")
+    
+    # removing the ".fa" extension in bins name, since these are absent in the CheckM2 results
+    bins_taxonomy['original_bin_name'] = bins_taxonomy['original_bin_name'].str.replace(".fa", "")
+    bins_taxonomy['renamed_bin'] = bins_taxonomy['renamed_bin'].str.replace(".fa", "")
+
+    # getting the type of assembly we have in bins_taxonomy
+    assembly_type = bins_taxonomy['assembly'].unique().tolist()
+
+    processed_dataframes = []
+    for assembly in assembly_type:
+        # filtering the results to keep only the rows related to this assembly method
+        taxonomy_df_filtered = bins_taxonomy[bins_taxonomy['assembly'] == assembly]
+
+        # loading the corresponding results table into a DataFrame
+        checkm2_results = os.path.join(dereplication_checkm_qc_dir, assembly, "checkm2", "quality_report.tsv")
+        checkm2_results_df = pd.read_csv(checkm2_results, sep="\t")[['Name', 'Completeness', 'Contamination']]
+                
+        # joining it on the GTDB taxonomy we recovered
+        taxonomy_df_filtered = pd.merge(taxonomy_df_filtered, checkm2_results_df, how="left",
+                                        left_on="renamed_bin", right_on="Name").drop(columns=["Name"])
+        
+        processed_dataframes.append(taxonomy_df_filtered)
+
+    # concatenating all DataFrames to have the final results, containing both GTDB-Tk annotation and CheckM2 bins results
+    # for each assembly method tested
+    return pd.concat(processed_dataframes, ignore_index=True).rename(columns={"Contamination": "contamination", "Completeness": "completeness"})
+
+def subcommand_compare(args):
+    """
+    Handling `skani_analysis.py compare ...`
+    """
     if args.bins == 'refined':
         src_dir = 'results/07_bins_refinement/binette'
         list_bins_path = copy_and_rename_bins_refined(src_dir, args.tmp)
@@ -212,6 +384,36 @@ def main():
         print(f"Venn diagram saved to {args.venn_diagram}")
     else:
         print(f"Venn diagram for refined bins identity was not implemented")
+
+def subcommand_check(args):
+    """
+    Handling `skani_analysis.py check ...`  
+    """
+
+    # reading the JSON as a dictionary
+    with open(args.json_results) as json_file:
+        data = json.load(json_file)
+
+        # bins that could be recovered using one assembly approach only
+        unique_bins = identify_unique_bins(data)
+
+        # getting the taxonomy of these bins
+        unique_bins_taxonomy = get_bins_taxo(unique_bins)
+        
+        # getting the quality of these bins
+        unique_bins_taxonomy_quality = get_bins_quality(unique_bins_taxonomy)
+
+        # saving the results
+        unique_bins_taxonomy_quality.to_csv(args.tsv_output, sep="\t", index=False)
+
+def main():
+    args = parse_arguments()
+
+    # skani_analysis.py compare ...
+    if args.subparser == 'compare':
+        subcommand_compare(args)
+    elif args.subparser == 'check':
+        subcommand_check(args)
 
 if __name__ == "__main__":
     main()
