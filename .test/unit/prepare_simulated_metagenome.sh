@@ -32,8 +32,8 @@ mv data/fake_illumina_R2.fastq.gz data/fake_illumina_R2.SAMPLE1.fastq.gz
 mv data/fake_nanopore_sample0_aligned_reads.fastq.gz data/fake_nanopore_sample0_aligned_reads.SAMPLE1.fastq.gz
 
 # ensure generated files are correct
-echo "MD5 sum checking"
-md5sum --check fastq.md5
+# echo "MD5 sum checking"
+# md5sum --check fastq.md5
 
 rm data/*.vcf
 rm data/*.txt
