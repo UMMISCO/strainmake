@@ -1,0 +1,146 @@
+samples: .test/unit/3._ALL_seq/metadata.tsv
+
+################################################################################
+#                                Preprocessing                                 #        
+################################################################################ 
+
+fastp:
+  compression: 2 # --compression command of fastp
+  minimal_read_length: 50 # --length_required command of fastp
+  qualified_quality_phred: 15 # quality value (phred) that a base is qualified
+
+# the same, but for long reads
+fastp_long_read:
+  compression: 2 # --compression command of fastp
+  minimal_read_length: 1000 # --length_required command of fastp
+  qualified_quality_phred: 12 # quality value (phred) that a base is qualified
+
+bowtie2:
+  index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
+  threads: 4
+
+################################################################################
+#                                   Assembly                                   #        
+################################################################################        
+
+assembly:
+  assembler: # to be implemented (megahit, metaspades, idbaud...)
+    - megahit 
+    - metaspades
+  long_read_assembler:
+    - metaflye
+  hybrid_assembler: # ensure you have long reads data for it to work
+    - hybridspades
+  # MEGAHIT configuration
+  megahit:
+    threads: 4
+  # SPAdes configuration
+  metaspades:
+    threads: 4
+    memory_limit: 50 # in GB
+  metaflye:
+    threads: 4
+    method: nanopore # or "pacbio"
+  hybridspades:
+    threads: 4
+    memory_limit: 50 # in GB
+
+################################################################################
+#                               Assembly quality                               #
+################################################################################
+
+quast:
+  threads: 4
+
+################################################################################
+#                                   Binning                                    #
+################################################################################
+
+binning:
+  binner: # currently: metabat2, semibin2. Others to be implemented
+    - metabat2 
+    - semibin2
+    - vamb
+  long_read_binner:
+    - semibin2
+  # bowtie2 configuration for both indexing and mapping
+  bowtie2:
+    threads: 4 # for both indexing and mapping
+    seed: 199999
+  # minimap2 configuration for long reads mapping
+  minimap2:
+    threads: 4
+  # MetaBAT 2 configuration
+  metabat2:
+    min_contig_size: 1500 # minimun size of 1500 bp per the MetaBAT 2 doc
+    minimum_mean_coverage: 1 # minimum mean coverage of a contig in each library for binning
+    min_bin_size: 200000 # minimum size of a bin as the output
+    threads: 4 # put 0 for using all cores
+  semibin2:
+    environment: ocean # (human_gut, dog_cut, ocean...) see https://semibin.readthedocs.io/en/latest/usage/#easy-single-binning-mode
+    threads: 4 # put 0 for using all cores
+  vamb:
+    minfasta: 200000 # minimum bin size to output as fasta
+    gpu: "" # if you don't want to use GPU, just let a "", if you want put "--cuda"
+    epochs: 50 # number of epochs for VAE training
+    threads: 10
+    batch_sizes: [5 10 30]
+    start_batch_size: 10
+
+################################################################################
+#                                 Bins quality                                 #
+################################################################################
+
+checkm2:
+  threads: 4
+
+################################################################################
+#                               Bins refinement                                #
+################################################################################
+
+bins_refinement:
+  binette:
+    threads: 4
+    low_mem: "" # if you want to run DIAMOND in low memory mode replace "" by "--low_mem"
+
+################################################################################
+#                             Bins post-processing                             #
+################################################################################
+
+bins_postprocessing:
+  gtdbtk:
+    threads: 1
+    other_args: "" # write there others params you'd want to use
+  drep:
+    comparison_algorithm: "ANImf" # comparison algorithm used by dRep (goANI, ANIn, gANI, ANImf, fastANI)
+    other_args: "" # write there others params you'd want to use (for example "--SkipMash --completeness 90"...)
+    threads: 4
+  genomes_quality_filtration:
+    checkm2:
+      threads: 15
+    filtration:
+      min_completeness: 75
+      max_contamination: 10
+
+################################################################################
+#                             Taxonomic profiling                              #
+################################################################################
+
+taxonomic_profiling:
+  metaphlan:
+    threads: 4
+
+################################################################################
+#                              Strains profiling                               #
+################################################################################
+
+strains_profiling:
+  minimap2:
+    threads: 20
+  freebayes:
+    min_alternate_count: 1
+    min_alternate_fraction: 0.01
+  instrain:
+    threads: 20
+  floria:
+    threads: 20
