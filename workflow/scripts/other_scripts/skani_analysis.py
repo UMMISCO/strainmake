@@ -30,10 +30,11 @@ def parse_arguments():
     compare_parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
 
     # checking results
-    check_parser = subparsers.add_parser('check', help="Recovering the taxonomical annotation and quality of bins obtained from only one assembly approach")
+    check_parser = subparsers.add_parser('check', help="Recovering the taxonomical annotation and quality of bins obtained from only one assembly approach or from a given assembly")
 
     check_parser.add_argument('--json_results', required=True, help='Path to the JSON produced using "skani_analysis.py compare"')
     check_parser.add_argument('--tsv_output', required=True, help='File to save the results in TSV format')
+    check_parser.add_argument('--assembly', required=True, choices=['unique', 'megahit', 'metaflye', 'metaspades', 'hybridspades'], help="Choose 'unique' to get a list of bins that were not found from at least a second assembly method, at the given ANI threshold you used with the 'compare' subcommand. Chose any other possible assembly method to get a list of bins recovered from the given assembly (it won't return the redundant bins coming from other asssemblies)")
 
     return parser.parse_args()
 
@@ -216,6 +217,16 @@ def identify_unique_bins(assembly_bins_dict):
 
     return unique_values
 
+def get_bins_by_assembly_method(assembly_bins_dict, assembly: str):
+    """
+    Takes in input a dictionary of compared bins and returns a dictionary of bins that
+    were recovered from the given assembly method
+    """
+    if assembly not in assembly_bins_dict:
+        raise ValueError(f"No assembly method '{assembly}' in the results.")
+
+    return {assembly: assembly_bins_dict[assembly]}
+
 def get_original_bin_name(corresponding_df: pd.DataFrame, bin_name: str):
     return corresponding_df[corresponding_df['unambiguous_filename'] == bin_name]['filename'].values[0]
 
@@ -281,32 +292,33 @@ def get_bins_taxo(assembly_bins_dict):
     # looping over each assembly method in the dictionary
     for method, bins in tqdm(assembly_bins_dict.items()):
         for bin in bins:
-            bin = bin.replace(f"{method}.", "")
+            if method in bin:
+                bin = bin.replace(f"{method}.", "")
 
-            # getting the original name of the bin before renaming
-            original_name = get_original_bin_name(corresponding_names_paths[method], bin)
-            # getting the original path to determine the sample name
-            path = get_original_bin_path(corresponding_names_paths[method], bin)
-            # extracting the sample name from the bin's path
-            sample_name = get_sample_name_from_bins_refinement_path(path)
+                # getting the original name of the bin before renaming
+                original_name = get_original_bin_name(corresponding_names_paths[method], bin)
+                # getting the original path to determine the sample name
+                path = get_original_bin_path(corresponding_names_paths[method], bin)
+                # extracting the sample name from the bin's path
+                sample_name = get_sample_name_from_bins_refinement_path(path)
 
-            # constructing the path to the GTDB-Tk bacterial summary file and loading it
-            gtdb_taxo_annotation_bact = os.path.join(gtdb_tk_results_dir, method, sample_name, "gtdbtk.bac120.summary.tsv")
-            gtdb_taxo_annotation_bact_df = pd.read_csv(gtdb_taxo_annotation_bact, sep="\t")
+                # constructing the path to the GTDB-Tk bacterial summary file and loading it
+                gtdb_taxo_annotation_bact = os.path.join(gtdb_tk_results_dir, method, sample_name, "gtdbtk.bac120.summary.tsv")
+                gtdb_taxo_annotation_bact_df = pd.read_csv(gtdb_taxo_annotation_bact, sep="\t")
 
-            # trying to retrieve the taxonomy using the bacterial GTDB-Tk output
-            taxonomy = get_gtdb_taxo_from_bin_name(gtdb_taxo_annotation_bact_df, original_name)
-            # if no taxonomy was found, check if the bin might be archaeal
-            if taxonomy is None:
-                gtdb_taxo_annotation_arch = os.path.join(gtdb_tk_results_dir, method, sample_name, "gtdbtk.ar53.summary.tsv")
-                gtdb_taxo_annotation_arch_df = pd.read_csv(gtdb_taxo_annotation_arch, sep="\t")
-                taxonomy = get_gtdb_taxo_from_bin_name(gtdb_taxo_annotation_arch_df, original_name)
+                # trying to retrieve the taxonomy using the bacterial GTDB-Tk output
+                taxonomy = get_gtdb_taxo_from_bin_name(gtdb_taxo_annotation_bact_df, original_name)
+                # if no taxonomy was found, check if the bin might be archaeal
+                if taxonomy is None:
+                    gtdb_taxo_annotation_arch = os.path.join(gtdb_tk_results_dir, method, sample_name, "gtdbtk.ar53.summary.tsv")
+                    gtdb_taxo_annotation_arch_df = pd.read_csv(gtdb_taxo_annotation_arch, sep="\t")
+                    taxonomy = get_gtdb_taxo_from_bin_name(gtdb_taxo_annotation_arch_df, original_name)
 
-            # storing the results
-            results['assembly'].append(method)
-            results['original_bin_name'].append(original_name)
-            results['renamed_bin'].append(bin)
-            results['gtdb_classification'].append(taxonomy)
+                # storing the results
+                results['assembly'].append(method)
+                results['original_bin_name'].append(original_name)
+                results['renamed_bin'].append(bin)
+                results['gtdb_classification'].append(taxonomy)
 
     # returning the results as a DataFrame
     return pd.DataFrame(results)
@@ -394,17 +406,22 @@ def subcommand_check(args):
     with open(args.json_results) as json_file:
         data = json.load(json_file)
 
-        # bins that could be recovered using one assembly approach only
-        unique_bins = identify_unique_bins(data)
+        if args.assembly == 'unique':
+            # bins that could be recovered using one assembly approach only
+            bins = identify_unique_bins(data)
+        else:
+            # if not, the user wants to get the bins identified from a given assembly approach,
+            # so including similar bins identified from other assembly approaches
+            bins = get_bins_by_assembly_method(data, args.assembly)
 
         # getting the taxonomy of these bins
-        unique_bins_taxonomy = get_bins_taxo(unique_bins)
+        bins_taxonomy = get_bins_taxo(bins)
         
         # getting the quality of these bins
-        unique_bins_taxonomy_quality = get_bins_quality(unique_bins_taxonomy)
+        bins_taxonomy_quality = get_bins_quality(bins_taxonomy)
 
         # saving the results
-        unique_bins_taxonomy_quality.to_csv(args.tsv_output, sep="\t", index=False)
+        bins_taxonomy_quality.to_csv(args.tsv_output, sep="\t", index=False)
 
 def main():
     args = parse_arguments()

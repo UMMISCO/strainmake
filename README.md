@@ -120,7 +120,7 @@ options:
 We can then check bins found from one assembly method only.
 
 ```
-usage: skani_analysis.py check [-h] --json_results JSON_RESULTS --tsv_output TSV_OUTPUT
+usage: skani_analysis.py check [-h] --json_results JSON_RESULTS --tsv_output TSV_OUTPUT --assembly {unique,megahit,metaflye,metaspades,hybridspades}
 
 options:
   -h, --help            show this help message and exit
@@ -128,6 +128,9 @@ options:
                         Path to the JSON produced using "skani_analysis.py compare"
   --tsv_output TSV_OUTPUT
                         File to save the results in TSV format
+  --assembly {unique,megahit,metaflye,metaspades,hybridspades}
+                        Choose 'unique' to get a list of bins that were not found from at least a second assembly method, at the given ANI threshold you used with the 'compare' subcommand. Chose any other possible assembly method to
+                        get a list of bins recovered from the given assembly (it won't return the redundant bins coming from other asssemblies)
 ```
 
 `calculate_binned_contigs.py` allows to compute the binned rate of contigs, i.e. the percentage of contigs from an assembly that is found in at least one bin at the end.
