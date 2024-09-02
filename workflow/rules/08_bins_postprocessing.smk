@@ -152,3 +152,52 @@ rule genes_calling:
         python3 workflow/scripts/genes_prediction.py --cpu {threads} {input} {output} \
             > {log.stdout} 2> {log.stderr}
         """
+
+# estimating distribution of dereplicated bins in the metagenomes using CheckM 1
+# first we calculate coverage
+# then, we profile the metagenome using the coverage
+rule coverage_in_mapping:
+    input:
+        dereplicated_and_filtered_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
+        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam"
+    output:
+        "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/coverage.tsv"
+    conda:
+        "../envs/checkm1.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.stderr"
+    threads: config['bins_postprocessing']['profiling']['checkm1']['threads']
+    shell:
+        """
+        checkm coverage -x fa {input.dereplicated_and_filtered_bins} {output} \
+            {input.samples_mapped_on_dereplicated_and_filtered_bins} \
+            > {log.stdout} 2> {log.stderr}
+        """
+
+rule bins_distribution_estimation:
+    input: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/coverage.tsv"
+    output: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.tsv"
+    conda:
+        "../envs/checkm1.yaml"
+    log: 
+        stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.stderr"
+    shell:
+        """
+        checkm profile --tab_table -f  {output} {input} > {log.stdout} 2> {log.stderr}
+        """
+
+rule process_estimated_bins_distribution:
+    input: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.tsv"
+    output: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.processed.tsv"
+    conda:
+        "../envs/python.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.stderr"
+    shell:
+        """
+        python3 workflow/scripts/process_checkm1_profile_table.py --input_table {input} \
+            {output} > {log.stdout} 2> {log.stderr}
+        """

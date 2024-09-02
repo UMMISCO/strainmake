@@ -1,0 +1,6 @@
+name: checkm1
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - checkm-genome=1.2.2 # https://github.com/Ecogenomics/CheckM/issues/401
