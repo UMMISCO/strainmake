@@ -43,6 +43,20 @@ rule indexing_ref_genomes:
         samtools faidx {input} > {log.stdout} 2> {log.stderr}
         """
 
+# inStrain will take predicted genes as an input if they have been
+# concatenated into a single FASTA file
+rule concatenating_predicted_genes:
+    input:
+        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/genes"
+    output:
+        "results/10_strain_profiling/refs/{assembler}/ref_genes.fa"
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+    shell:
+        """
+        cat {input}/*.fna > {output}
+        """
+
 # mapping sample reads on the reference genomes (the bins)
 rule reads_mapping_on_reference:
     input:
@@ -107,6 +121,18 @@ rule bam_sorting_strains_profiling:
             > {log.stdout} 2> {log.stderr}
         """
 
+rule bam_indexing:
+    input:
+        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam"
+    output:
+        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai"
+    conda:
+        "../envs/samtools.yaml"
+    shell:
+        """ 
+        samtools index {input}
+        """
+
 # producing a scaffolds to bin file for inStrain (file with the contig <-> bin link)
 rule produce_scaffolds_to_bin_file:
     input:
@@ -154,7 +180,9 @@ rule instrain_profiling:
         bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
         refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
         # scaffolds to bin file
-        stb = "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb"
+        stb = "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb",
+        # predicted genes in references
+        predicted_genes = "results/10_strain_profiling/refs/{assembler}/ref_genes.fa"
     output:
         directory("results/10_strain_profiling/inStrain/{assembler}/{sample}")
     conda:
@@ -170,13 +198,16 @@ rule instrain_profiling:
         """
         inStrain profile --output {output} -p {threads} \
             -s {input.stb} \
+            --database_mode \
+            -g {input.predicted_genes} \
             {input.bam} {input.refs} > {log.stdout} 2> {log.stderr}
         """
 
 rule instrain_comparing: 
     input:
         instrain_results = expand("results/10_strain_profiling/inStrain/{{assembler}}/{sample}",
-                                  sample=SAMPLES)
+                                  sample=SAMPLES),
+        stb = "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb"
     output:
         directory("results/10_strain_profiling/inStrain/{assembler}/compare")
     conda:
@@ -190,12 +221,15 @@ rule instrain_comparing:
     shell:
         """
         inStrain compare -i {input.instrain_results} --output {output} \
+            --database_mode \
+            -s {input.stb} \
             > {log.stdout} 2> {log.stderr}
         """
 
 rule floria_profiling:
     input:
         bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
+        indexed_bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai",
         refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
         # Floria needs the FASTA file to be indexed
         refs_indexed = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa.fai",
@@ -217,5 +251,6 @@ rule floria_profiling:
         """
         floria -b {input.bam} -v  {input.vcf} -r {input.refs} \
             --output-dir {params.out_dir} -t {threads} \
+            --overwrite \
             > {log.stdout} 2> {log.stderr}
         """
