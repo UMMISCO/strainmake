@@ -124,6 +124,9 @@ bins_postprocessing:
   genes_prediction:
     prodigal:
       threads: 5
+  profiling:
+    checkm1:
+      threads: 5
 
 ################################################################################
 #                             Taxonomic profiling                              #
