@@ -10,6 +10,10 @@ HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler']
 if HYBRID_ASSEMBLER == None:
        HYBRID_ASSEMBLER = []
 
+# taking into account the case where we don't have SR assembly
+if ASSEMBLER == None:
+       ASSEMBLER = []
+
 # rule to concatenate every bins that were dereplicated and filtered into a 
 # unique FASTA file
 rule creating_ref_genomes_fasta:
