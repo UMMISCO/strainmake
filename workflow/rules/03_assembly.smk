@@ -16,13 +16,15 @@ rule megahit_assembly:
     params:
         out_dir = "results/03_assembly/megahit/{sample}",
         tmp_dir = "tmp/",
-        tmp_output = "{sample}_tmp_megahit_output/"
+        tmp_output = "{sample}_tmp_megahit_output/",
+        min_contig_len = config['assembly']['megahit']['min_contig_len']
     threads: config['assembly']['megahit']['threads']
     shell:
         """
         mkdir -p {params.tmp_dir} \
         && \
         megahit -1 {input.r1} -2 {input.r2} \
+            --min-contig-len {params.min_contig_len} \
             --num-cpu-threads {threads} \
             --tmp-dir {params.tmp_dir} \
             --out-dir {params.tmp_output} > {log.stdout} 2> {log.stderr} \
@@ -74,7 +76,8 @@ rule metaspades_assembly:
         stderr = "logs/03_assembly/metaspades/{sample}.stderr"
     params:
         out_dir = "results/03_assembly/metaspades/{sample}",
-        memory_limit = config['assembly']['metaspades']['memory_limit']
+        memory_limit = config['assembly']['metaspades']['memory_limit'],
+        min_contig_len = config['assembly']['metaspades']['min_contig_len']
     threads: config['assembly']['metaspades']['threads']
     shell:
         """
@@ -86,7 +89,11 @@ rule metaspades_assembly:
         && \
         mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
         && \
-        pigz {params.out_dir}/assembly.fa
+        pigz {params.out_dir}/assembly.fa \
+        && \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa.gz \
+        && \
+        mv tmp_assembly.fa.gz {output.assembly}
         """
 
 # hybrid assembly using hybridSPADes
@@ -105,7 +112,8 @@ rule hybridspades_assembly:
     params:
         out_dir = "results/03_assembly/hybridspades/{sample}",
         memory_limit = config['assembly']['hybridspades']['memory_limit'],
-        method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio"
+        method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
+        min_contig_len = config['assembly']['hybridspades']['min_contig_len']
     threads: config['assembly']['hybridspades']['threads']
     shell:
         """
@@ -118,5 +126,9 @@ rule hybridspades_assembly:
         && \
         mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
         && \
-        pigz {params.out_dir}/assembly.fa
+        pigz {params.out_dir}/assembly.fa \
+        && \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa.gz \
+        && \
+        mv tmp_assembly.fa.gz {output.assembly}
         """
