@@ -122,7 +122,9 @@ rule bam_sorting_strains_profiling:
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
-            > {log.stdout} 2> {log.stderr}
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        rm {input.bam}
         """
 
 rule bam_indexing:
