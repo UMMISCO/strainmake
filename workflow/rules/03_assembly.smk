@@ -91,7 +91,9 @@ rule metaspades_assembly:
         && \
         pigz {params.out_dir}/assembly.fa \
         && \
-        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa.gz \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa \
+        && \
+        pigz tmp_assembly.fa \
         && \
         mv tmp_assembly.fa.gz {output.assembly}
         """
@@ -128,7 +130,9 @@ rule hybridspades_assembly:
         && \
         pigz {params.out_dir}/assembly.fa \
         && \
-        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa.gz \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa \
+        && \
+        pigz tmp_assembly.fa \
         && \
         mv tmp_assembly.fa.gz {output.assembly}
         """
