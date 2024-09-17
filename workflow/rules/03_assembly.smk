@@ -7,7 +7,8 @@ rule megahit_assembly:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
-        assembly = "results/03_assembly/megahit/{sample}/assembly.fa"
+        assembly = "results/03_assembly/megahit/{sample}/assembly.fa",
+        intermediate_contigs_archive = "results/03_assembly/megahit/{sample}/intermediate_contigs.tar.gz"
     conda:
         "../envs/megahit.yaml"
     log:
@@ -34,6 +35,10 @@ rule megahit_assembly:
         rm -r {params.tmp_output} \
         && \
         mv {params.out_dir}/final.contigs.fa {params.out_dir}/assembly.fa \
+        && \
+        tar --use-compress-program="pigz --recursive" --remove-files \
+            -cvf {params.out_dir}/intermediate_contigs.tar.gz \
+            {params.out_dir}/intermediate_contigs
         """
 
 # for VAMB for example. It will replace the spaces in the FASTA headers and gzip the asssembly
