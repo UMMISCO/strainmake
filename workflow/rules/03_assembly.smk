@@ -13,6 +13,8 @@ rule megahit_assembly:
     log:
         stdout = "logs/03_assembly/megahit/{sample}.stdout",
         stderr = "logs/03_assembly/megahit/{sample}.stderr"
+    benchmark:
+        "benchmarks/03_assembly/megahit/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/megahit/{sample}",
         tmp_dir = "tmp/",
@@ -47,6 +49,8 @@ rule megahit_fasta_headers_renaming:
         stderr = "logs/03_assembly/megahit/{sample}.rename.stderr",
         stdout_pigz = "logs/03_assembly/megahit/{sample}.rename.pigz.stdout",
         stderr_pigz = "logs/03_assembly/megahit/{sample}.rename.pigz.stderr"
+    benchmark:
+        "benchmarks/03_assembly/megahit/{sample}.rename.benchmark.txt"
     params:
         rename_script = "workflow/scripts/megahit_fasta_header_rename.py",
         intermediate_output = "results/03_assembly/megahit/{sample}/assembly.new.fa"
@@ -74,6 +78,8 @@ rule metaspades_assembly:
     log:
         stdout = "logs/03_assembly/metaspades/{sample}.stdout",
         stderr = "logs/03_assembly/metaspades/{sample}.stderr"
+    benchmark:
+        "benchmarks/03_assembly/metaspades/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/metaspades/{sample}",
         memory_limit = config['assembly']['metaspades']['memory_limit'],
@@ -111,6 +117,8 @@ rule hybridspades_assembly:
     log:
         stdout = "logs/03_assembly/hybridspades/{sample}.stdout",
         stderr = "logs/03_assembly/hybridspades/{sample}.stderr"
+    benchmark:
+        "benchmarks/03_assembly/hybridspades/{sample}.benchmark.text"
     params:
         out_dir = "results/03_assembly/hybridspades/{sample}",
         memory_limit = config['assembly']['hybridspades']['memory_limit'],

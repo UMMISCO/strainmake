@@ -19,6 +19,8 @@ rule checkm2_assessment_LR:
     log:
         stdout = "logs/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.stdout",
         stderr = "logs/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.stderr"
+    benchmark:
+        "benchmarks/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.benchmark.txt"
     params:
         long_read_binner = config['binning']['long_read_binner'],
         assembler = config['assembly']['long_read_assembler']

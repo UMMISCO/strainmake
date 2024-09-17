@@ -26,6 +26,8 @@ rule bowtie_assembly_index:
     log:
         stdout = "logs/05_binning/bowtie2/{assembler}/{sample}.indexing.stdout",
         stderr = "logs/05_binning/bowtie2/{assembler}/{sample}.indexing.stderr"
+    benchmark:
+        "benchmarks/05_binning/bowtie2/{assembler}/{sample}.indexing.benchmark.txt"
     params:
         seed = config['binning']['bowtie2']['seed'],
         index_basename = "{sample}",
@@ -56,6 +58,8 @@ rule reads_mapping:
     log:
         stdout = "logs/05_binning/bowtie2/{assembler}/{sample}.mapping.stdout",
         stderr = "logs/05_binning/bowtie2/{assembler}/{sample}.mapping.stderr"
+    benchmark:
+        "benchmarks/05_binning/bowtie2/{assembler}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
         assembler = config['assembly']['assembler']
@@ -81,6 +85,8 @@ rule sam_to_bam:
     log:
         stdout = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stdout",
         stderr = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stderr"
+    benchmark:
+        "benchmarks/05_binning/samtools/{assembler}/{sample}.sam_to_bam.benchmark.txt"
     params:
         assembler = config['assembly']['assembler']
     wildcard_constraints:
@@ -104,6 +110,8 @@ rule bam_sorting:
     log:
         stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stdout",
         stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stderr"
+    benchmark:
+        "benchmarks/05_binning/samtools/{assembler}/{sample}.sorting.benchmark.txt"
     params:
         assembler = config['assembly']['assembler']
     wildcard_constraints:
@@ -129,6 +137,8 @@ rule get_contigs_depth:
     log:
         stdout = "logs/05_binning/metabat2/{assembler}/{sample}.depth_matrix.stdout",
         stderr = "logs/05_binning/metabat2/{assembler}/{sample}.depth_matrix.stderr"
+    benchmark:
+        "benchmarks/05_binning/metabat2/{assembler}/{sample}.depth_matrix.benchmark.txt"
     params:
         assembler = config['assembly']['assembler']
     wildcard_constraints:
@@ -157,6 +167,8 @@ rule metabat2_binning:
         stderr_mk = "logs/05_binning/metabat2/{assembler}/{sample}.mkdir.stderr",
         stdout_mv = "logs/05_binning/metabat2/{assembler}/{sample}.moving.stdout",
         stderr_mv = "logs/05_binning/metabat2/{assembler}/{sample}.moving.stderr"
+    benchmark:
+        "benchmarks/05_binning/metabat2/{assembler}/{sample}.binning.benchmark.txt"
     params:
         min_contig_size = config['binning']['metabat2']['min_contig_size'],
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
@@ -198,6 +210,8 @@ rule semibin2_binning:
         stderr = "logs/05_binning/semibin2/{assembler}/{sample}.binning.stderr",
         stdout_move = "logs/05_binning/semibin2/{assembler}/{sample}.move.stdout",
         stderr_move = "logs/05_binning/semibin2/{assembler}/{sample}.move.stderr"
+    benchmark:
+        "benchmarks/05_binning/semibin2/{assembler}/{sample}.binning.benchmark.txt"
     params:
         environment = config['binning']['semibin2']['environment']
     threads: config['binning']['semibin2']['threads']
@@ -230,6 +244,8 @@ rule vamb_binning:
     log:
         stdout = "logs/05_binning/vamb/{assembler}/{sample}.binning.stdout",
         stderr = "logs/05_binning/vamb/{assembler}/{sample}.binning.stderr",
+    benchmark:
+        "benchmarks/05_binning/vamb/{assembler}/{sample}.binning.benchmark.txt"
     params:
         minfasta = config['binning']['vamb']['minfasta'],
         gpu = config['binning']['vamb']['gpu'],

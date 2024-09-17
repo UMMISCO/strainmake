@@ -23,6 +23,8 @@ rule creating_ref_genomes_fasta:
         "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa"
     log:
         stderr = "logs/10_strain_profiling/refs/{assembler}.concatenate.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/refs/{assembler}.concatenate.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
@@ -40,6 +42,8 @@ rule indexing_ref_genomes:
     log:
         stdout = "logs/10_strain_profiling/refs_indexing/{assembler}.stdout",
         stderr = "logs/10_strain_profiling/refs_indexing/{assembler}.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/refs_indexing/{assembler}.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
@@ -54,6 +58,8 @@ rule concatenating_predicted_genes:
         "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/genes"
     output:
         "results/10_strain_profiling/refs/{assembler}/ref_genes.fa"
+    benchmark:
+        "benchmarks/10_strain_profiling/refs/{assembler}/concatenate_ref_genes.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
@@ -75,6 +81,8 @@ rule reads_mapping_on_reference:
         "../envs/minimap2.yaml"
     log:
         stderr = "logs/10_strain_profiling/minimap2/{assembler}/{sample}.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/minimap2/{assembler}/{sample}.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
         sample="|".join(SAMPLES)
@@ -95,6 +103,8 @@ rule sam_to_bam_strains_profiling:
     log:
         stdout = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.stdout",
         stderr = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
@@ -116,6 +126,8 @@ rule bam_sorting_strains_profiling:
     log:
         stdout = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sorting.stdout",
         stderr = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sorting.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/samtools/{assembler}/{sample}.sorting.benchmark.txt"
     wildcard_constraints:
         sample="|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
@@ -132,6 +144,8 @@ rule bam_indexing:
         "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai"
     conda:
         "../envs/samtools.yaml"
+    benchmark:
+        "benchmarks/10_strain_profiling/minimap2/{assembler}/{sample}.bam_indexing.benchmark.txt"
     shell:
         """ 
         samtools index {input}
@@ -149,6 +163,8 @@ rule produce_scaffolds_to_bin_file:
     log:
         stdout = "logs/10_strain_profiling/inStrain/{assembler}/stb.stdout",
         stderr = "logs/10_strain_profiling/inStrain/{assembler}/stb.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/inStrain/{assembler}/stb.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
@@ -168,6 +184,8 @@ rule variant_calling:
         "../envs/freebayes.yaml"
     log:
         stderr = "logs/10_strain_profiling/freeboys/{assembler}/{sample}.variant_calling.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/freeboys/{assembler}/{sample}.variant_calling.benchmark.txt"
     params:
         min_alternate_count = config['strains_profiling']['freebayes']['min_alternate_count'],
         min_alternate_fraction = config['strains_profiling']['freebayes']['min_alternate_fraction']
@@ -194,6 +212,8 @@ rule instrain_profiling:
     log:
         stdout = "logs/10_strain_profiling/inStrain/{assembler}/{sample}.profile.stdout",
         stderr = "logs/10_strain_profiling/inStrain/{assembler}/{sample}.profile.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/inStrain/{assembler}/{sample}.profile.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
@@ -219,6 +239,8 @@ rule instrain_comparing:
     log:
         stdout = "logs/10_strain_profiling/inStrain/{assembler}/compare.stdout",
         stderr = "logs/10_strain_profiling/inStrain/{assembler}/compare.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/inStrain/{assembler}/compare.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     threads: config['strains_profiling']['instrain']['threads']
@@ -245,6 +267,8 @@ rule floria_profiling:
     log:
         stdout = "logs/10_strain_profiling/floria/{assembler}/{sample}.profile.stdout",
         stderr = "logs/10_strain_profiling/floria/{assembler}/{sample}.profile.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/floria/{assembler}/{sample}.profile.benchmark.txt"
     params:
         out_dir = "results/10_strain_profiling/floria/{assembler}/{sample}"
     wildcard_constraints:
