@@ -12,6 +12,8 @@ rule fastqc_before_preprocessing:
     log:
         stdout = "logs/01_qc/fastqc/{sample}.stdout",
         stderr = "logs/01_qc/fastqc/{sample}.stderr"   
+    benchmark:
+        "benchmarks/01_qc/fastqc/{sample}.benchmark.txt"
     params:
         out_dir = "results/01_qc/fastqc/{sample}"
     shell:

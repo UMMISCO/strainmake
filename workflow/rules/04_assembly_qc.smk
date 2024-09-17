@@ -9,6 +9,8 @@ rule quast_qc:
     log:
         stdout = "logs/04_assembly_qc/quast/{assembler}/{sample}.stdout",
         stderr = "logs/04_assembly_qc/quast/{assembler}/{sample}.stderr"
+    benchmark:
+        "benchmarks/04_assembly_qc/quast/{assembler}/{sample}.benchmark.txt"
     params:
         out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}"
     threads: config['quast']['threads']
