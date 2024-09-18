@@ -5,3 +5,4 @@ results/
 tmp/
 data/gtdb_tk
 __pycache__/
+benchmarks/
