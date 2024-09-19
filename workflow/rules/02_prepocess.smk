@@ -105,7 +105,7 @@ rule fastqc_after_preprocessing:
         stdout = "logs/02_preprocess/fastqc/{sample}_{read}.clean.stdout",
         stderr = "logs/02_preprocess/fastqc/{sample}_{read}.clean.stderr"
     benchmark:
-        "benchmarks/02_preprocess/fastqc/{sample}_{read}.benchmark.txt"
+        "benchmarks/02_preprocess/fastqc/{sample}.{read}.benchmark.txt"
     shell:
         """
         fastqc {input} -o results/02_preprocess/fastqc/ \
