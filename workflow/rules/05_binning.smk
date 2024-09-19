@@ -112,7 +112,9 @@ rule bam_sorting:
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
-            > {log.stdout} 2> {log.stderr}
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        rm {input.bam}
         """
 
 

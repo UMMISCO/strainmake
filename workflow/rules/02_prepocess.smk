@@ -38,7 +38,6 @@ rule host_decontamination:
     conda:
         "../envs/bowtie2.yaml"
     log:
-        stdout = "logs/02_preprocess/bowtie2/{sample}.stdout",
         stderr = "logs/02_preprocess/bowtie2/{sample}.stderr"
     params:
         organism_name = config['bowtie2']['index_name'],
@@ -49,7 +48,7 @@ rule host_decontamination:
         bowtie2 -p {threads} -x "{input.index}/{params.organism_name}" \
             -1 {input.r1} -2 {input.r2} \
             --un-conc-gz {params.bowtie_output_name} \
-            > {log.stdout} 2> {log.stderr}
+            > /dev/null 2> {log.stderr}
         """
 
 # get the bowtie2 index from the internet
