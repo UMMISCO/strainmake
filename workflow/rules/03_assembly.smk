@@ -118,7 +118,7 @@ rule hybridspades_assembly:
         stdout = "logs/03_assembly/hybridspades/{sample}.stdout",
         stderr = "logs/03_assembly/hybridspades/{sample}.stderr"
     benchmark:
-        "benchmarks/03_assembly/hybridspades/{sample}.benchmark.text"
+        "benchmarks/03_assembly/hybridspades/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/hybridspades/{sample}",
         memory_limit = config['assembly']['hybridspades']['memory_limit'],
