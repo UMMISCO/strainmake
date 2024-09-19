@@ -10,6 +10,8 @@ rule fastp:
     log:
         stdout = "logs/02_preprocess/fastp/{sample}.stdout",
         stderr = "logs/02_preprocess/fastp/{sample}.stderr"
+    benchmark:
+        "benchmarks/02_preprocess/fastp/{sample}.benchmark.txt"
     params:
         compression_level = config['fastp']['compression'],
         min_phred = config['fastp']['qualified_quality_phred'],
@@ -39,6 +41,8 @@ rule host_decontamination:
         "../envs/bowtie2.yaml"
     log:
         stderr = "logs/02_preprocess/bowtie2/{sample}.stderr"
+    benchmark:
+        "benchmarks/02_preprocess/bowtie2/{sample}.benchmark.txt"
     params:
         organism_name = config['bowtie2']['index_name'],
         bowtie_output_name = "results/02_preprocess/bowtie2/{sample}_%.clean.fastq.gz"
@@ -64,11 +68,12 @@ rule get_bowtie_index:
         mv_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.mv.stderr",
         rm_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.rm.stdout",
         rm_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.rm.stderr"
-
     conda:
         "../envs/get_bowtie_index.yaml"
     params:
         organism_name = config['bowtie2']['index_name']
+    benchmark:
+        "benchmarks/02_preprocess/bowtie2/get_bowtie_index.benchmark.txt"
     shell:
     # downloading the already made index file and unzipping it. The indexes 
     # will be in a folder of name "index"
@@ -98,6 +103,8 @@ rule fastqc_after_preprocessing:
     log:
         stdout = "logs/02_preprocess/fastqc/{sample}_{read}.clean.stdout",
         stderr = "logs/02_preprocess/fastqc/{sample}_{read}.clean.stderr"
+    benchmark:
+        "benchmarks/02_preprocess/fastqc/{sample}.{read}.benchmark.txt"
     shell:
         """
         fastqc {input} -o results/02_preprocess/fastqc/ \

@@ -22,6 +22,8 @@ rule checkm2_database:
     log:
         stdout = "logs/06_binning_qc/checkm2/checkm2.db.stdout",
         stderr = "logs/06_binning_qc/checkm2/checkm2.db.stderr"
+    benchmark:
+        "benchmarks/06_binning_qc/checkm2/checkm2.db.benchmark.txt"
     params:
         output_path = "results/06_binning_qc/checkm2/database"
     shell:
@@ -43,6 +45,8 @@ rule checkm2_assessment:
     log:
         stdout = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stdout",
         stderr = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stderr"
+    benchmark:
+        "benchmarks/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.benchmark.txt"
     params:
         binner = config['binning']['binner'],
         assembler = config['assembly']['assembler']
@@ -82,6 +86,8 @@ rule checkm2_merge_results:
     log:
         stdout = "logs/06_binning_qc/checkm2/samples/{sample}/merge_reports.stdout",
         stderr = "logs/06_binning_qc/checkm2/samples/{sample}/merge_reports.stderr"
+    benchmark:
+        "benchmarks/06_binning_qc/checkm2/samples/{sample}/merge_reports.benchmark.txt"
     shell:
         """
         python workflow/scripts/merge_checkm2_reports.py \
@@ -100,6 +106,8 @@ rule checkm2_plot_results:
     log:
         stdout = "logs/06_binning_qc/checkm2/samples/{sample}/plot_reports.stdout",
         stderr = "logs/06_binning_qc/checkm2/samples/{sample}/plot_reports.stderr"
+    benchmark:
+        "benchmarks/06_binning_qc/checkm2/samples/{sample}/plot_reports.benchmark.txt"
     shell:
         """
         Rscript workflow/scripts/checkm2_assessment_plots.R \

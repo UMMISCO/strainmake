@@ -10,6 +10,8 @@ rule metaflye_assembly:
     log:
         stdout = "logs/03_assembly/metaflye/{sample}.stdout",
         stderr = "logs/03_assembly/metaflye/{sample}.stderr"
+    benchmark:
+        "benchmarks/03_assembly/metaflye/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/LR/metaflye/{sample}",
         method_flag = "--nano-hq" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio-hifi",

@@ -22,6 +22,8 @@ rule binette_refinement_LR:
         stderr = "logs/07_bins_refinement/binette/{assembler}/{sample}/bins_refinement.stderr",
         stdout_check = "logs/07_bins_refinement/binette/{assembler}/{sample}/check.stdout",
         stderr_check = "logs/07_bins_refinement/binette/{assembler}/{sample}/check.stderr"
+    benchmark:
+        "benchmarks/07_bins_refinement/binette/{assembler}/{sample}/bins_refinement.benchmark.txt"
     params:
         # constructing the precise folder path with bins from the input
         bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input.bins_dirs],
