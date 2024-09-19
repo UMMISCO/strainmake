@@ -173,7 +173,9 @@ rule genes_calling:
 rule coverage_in_mapping:
     input:
         dereplicated_and_filtered_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
-        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam"
+        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
+        # needing the indexed BAM also
+        mapping_index = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai"
     output:
         "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/coverage.tsv"
     conda:
