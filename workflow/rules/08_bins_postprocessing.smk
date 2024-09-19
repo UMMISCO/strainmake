@@ -3,15 +3,15 @@ SAMPLES = read_table(SAMPLES_TABLE)
 
 rule gtdb_tk_taxonomic_annotation:
     input:
-        # folder with refined bins
-        refined_bins = "results/07_bins_refinement/binette/{assembler}/{sample}",
+        # folder with dereplicated and filtered bins (= MAG)
+        refined_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
         ref_data = "data/gtdb_tk/release220"
-    output: directory("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}")
+    output: directory("results/08_bins_postprocessing/gtdb_tk/{assembler}")
     conda:
         "../envs/gtdb_tk.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}/classify.stdout",
-        stderr = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}/classify.stderr"
+        stdout = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/classify.stdout",
+        stderr = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/classify.stderr"
     params:
         other_args = config['bins_postprocessing']['gtdbtk']['other_args']
     threads: config['bins_postprocessing']['gtdbtk']['threads']
