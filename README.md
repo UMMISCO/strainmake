@@ -155,3 +155,13 @@ options:
   --tsv_output_binned_rate TSV_OUTPUT_BINNED_RATE
                         File to save the binning rate of contigs in TSV format
 ```
+
+## Using preprocessed reads
+
+If your sequencing reads have already been preprocessed, you can use the [`already_preprocessed_seq.py`](workflow/scripts/prepare/already_preprocessed_seq.py) script to set up the `results` directory so that the pipeline starts directly from the assembly step, using your preprocessed FASTQ files.
+
+To do this, provide a TSV file formatted like [`config_data.tsv`](data/config_data.tsv). The script will create symbolic links in the `results` folder that point to your preprocessed FASTQ files, saving storage space by avoiding unnecessary duplication.
+
+This approach ensures that the pipeline can use your preprocessed data without needing to process the FASTQ files again.
+
+

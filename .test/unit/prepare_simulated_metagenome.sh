@@ -50,10 +50,12 @@ mkdir -p "3._ALL_seq"
 mkdir -p "4._SR_fail_if_LR_only"
 mkdir -p "5._LR_fail_if_SR_only"
 mkdir -p "6._SR_not_paired"
+mkdir -p "7._ALL_already_preprocessed"
 
 python3 generate_metadata_table.py data/ SR && mv metadata.tsv "1._SR_only"
 python3 generate_metadata_table.py data/ LR && mv metadata.tsv "2._LR_only"
 python3 generate_metadata_table.py data/ all && mv metadata.tsv "3._ALL_seq"
+python3 generate_metadata_table.py data/ all && mv metadata.tsv "7._ALL_already_preprocessed"
 
 cp "1._SR_only/metadata.tsv" "5._LR_fail_if_SR_only"
 cp "2._LR_only/metadata.tsv" "4._SR_fail_if_LR_only"

@@ -2,7 +2,9 @@ import unittest
 import subprocess
 import os
 import re
+import shutil
 import pandas as pd
+from pathlib import Path
 
 class TestPipeline(unittest.TestCase):
     """
@@ -31,6 +33,9 @@ class TestPipeline(unittest.TestCase):
         os.makedirs(cls.case5, exist_ok=True)
 
         cls.case6 = "6._SR_not_paired"
+        os.makedirs(cls.case6, exist_ok=True)
+
+        cls.case7 = "7._ALL_already_preprocessed"
         os.makedirs(cls.case6, exist_ok=True)
         
     @classmethod
@@ -269,6 +274,103 @@ class TestPipeline(unittest.TestCase):
 
         # check if a ValueError was raised for this problem
         self.assertIn("ValueError", result.stdout)
+
+    def test_reads_already_preprocessed_implementation(self):
+        """
+        Method for testing if the method implemented for taking into account already preprocessed 
+        samples works well
+        """
+
+        prepare_results_folder_script = "../../workflow/scripts/prepare/already_preprocessed_seq.py"
+        metadata_table = os.path.join(self.case7, "metadata.tsv")
+
+        # testing if if the results directory folder is well created, with good symlinks
+        result = subprocess.run(
+            [
+                "python3",
+                prepare_results_folder_script,
+                "--results_dir",
+                "../../results",
+                metadata_table
+            ],
+            capture_output=True, text=True
+        )
+        
+        self.assertEqual(result.returncode, 0, f"The script did not run successfully: {result.stderr} {result.stdout}")
+
+        # we should have a `results` folder and  three symlinks:
+        # results/02_preprocess/bowtie2/SAMPLE1_1.clean.fastq.gz -> /path/to/pipeline/.test/unit/data/fake_illumina_R1.SAMPLE1.fastq.gz
+        # results/02_preprocess/bowtie2/SAMPLE1_2.clean.fastq.gz -> /path/to/pipeline/.test/unit/data/fake_illumina_R2.SAMPLE1.fastq.gz
+        # results/02_preprocess/fastp_long_read/SAMPLE1_1.fastq.gz -> /path/to/pipeline/.test/unit/data/fake_nanopore_sample0_aligned_reads.SAMPLE1.fastq.gz
+
+        # test if "results" exist
+        self.assertTrue(os.path.exists("../../results"), "The 'results' folder has not been created")
+
+        # checking if results/02_preprocess/bowtie2/SAMPLE1_1.clean.fastq.gz, results/02_preprocess/bowtie2/SAMPLE1_2.clean.fastq.gz
+        # and results/02_preprocess/fastp_long_read/SAMPLE1_1.fastq.gz are symlinks
+        expected_symlinks = [
+            "../../results/02_preprocess/bowtie2/SAMPLE1_1.clean.fastq.gz",
+            "../../results/02_preprocess/bowtie2/SAMPLE1_2.clean.fastq.gz",
+            "../../results/02_preprocess/fastp_long_read/SAMPLE1_1.fastq.gz",
+        ]
+
+        for symlink in expected_symlinks:
+            symlink_path = Path(symlink)
+
+            # checking if the symlink exists
+            self.assertTrue(symlink_path.exists(), f"Symlink {symlink} does not exist")
+
+            # checking if it's actually a symlink
+            self.assertTrue(symlink_path.is_symlink(), f"{symlink} is not a symlink")
+
+        # we then run the pipeline in dry mode and test that there is no rule of preprocessing
+        # (since here we take these samples as already preprocessed)
+        config_path = os.path.join(self.case7, "config.yaml")
+        result = subprocess.run(
+            [
+                "snakemake", 
+                "-c", "4", 
+                "-p",
+                "--conda-frontend", "conda", 
+                "--use-conda", 
+                "--configfile", config_path,
+                "-s", "../../workflow/Snakefile.already_preprocessed_seq.smk",
+                "--directory", "../../",
+                "-n"
+            ],
+            capture_output=True, text=True
+        )   
+
+        # check if Snakemake command was successful
+        self.assertEqual(result.returncode, 0, f"Snakemake failed: {result.stderr} {result.stdout}")
+        
+        snakemake_jobs = self.parse_snakemake_dryrun_output(result.stdout)
+        # list of preprocessing jobs that shouldn't appear in the dry-run
+        preprocessing_jobs = [
+            "fastqc_before_preprocessing", 
+            "fastp", 
+            "host_decontamination", 
+            "fastqc_after_preprocessing", 
+            "fastp_long_read"
+        ]
+
+        # asserting that none of the preprocessing jobs are scheduled
+        for index, row in snakemake_jobs.iterrows():
+            self.assertNotIn(row["job"], preprocessing_jobs, 
+                             f"Preprocessing job {row['job']} should not be scheduled for already preprocessed samples\n{snakemake_jobs}")
+
+        # cleaning by removing symlinks and the "results" directory
+        result = subprocess.run(
+            [
+                "python3",
+                prepare_results_folder_script,
+                "--clean",
+                "--results_dir",
+                "../../results",
+                metadata_table
+            ])  
+
+        shutil.rmtree("../../results")
 
 if __name__ == "__main__":
     unittest.main()
