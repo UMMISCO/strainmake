@@ -61,10 +61,6 @@ binning:
     - vamb
   long_read_binner:
     - semibin2
-  # bowtie2 configuration for both indexing and mapping
-  bowtie2:
-    threads: 4 # for both indexing and mapping
-    seed: 199999
   # minimap2 configuration for long reads mapping
   minimap2:
     threads: 4

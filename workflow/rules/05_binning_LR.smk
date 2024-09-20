@@ -14,14 +14,14 @@ rule reads_mapping_LR:
         # assembly
         assembly = "results/03_assembly/LR/{assembler_lr}/{sample_lr}/assembly.fa.gz"
     output:
-        sam = "results/05_binning/minimap2/{assembler_lr}/{sample_lr}.sam"
+        sam = "results/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        stdout = "logs/05_binning/minimap2/{assembler_lr}/{sample_lr}.mapping.stdout",
-        stderr = "logs/05_binning/minimap2/{assembler_lr}/{sample_lr}.mapping.stderr"
+        stdout = "logs/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.mapping.stdout",
+        stderr = "logs/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.mapping.stderr"
     benchmark:
-        "benchmarks/05_binning/minimap2/{assembler_lr}/{sample_lr}.mapping.benchmark.txt"
+        "benchmarks/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.mapping.benchmark.txt"
     params:
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
     wildcard_constraints:
@@ -37,7 +37,7 @@ rule reads_mapping_LR:
 
 rule sam_to_bam_LR:
     input:
-        sam = "results/05_binning/minimap2/{assembler_lr}/{sample_lr}.sam"
+        sam = "results/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.sam"
     output:
         bam = "results/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.bam"
     conda:

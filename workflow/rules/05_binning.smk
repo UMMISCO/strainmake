@@ -14,72 +14,38 @@ if ASSEMBLER == None:
 if HYBRID_ASSEMBLER == None:
        HYBRID_ASSEMBLER = []
 
-# rules for mapping reads on assembly and producing a .BAM file
-rule bowtie_assembly_index:
-    input:
-        # assemblies produced in step 03
-        "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
-    output:
-        directory("results/05_binning/bowtie2/index/{assembler}/{sample}")
-    conda:
-        "../envs/bowtie2.yaml"
-    log:
-        stdout = "logs/05_binning/bowtie2/{assembler}/{sample}.indexing.stdout",
-        stderr = "logs/05_binning/bowtie2/{assembler}/{sample}.indexing.stderr"
-    benchmark:
-        "benchmarks/05_binning/bowtie2/{assembler}/{sample}.indexing.benchmark.txt"
-    params:
-        seed = config['binning']['bowtie2']['seed'],
-        index_basename = "{sample}",
-        assembler = config['assembly']['assembler']
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
-    threads: config['binning']['bowtie2']['threads']
-    shell:
-        """
-        mkdir -p {output} \
-        && \
-        bowtie2-build --threads {threads} --seed {params.seed} \
-            {input} "{output}/{params.index_basename}" \
-            > {log.stdout} 2> {log.stderr}
-        """
-
 rule reads_mapping:
     input:
         # metagenome reads
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-        # assemblies index produced in rule "bowtie_assembly_index"
-        bowtie_index = "results/05_binning/bowtie2/index/{assembler}/{sample}"
+        # assembly to map reads on
+        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
     output:
-        sam = "results/05_binning/bowtie2/{assembler}/{sample}.sam"
+        "results/05_binning/minimap2/SR/{assembler}/{sample}.sam"
     conda:
-        "../envs/bowtie2.yaml"
+        "../envs/minimap2.yaml"
     log:
-        stdout = "logs/05_binning/bowtie2/{assembler}/{sample}.mapping.stdout",
-        stderr = "logs/05_binning/bowtie2/{assembler}/{sample}.mapping.stderr"
+        stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr"
     benchmark:
-        "benchmarks/05_binning/bowtie2/{assembler}/{sample}.mapping.benchmark.txt"
+        "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
         assembler = config['assembly']['assembler']
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
-    threads: config['binning']['bowtie2']['threads']
+    threads: config['binning']['minimap2']['threads']
     shell:
         """
-        bowtie2 -p {threads} \
-            -x "{input.bowtie_index}/{params.index_basename}" \
-            -1 {input.r1} -2 {input.r2} \
-            -S {output.sam} \
-            > {log.stdout} 2> {log.stderr}
+        minimap2 -ax sr -t {threads} \
+            {input.assembly} {input.r1} {input.r2} > {output} 2> {log.stderr}
         """
 
 rule sam_to_bam:
     input:
-        sam = "results/05_binning/bowtie2/{assembler}/{sample}.sam"
+        sam = "results/05_binning/minimap2/SR/{assembler}/{sample}.sam"
     output:
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.bam"
+        bam = "results/05_binning/minimap2/SR/{assembler}/{sample}.bam"
     conda:
         "../envs/samtools.yaml"
     log:
@@ -102,9 +68,9 @@ rule sam_to_bam:
 rule bam_sorting:
     input:
         # reads mapped on the assembly
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.bam"
+        bam = "results/05_binning/minimap2/SR/{assembler}/{sample}.bam"
     output:
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
+        bam = "results/05_binning/minimap2/SR/{assembler}/{sample}.sorted.bam"
     conda:
         "../envs/samtools.yaml"
     log:
@@ -131,7 +97,7 @@ rule bam_sorting:
 # metabat2
 rule get_contigs_depth:
     input:
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
+        bam = "results/05_binning/minimap2/SR/{assembler}/{sample}.sorted.bam"
     output:
         bam_depth_matrix = "results/05_binning/metabat2/{assembler}/{sample}.depth_matrix.tab"
     conda:
@@ -202,7 +168,7 @@ rule metabat2_binning:
 rule semibin2_binning:
     input:
         assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
+        bam = "results/05_binning/minimap2/SR/{assembler}/{sample}.sorted.bam"
     output:
         output = directory("results/05_binning/semibin2/bins/{assembler}/{sample}")
     conda:
@@ -238,7 +204,7 @@ rule semibin2_binning:
 rule vamb_binning:
     input:
         assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        bam = "results/05_binning/bowtie2/{assembler}/{sample}.sorted.bam"
+        bam = "results/05_binning/minimap2/SR/{assembler}/{sample}.sorted.bam"
     output:
         output = directory("results/05_binning/vamb/bins/{assembler}/{sample}")
     conda:
