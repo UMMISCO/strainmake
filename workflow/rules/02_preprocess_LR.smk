@@ -9,6 +9,8 @@ rule fastp_long_read:
     log:
         stdout = "logs/02_preprocess/fastp_long_read/{sample_lr}.stdout",
         stderr = "logs/02_preprocess/fastp_long_read/{sample_lr}.stderr"
+    benchmark:
+        "benchmarks/02_preprocess/fastp_long_read/{sample_lr}.benchmark.txt"
     params:
         compression_level = config['fastp_long_read']['compression'],
         min_phred = config['fastp_long_read']['qualified_quality_phred'],

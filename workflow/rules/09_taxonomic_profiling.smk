@@ -6,6 +6,8 @@ rule metaphlan_profiling:
     log:
         stdout = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stdout",
         stderr = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stderr"
+    benchmark:
+        "benchmarks/09_taxonomic_profiling/metaphlan/{sample}.profile.benchmark.txt"
     threads: config['taxonomic_profiling']['metaphlan']['threads']
     shell:
         """

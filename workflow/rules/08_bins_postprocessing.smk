@@ -12,6 +12,8 @@ rule gtdb_tk_taxonomic_annotation:
     log:
         stdout = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/classify.stdout",
         stderr = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/classify.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/gtdb_tk/{assembler}/classify.benchmark.txt"
     params:
         other_args = config['bins_postprocessing']['gtdbtk']['other_args']
     threads: config['bins_postprocessing']['gtdbtk']['threads']
@@ -31,6 +33,8 @@ rule list_refined_genomes:
     log:
         stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stdout",
         stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/list.benchmark.txt"
     params:
         # constructing the precise folder path with bins from the input
         bins_folder = lambda wildcards, input: [f"{dir}/final_bins" for dir in input]
@@ -52,6 +56,8 @@ rule copy_and_rename_bins:
     log:
         stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/copy_and_rename.stdout",
         stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/copy_and_rename.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/copy_and_rename.benchmark.txt"
     shell:
         """
         python3 workflow/scripts/make_bin_names_unambiguous.py {input} {output.bins_name_link_table} \
@@ -66,6 +72,8 @@ rule list_refined_genomes_after_unduplicating_filenames:
     log:
         stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.stdout",
         stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.benchmark.txt"
     shell:
         """
         bash workflow/scripts/list_refined_genomes.sh {output} {input} \
@@ -82,6 +90,8 @@ rule genomes_dereplication:
     log:
         stdout = "logs/08_bins_postprocessing/drep/{assembler}/dereplication.stdout",
         stderr = "logs/08_bins_postprocessing/drep/{assembler}/dereplication.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/drep/{assembler}/dereplication.benchmark.txt"
     params:
         comparison_algorithm = config['bins_postprocessing']['drep']['comparison_algorithm'],
         other_args = config['bins_postprocessing']['drep']['other_args'],
@@ -112,6 +122,8 @@ rule dereplicated_genomes_quality_and_filtering:
         stderr = "logs/08_bins_postprocessing/checkm2/{assembler}.assessment.stderr",
         stdout_filtration = "logs/08_bins_postprocessing/genomes_filtration/{assembler}.filtration.stdout",
         stderr_filtration = "logs/08_bins_postprocessing/genomes_filtration/{assembler}.filtration.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/checkm2/{assembler}.assessment_and_filtration.benchmark.txt"
     params:
         minimal_completeness = config['bins_postprocessing']['genomes_quality_filtration']['filtration']['min_completeness'],
         maximal_contamination = config['bins_postprocessing']['genomes_quality_filtration']['filtration']['max_contamination']
@@ -146,6 +158,8 @@ rule genes_calling:
     log:
         stdout = "logs/08_bins_postprocessing/prodigal/{assembler}.stdout",
         stderr = "logs/08_bins_postprocessing/prodigal/{assembler}.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/prodigal/{assembler}.benchmark.txt"
     threads: config['bins_postprocessing']['genes_prediction']['prodigal']['threads']
     shell:
         """
@@ -159,7 +173,9 @@ rule genes_calling:
 rule coverage_in_mapping:
     input:
         dereplicated_and_filtered_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
-        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam"
+        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
+        # needing the indexed BAM also
+        mapping_index = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai"
     output:
         "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/coverage.tsv"
     conda:
@@ -167,6 +183,8 @@ rule coverage_in_mapping:
     log:
         stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.stdout",
         stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.benchmark.txt"
     threads: config['bins_postprocessing']['profiling']['checkm1']['threads']
     shell:
         """
@@ -183,6 +201,8 @@ rule bins_distribution_estimation:
     log: 
         stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.stdout",
         stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.benchmark.txt"
     shell:
         """
         checkm profile --tab_table -f  {output} {input} > {log.stdout} 2> {log.stderr}
@@ -196,6 +216,8 @@ rule process_estimated_bins_distribution:
     log:
         stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.stdout",
         stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.benchmark.txt"
     shell:
         """
         python3 workflow/scripts/process_checkm1_profile_table.py --input_table {input} \
