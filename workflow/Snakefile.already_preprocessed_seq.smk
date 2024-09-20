@@ -75,12 +75,12 @@ rule all:
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR),
             # bins post-processing
-            expand("results/08_bins_postprocessing/gtdb_tk/{assembler}/{sample}", 
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             expand("results/08_bins_postprocessing/dRep/{assembler}",
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER),
             expand("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER),
+            expand("results/08_bins_postprocessing/gtdb_tk/{assembler}", 
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER),
             expand("results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.processed.tsv",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             # taxonomic profiling
