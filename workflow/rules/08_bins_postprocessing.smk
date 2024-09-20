@@ -19,7 +19,7 @@ rule gtdb_tk_taxonomic_annotation:
     threads: config['bins_postprocessing']['gtdbtk']['threads']
     shell:
         """
-        gtdbtk classify_wf --genome_dir {input.refined_bins}/final_bins --cpus {threads} --out_dir {output} \
+        gtdbtk classify_wf --genome_dir {input.refined_bins} --cpus {threads} --out_dir {output} \
             --extension ".fa" \
             --skip_ani_screen --pplacer_cpus 1 \
             {params.other_args} \
