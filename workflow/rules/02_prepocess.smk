@@ -33,7 +33,7 @@ rule host_decontamination:
     input:
         r1 = "results/02_preprocess/fastp/{sample}_1.fastq.gz",
         r2 = "results/02_preprocess/fastp/{sample}_2.fastq.gz",
-        index = directory("results/02_preprocess/bowtie2/index")
+        index = "results/02_preprocess/bowtie2/index"
     output:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
