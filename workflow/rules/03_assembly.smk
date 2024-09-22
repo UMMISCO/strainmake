@@ -56,7 +56,8 @@ rule megahit_fasta_headers_renaming:
     params:
         rename_script = "workflow/scripts/megahit_fasta_header_rename.py",
         intermediate_output = "results/03_assembly/megahit/{sample}/assembly.new.fa",
-        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh"
+        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
+        out_dir = "results/03_assembly/megahit/{sample}"
     shell:
         """
         python3 {params.rename_script} {input} {params.intermediate_output} \
