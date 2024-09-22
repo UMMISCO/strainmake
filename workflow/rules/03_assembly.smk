@@ -8,7 +8,6 @@ rule megahit_assembly:
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
         assembly = "results/03_assembly/megahit/{sample}/assembly.fa",
-        intermediate_contigs_archive = "results/03_assembly/megahit/{sample}/intermediate_contigs.tar.gz"
     conda:
         "../envs/megahit.yaml"
     log:
@@ -36,17 +35,15 @@ rule megahit_assembly:
         && \
         rm -r {params.tmp_output} \
         && \
-        mv {params.out_dir}/final.contigs.fa {params.out_dir}/assembly.fa \
-        && \
-        tar --use-compress-program="pigz --recursive" --remove-files \
-            -cvf {params.out_dir}/intermediate_contigs.tar.gz \
-            {params.out_dir}/intermediate_contigs
+        mv {params.out_dir}/final.contigs.fa {params.out_dir}/assembly.fa
         """
 
 # for VAMB for example. It will replace the spaces in the FASTA headers and gzip the asssembly
 rule megahit_fasta_headers_renaming:
     input: "results/03_assembly/megahit/{sample}/assembly.fa"
-    output: "results/03_assembly/megahit/{sample}/assembly.fa.gz"
+    output: 
+        assembly = "results/03_assembly/megahit/{sample}/assembly.fa.gz",
+        other_files = "results/03_assembly/metaspades/{sample}/other_files.tar.gz"
     conda:
         "../envs/pigz.yaml"
     log:
@@ -58,7 +55,8 @@ rule megahit_fasta_headers_renaming:
         "benchmarks/03_assembly/megahit/{sample}.rename.benchmark.txt"
     params:
         rename_script = "workflow/scripts/megahit_fasta_header_rename.py",
-        intermediate_output = "results/03_assembly/megahit/{sample}/assembly.new.fa"
+        intermediate_output = "results/03_assembly/megahit/{sample}/assembly.new.fa",
+        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh"
     shell:
         """
         python3 {params.rename_script} {input} {params.intermediate_output} \
@@ -68,7 +66,9 @@ rule megahit_fasta_headers_renaming:
         && \
         mv {params.intermediate_output} {input} \
         && \
-        pigz --verbose {input} > {log.stdout_pigz} 2> {log.stderr_pigz}
+        pigz --verbose {input} > {log.stdout_pigz} 2> {log.stderr_pigz} \
+        && \
+        bash {params.compressing_files_script} {params.out_dir}
         """
 
 rule metaspades_assembly:
@@ -90,7 +90,7 @@ rule metaspades_assembly:
         out_dir = "results/03_assembly/metaspades/{sample}",
         memory_limit = config['assembly']['metaspades']['memory_limit'],
         min_contig_len = config['assembly']['metaspades']['min_contig_len'],
-        compressing_files_script = "workflow/scripts/compress_spades_results.sh"
+        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh"
     threads: config['assembly']['metaspades']['threads']
     shell:
         """
@@ -134,7 +134,7 @@ rule hybridspades_assembly:
         memory_limit = config['assembly']['hybridspades']['memory_limit'],
         method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
         min_contig_len = config['assembly']['hybridspades']['min_contig_len'],
-        compressing_files_script = "workflow/scripts/compress_spades_results.sh"
+        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh"
     threads: config['assembly']['hybridspades']['threads']
     shell:
         """
