@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# checking if the path to the SPAdes results directory is provided
+# checking if the path to the SPAdes/MEGAHIT results directory is provided
 if [ -z "$1" ]; then
-  echo "Usage: bash compress_spades_results.sh path/to/spades/results"
+  echo "Usage: bash compress_spades_megahit_results.sh path/to/assembly/results"
   exit 1
 fi
 
