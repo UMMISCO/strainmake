@@ -18,7 +18,7 @@ rule megahit_assembly:
     params:
         out_dir = "results/03_assembly/megahit/{sample}",
         tmp_dir = "tmp/",
-        tmp_output = "{sample}_tmp_megahit_output/",
+        tmp_output = "{sample}_tmp_megahit_output",
         min_contig_len = config['assembly']['megahit']['min_contig_len']
     threads: config['assembly']['megahit']['threads']
     shell:
@@ -43,7 +43,7 @@ rule megahit_fasta_headers_renaming:
     input: "results/03_assembly/megahit/{sample}/assembly.fa"
     output: 
         assembly = "results/03_assembly/megahit/{sample}/assembly.fa.gz",
-        other_files = "results/03_assembly/metaspades/{sample}/other_files.tar.gz"
+        other_files = "results/03_assembly/megahit/{sample}/other_files.tar.gz"
     conda:
         "../envs/pigz.yaml"
     log:

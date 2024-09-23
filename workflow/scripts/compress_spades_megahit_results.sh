@@ -18,8 +18,11 @@ fi
 # moving to the SPAdes results directory
 cd "$SPADES_DIR" || exit 1
 
+echo "Directory content before:"
+ls
+
 # creating a tar.gz archive with all files except "assembly.fa.gz"
-tar --use-compress-program="pigz --recursive" -cvf other_files.tar.gz --exclude="assembly.fa.gz" *
+tar --use-compress-program="pigz --recursive" -cf other_files.tar.gz --exclude="assembly.fa.gz" *
 
 # checking if the archive was successfully created
 if [ -f "other_files.tar.gz" ]; then
@@ -30,3 +33,6 @@ else
     echo "Error: Failed to create other_files.tar.gz."
     exit 1
 fi
+
+echo "Directory content after:"
+ls
