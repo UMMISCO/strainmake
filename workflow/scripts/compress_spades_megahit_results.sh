@@ -16,18 +16,18 @@ if [ ! -d "$SPADES_DIR" ]; then
 fi
 
 # moving to the SPAdes results directory
-cd "$SPADES_DIR" || exit 1
+cd "$SPADES_DIR"
 
 echo "Directory content before:"
 ls
 
 # creating a tar.gz archive with all files except "assembly.fa.gz"
-tar --use-compress-program="pigz --recursive" -cf other_files.tar.gz --exclude="assembly.fa.gz" *
+time tar --use-compress-program="pigz --recursive" -cvf other_files.tar.gz --exclude="assembly.fa.gz" *
 
 # checking if the archive was successfully created
 if [ -f "other_files.tar.gz" ]; then
     # if it was successful, deleting all files except "assembly.fa.gz" and "other_files.tar.gz"
-    find . ! -name "assembly.fa.gz" ! -name "other_files.tar.gz" -type f -delete
+    find . ! -name "assembly.fa.gz" ! -name "other_files.tar.gz" -type f,d -print -delete
     echo "Compression complete. Only assembly.fa.gz and other_files.tar.gz remain."
 else
     echo "Error: Failed to create other_files.tar.gz."
