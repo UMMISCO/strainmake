@@ -76,6 +76,12 @@ Human assembly for mapping:
 | :------- | :----------------------------------------------- | :-------------------------------------------- | :---------------------------------- | :----------- |
 | Prodigal | [2010](https://doi.org/10.1186/1471-2105-11-119) | [Yes](https://anaconda.org/bioconda/prodigal) | https://github.com/hyattpd/Prodigal | Yes          |
 
+### Coverage estimation
+
+| Tool   | Original year                                 | Conda available?                                   | Link                                  | Implemented? |
+|:------ |:--------------------------------------------- |:-------------------------------------------------- |:------------------------------------- |:------------ |
+| CheckM | [2015](https://doi.org/10.1101/gr.186072.114) | [Yes](https://anaconda.org/bioconda/checkm-genome) | https://github.com/Ecogenomics/CheckM | Yes          |
+
 ## Taxonomic profiling
 
 | Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |
