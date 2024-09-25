@@ -65,23 +65,23 @@ def prepare_results_dir(
     results_dir  # path where the results folder will be created
 ):
     """ 
-    Create a `results` folder (fail if it already exists).
-    
-    For short reads samples, it creates `results/02_preprocess/bowtie2` folder 
+    Create or update a `results` folder.
+
+    For short reads samples, it creates or updates `results/02_preprocess/bowtie2` folder 
     with inside files named `{sample}_1.clean.fastq.gz` symlinked to 
     the real FASTQ and `{sample}_2.clean.fastq.gz` symlinked to 
     the real FASTQ.
 
-    For long reads samples, it creates `results/02_preprocess/fastp_long_read`
+    For long reads samples, it creates or updates `results/02_preprocess/fastp_long_read`
     folder with inside files named `{sample}_1.fastq.gz` symlinked to the real FASTQ.
     """
 
-    # create results directory structure
+    # create results directory structure if not exists
     bowtie2_dir = results_dir / "02_preprocess" / "bowtie2"
     fastp_long_read_dir = results_dir / "02_preprocess" / "fastp_long_read"
 
-    bowtie2_dir.mkdir(parents=True, exist_ok=False)
-    fastp_long_read_dir.mkdir(parents=True, exist_ok=False)
+    bowtie2_dir.mkdir(parents=True, exist_ok=True)  # Create if it doesn't exist
+    fastp_long_read_dir.mkdir(parents=True, exist_ok=True)  # Create if it doesn't exist
 
     # handle short reads
     if SR_samples:
@@ -93,11 +93,18 @@ def prepare_results_dir(
             r1_source = Path(paths['R1']).resolve()
             r2_source = Path(paths['R2']).resolve()
 
-            r1_target.symlink_to(r1_source)
-            r2_target.symlink_to(r2_source)
+            # creating symlink only if it doesn't exist
+            if not r1_target.exists():
+                r1_target.symlink_to(r1_source)
+                print(f"Symlinked {r1_source} -> {r1_target}")
+            else:
+                print(f"Symlink already exists: {r1_target}")
 
-            print(f"Symlinked {r1_source} -> {r1_target}")
-            print(f"Symlinked {r2_source} -> {r2_target}")
+            if not r2_target.exists():
+                r2_target.symlink_to(r2_source)
+                print(f"Symlinked {r2_source} -> {r2_target}")
+            else:
+                print(f"Symlink already exists: {r2_target}")
 
     # handle long reads
     if LR_samples:
@@ -107,8 +114,12 @@ def prepare_results_dir(
             # convert path to an absolute path
             lr_source = Path(path).resolve()
 
-            lr_target.symlink_to(lr_source)
-            print(f"Symlinked {lr_source} -> {lr_target}")
+            # creating symlink only if it doesn't exist
+            if not lr_target.exists():
+                lr_target.symlink_to(lr_source)
+                print(f"Symlinked {lr_source} -> {lr_target}")
+            else:
+                print(f"Symlink already exists: {lr_target}")
 
 def clean_results_dir(results_dir):
     """
