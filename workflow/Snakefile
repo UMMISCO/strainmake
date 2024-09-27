@@ -94,7 +94,7 @@ rule all:
             # strains profiling
             #      -> inStrain
             expand("results/10_strain_profiling/inStrain/{assembler}/compare",
-                   assembler = ASSEMBLER + HYBRID_ASSEMBLER),
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
             #      -> Floria
             expand("results/10_strain_profiling/floria/{assembler}/{sample}/contig_ploidy_info.tsv",
                    assembler = ASSEMBLER + HYBRID_ASSEMBLER, sample = SAMPLES)

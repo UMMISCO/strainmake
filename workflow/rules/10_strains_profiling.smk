@@ -3,6 +3,7 @@ from utils import *
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
 ASSEMBLER = config['assembly']['assembler']
+ASSEMBLER_LR = config['assembly']['long_read_assembler']
 
 HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler'] 
 
@@ -13,6 +14,10 @@ if HYBRID_ASSEMBLER == None:
 # taking into account the case where we don't have SR assembly
 if ASSEMBLER == None:
        ASSEMBLER = []
+
+# taking into account the case where we don't have LR
+if ASSEMBLER_LR == None:
+       ASSEMBLER_LR = []
 
 # rule to concatenate every bins that were dereplicated and filtered into a 
 # unique FASTA file
@@ -26,7 +31,7 @@ rule creating_ref_genomes_fasta:
     benchmark:
         "benchmarks/10_strain_profiling/refs/{assembler}.concatenate.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     shell:
         """
         cat {input}/*.fa > {output} 2> {log.stderr}
@@ -45,7 +50,7 @@ rule indexing_ref_genomes:
     benchmark:
         "benchmarks/10_strain_profiling/refs_indexing/{assembler}.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     shell:
         """
         samtools faidx {input} > {log.stdout} 2> {log.stderr}
@@ -61,7 +66,7 @@ rule concatenating_predicted_genes:
     benchmark:
         "benchmarks/10_strain_profiling/refs/{assembler}/concatenate_ref_genes.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     shell:
         """
         cat {input}/*.fna > {output}
@@ -93,6 +98,34 @@ rule reads_mapping_on_reference:
             {input.refs} {input.r1} {input.r2} > {output} 2> {log.stderr}
         """
 
+# mapping sample reads (long reads) on the reference genomes (the bins)
+rule reads_LR_mapping_on_reference:
+    input:
+        # the bins we concatenated into a single FASTA file
+        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
+        # metagenome reads
+        long_read = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz"
+    output:
+        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sam"
+    conda:
+        "../envs/minimap2.yaml"
+    log:
+        stderr = "logs/10_strain_profiling/minimap2/{assembler}/{sample}.stderr"
+    benchmark:
+        "benchmarks/10_strain_profiling/minimap2/{assembler}/{sample}.benchmark.txt"
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER_LR),
+        sample="|".join(SAMPLES)
+    params:
+        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
+    threads: config['strains_profiling']['minimap2']['threads']
+    shell:
+        """
+        minimap2 -ax {params.method} -t {threads} \
+            {input.refs} {input.long_read} \
+            > {output} 2> {log.stderr}
+        """
+
 rule sam_to_bam_strains_profiling:
     input:
         sam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sam"
@@ -107,7 +140,7 @@ rule sam_to_bam_strains_profiling:
         "benchmarks/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -130,7 +163,7 @@ rule bam_sorting_strains_profiling:
         "benchmarks/10_strain_profiling/samtools/{assembler}/{sample}.sorting.benchmark.txt"
     wildcard_constraints:
         sample="|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -168,7 +201,7 @@ rule produce_scaffolds_to_bin_file:
     benchmark:
         "benchmarks/10_strain_profiling/inStrain/{assembler}/stb.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     shell:
         """
         parse_stb.py --reverse -f {input.bins}/* -o {output} \
@@ -191,6 +224,8 @@ rule variant_calling:
     params:
         min_alternate_count = config['strains_profiling']['freebayes']['min_alternate_count'],
         min_alternate_fraction = config['strains_profiling']['freebayes']['min_alternate_fraction']
+    wildcard_constraints:
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         freebayes -f {input.refs} -F {params.min_alternate_fraction} -C {params.min_alternate_count} \
@@ -218,7 +253,7 @@ rule instrain_profiling:
         "benchmarks/10_strain_profiling/inStrain/{assembler}/{sample}.profile.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     threads: config['strains_profiling']['instrain']['threads']
     shell:
         """
@@ -244,7 +279,7 @@ rule instrain_comparing:
     benchmark:
         "benchmarks/10_strain_profiling/inStrain/{assembler}/compare.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
     threads: config['strains_profiling']['instrain']['threads']
     shell:
         """
