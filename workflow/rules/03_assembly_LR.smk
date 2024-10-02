@@ -15,7 +15,8 @@ rule metaflye_assembly:
     params:
         out_dir = "results/03_assembly/LR/metaflye/{sample}",
         method_flag = "--nano-hq" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio-hifi",
-        min_contig_len = config['assembly']['metaflye']['min_contig_len']
+        min_contig_len = config['assembly']['metaflye']['min_contig_len'],
+        intermediate_assembly = "{sample}_metaflye_tmp_assembly.fa"
     threads: config['assembly']['metaflye']['threads']
     shell:
         """
@@ -27,9 +28,9 @@ rule metaflye_assembly:
         && \
         pigz {params.out_dir}/assembly.fa \
         && \
-        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
         && \
-        pigz tmp_assembly.fa \
+        pigz {params.intermediate_assembly} \
         && \
-        mv tmp_assembly.fa.gz {output.assembly}
+        mv {params.intermediate_assembly}.gz {output.assembly}
         """

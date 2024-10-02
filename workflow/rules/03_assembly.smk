@@ -91,7 +91,8 @@ rule metaspades_assembly:
         out_dir = "results/03_assembly/metaspades/{sample}",
         memory_limit = config['assembly']['metaspades']['memory_limit'],
         min_contig_len = config['assembly']['metaspades']['min_contig_len'],
-        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh"
+        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
+        intermediate_assembly = "{sample}_metaspades_tmp_assembly.fa"
     threads: config['assembly']['metaspades']['threads']
     shell:
         """
@@ -105,11 +106,11 @@ rule metaspades_assembly:
         && \
         pigz {params.out_dir}/assembly.fa \
         && \
-        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
         && \
-        pigz tmp_assembly.fa \
+        pigz {params.intermediate_assembly} \
         && \
-        mv tmp_assembly.fa.gz {output.assembly} \
+        mv {params.intermediate_assembly}.gz {output.assembly} \
         && \
         bash {params.compressing_files_script} {params.out_dir}
         """
@@ -135,7 +136,8 @@ rule hybridspades_assembly:
         memory_limit = config['assembly']['hybridspades']['memory_limit'],
         method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
         min_contig_len = config['assembly']['hybridspades']['min_contig_len'],
-        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh"
+        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
+        intermediate_assembly = "{sample}_hybridspades_tmp_assembly.fa"
     threads: config['assembly']['hybridspades']['threads']
     shell:
         """
@@ -150,11 +152,11 @@ rule hybridspades_assembly:
         && \
         pigz {params.out_dir}/assembly.fa \
         && \
-        seqkit seq -m {params.min_contig_len} {output.assembly} > tmp_assembly.fa \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
         && \
-        pigz tmp_assembly.fa \
+        pigz {params.intermediate_assembly} \
         && \
-        mv tmp_assembly.fa.gz {output.assembly} \
+        mv {params.intermediate_assembly}.gz {output.assembly} \
         && \
         bash {params.compressing_files_script} {params.out_dir}
         """
