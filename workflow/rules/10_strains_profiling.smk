@@ -104,7 +104,7 @@ rule reads_LR_mapping_on_reference:
         # the bins we concatenated into a single FASTA file
         refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
         # metagenome reads
-        long_read = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz"
+        long_read = "results/02_preprocess/fastp_long_read/{sample}_1.fastq.gz"
     output:
         "results/10_strain_profiling/minimap2/{assembler}/{sample}.sam"
     conda:
