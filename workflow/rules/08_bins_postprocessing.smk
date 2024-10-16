@@ -141,7 +141,9 @@ rule dereplicated_genomes_quality_and_filtering:
             --min-comp {params.minimal_completeness} \
             --max-cont {params.maximal_contamination} \
             --outdir {output.selected_bins} \
-            > {log.stdout_filtration} 2> {log.stderr_filtration}
+            > {log.stdout_filtration} 2> {log.stderr_filtration} \
+        && \
+        python3 workflow/scripts/deduplicate_contigs_name.py {output.selected_bins}
         """
 
 # predicting genes in dereplicated genomes

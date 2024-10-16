@@ -3,6 +3,7 @@ import subprocess
 import os
 import re
 import shutil
+import pyfastx
 import pandas as pd
 from pathlib import Path
 
@@ -371,6 +372,51 @@ class TestPipeline(unittest.TestCase):
             ])  
 
         shutil.rmtree("../../results")
+    
+    ################ Utils
+
+    def test_sequences_renaming_in_fasta(self):
+        """ 
+        Method to ensure the method to rename headers in FASTA works well
+        """
+        # test FASTA we will use
+        os.makedirs("fasta/tmp")
+        fasta_test = "fasta/tmp/test_tmp_for_test.fa"
+        shutil.copy2("fasta/test.fa", fasta_test)
+
+        fa = pyfastx.Fasta(fasta_test)
+
+        headers_before_renaming = ['contig_1', 'contig_2', 'contig_3']
+
+        self.assertEqual(headers_before_renaming, list(fa.keys()))
+
+        # cleaning index
+        os.remove(f"{fasta_test}.fxi")
+
+        # renaming step using the script
+        script = "../../workflow/scripts/deduplicate_contigs_name.py"
+        result = subprocess.run(
+            [
+                "python3",
+                script,
+                "fasta/tmp"
+            ],
+            capture_output=True, text=True
+        )
+
+        # check if the command was successful
+        self.assertEqual(result.returncode, 0, f"FASTA headers renaming failed")
+
+        # checking how the FASTA headers were renamed
+        fa_new = pyfastx.Fasta(fasta_test)
+        headers_after_renaming = ['test_tmp_for_test_contig_1', 'test_tmp_for_test_contig_2', 'test_tmp_for_test_contig_3']
+        headers_after_renaming_test = list(fa_new.keys())
+
+        self.assertEqual(headers_after_renaming, headers_after_renaming_test, f"Renamed sequences do not match what is expected (what we have: {headers_after_renaming_test})")
+
+        # cleaning
+        shutil.rmtree("fasta/tmp")
+        
 
 if __name__ == "__main__":
     unittest.main()
