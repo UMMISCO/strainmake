@@ -19,19 +19,22 @@ if ASSEMBLER == None:
 if ASSEMBLER_LR == None:
        ASSEMBLER_LR = []
 
+DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
+
 # rule to concatenate every bins that were dereplicated and filtered into a 
 # unique FASTA file
 rule creating_ref_genomes_fasta:
     input:
-        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins"
+        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins"
     output:
-        "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa"
+        "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa"
     log:
-        stderr = "logs/10_strain_profiling/refs/{assembler}.concatenate.stderr"
+        stderr = "logs/10_strain_profiling/refs/{ani}/{assembler}.concatenate.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/refs/{assembler}.concatenate.benchmark.txt"
+        "benchmarks/10_strain_profiling/refs/{ani}/{assembler}.concatenate.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         cat {input}/*.fa > {output} 2> {log.stderr}
@@ -39,18 +42,19 @@ rule creating_ref_genomes_fasta:
 
 rule indexing_ref_genomes:
     input:
-        "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa"
+        "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa"
     output:
-        "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa.fai"
+        "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa.fai"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/10_strain_profiling/refs_indexing/{assembler}.stdout",
-        stderr = "logs/10_strain_profiling/refs_indexing/{assembler}.stderr"
+        stdout = "logs/10_strain_profiling/refs_indexing/{ani}/{assembler}.stdout",
+        stderr = "logs/10_strain_profiling/refs_indexing/{ani}/{assembler}.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/refs_indexing/{assembler}.benchmark.txt"
+        "benchmarks/10_strain_profiling/refs_indexing/{ani}/{assembler}.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         samtools faidx {input} > {log.stdout} 2> {log.stderr}
@@ -60,13 +64,14 @@ rule indexing_ref_genomes:
 # concatenated into a single FASTA file
 rule concatenating_predicted_genes:
     input:
-        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/genes"
+        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/genes"
     output:
-        "results/10_strain_profiling/refs/{assembler}/ref_genes.fa"
+        "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genes.fa"
     benchmark:
-        "benchmarks/10_strain_profiling/refs/{assembler}/concatenate_ref_genes.benchmark.txt"
+        "benchmarks/10_strain_profiling/refs/{ani}/{assembler}/concatenate_ref_genes.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         cat {input}/*.fna > {output}
@@ -76,21 +81,22 @@ rule concatenating_predicted_genes:
 rule reads_mapping_on_reference:
     input:
         # the bins we concatenated into a single FASTA file
-        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
+        refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
         # metagenome reads
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
     output:
-        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sam"
+        "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        stderr = "logs/10_strain_profiling/minimap2/{assembler}/{sample}.stderr"
+        stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/minimap2/{assembler}/{sample}.benchmark.txt"
+        "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
-        sample="|".join(SAMPLES)
+        sample="|".join(SAMPLES),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
@@ -102,20 +108,21 @@ rule reads_mapping_on_reference:
 rule reads_LR_mapping_on_reference:
     input:
         # the bins we concatenated into a single FASTA file
-        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
+        refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
         # metagenome reads
         long_read = "results/02_preprocess/fastp_long_read/{sample}_1.fastq.gz"
     output:
-        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sam"
+        "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        stderr = "logs/10_strain_profiling/minimap2/{assembler}/{sample}.stderr"
+        stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/minimap2/{assembler}/{sample}.benchmark.txt"
+        "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER_LR),
-        sample="|".join(SAMPLES)
+        sample="|".join(SAMPLES),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     params:
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
     threads: config['strains_profiling']['minimap2']['threads']
@@ -128,19 +135,20 @@ rule reads_LR_mapping_on_reference:
 
 rule sam_to_bam_strains_profiling:
     input:
-        sam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sam"
+        sam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
     output:
-        bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.bam"
+        bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.bam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.stdout",
-        stderr = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.stderr"
+        stdout = "logs/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sam_to_bam.stdout",
+        stderr = "logs/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sam_to_bam.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/samtools/{assembler}/{sample}.sam_to_bam.benchmark.txt"
+        "benchmarks/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sam_to_bam.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -151,19 +159,20 @@ rule sam_to_bam_strains_profiling:
 rule bam_sorting_strains_profiling:
     input:
         # reads mapped on the assembly
-        bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.bam"
+        bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.bam"
     output:
-        bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam"
+        bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sorting.stdout",
-        stderr = "logs/10_strain_profiling/samtools/{assembler}/{sample}.sorting.stderr"
+        stdout = "logs/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sorting.stdout",
+        stderr = "logs/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sorting.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/samtools/{assembler}/{sample}.sorting.benchmark.txt"
+        "benchmarks/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sorting.benchmark.txt"
     wildcard_constraints:
         sample="|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -174,13 +183,15 @@ rule bam_sorting_strains_profiling:
 
 rule bam_indexing:
     input:
-        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam"
+        "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam"
     output:
-        "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai"
+        "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam.bai"
     conda:
         "../envs/samtools.yaml"
     benchmark:
-        "benchmarks/10_strain_profiling/minimap2/{assembler}/{sample}.bam_indexing.benchmark.txt"
+        "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.bam_indexing.benchmark.txt"
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """ 
         samtools index {input}
@@ -189,19 +200,20 @@ rule bam_indexing:
 # producing a scaffolds to bin file for inStrain (file with the contig <-> bin link)
 rule produce_scaffolds_to_bin_file:
     input:
-        bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
-        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa"
+        bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
+        refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa"
     output:
-        "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb"
+        "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.stb"
     conda:
         "../envs/drep.yaml"
     log:
-        stdout = "logs/10_strain_profiling/inStrain/{assembler}/stb.stdout",
-        stderr = "logs/10_strain_profiling/inStrain/{assembler}/stb.stderr"
+        stdout = "logs/10_strain_profiling/inStrain/{ani}/{assembler}/stb.stdout",
+        stderr = "logs/10_strain_profiling/inStrain/{ani}/{assembler}/stb.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/inStrain/{assembler}/stb.benchmark.txt"
+        "benchmarks/10_strain_profiling/inStrain/{ani}/{assembler}/stb.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         parse_stb.py --reverse -f {input.bins}/* -o {output} \
@@ -211,21 +223,22 @@ rule produce_scaffolds_to_bin_file:
 # calling variants using the dereplicated bins as reference and the sample reads mapped on it
 rule variant_calling:
     input:
-        bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
-        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa"
+        bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam",
+        refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa"
     output:
-        "results/10_strain_profiling/freebayes/{assembler}/{sample}.vcf"
+        "results/10_strain_profiling/freebayes/{ani}/{assembler}/{sample}.vcf"
     conda:
         "../envs/freebayes.yaml"
     log:
-        stderr = "logs/10_strain_profiling/freeboys/{assembler}/{sample}.variant_calling.stderr"
+        stderr = "logs/10_strain_profiling/freeboys/{ani}/{assembler}/{sample}.variant_calling.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/freeboys/{assembler}/{sample}.variant_calling.benchmark.txt"
+        "benchmarks/10_strain_profiling/freeboys/{ani}/{assembler}/{sample}.variant_calling.benchmark.txt"
     params:
         min_alternate_count = config['strains_profiling']['freebayes']['min_alternate_count'],
         min_alternate_fraction = config['strains_profiling']['freebayes']['min_alternate_fraction']
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         freebayes -f {input.refs} -F {params.min_alternate_fraction} -C {params.min_alternate_count} \
@@ -236,24 +249,25 @@ rule variant_calling:
 # strains profiling
 rule instrain_profiling:
     input:
-        bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
-        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
+        bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam",
+        refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
         # scaffolds to bin file
-        stb = "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb",
+        stb = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.stb",
         # predicted genes in references
-        predicted_genes = "results/10_strain_profiling/refs/{assembler}/ref_genes.fa"
+        predicted_genes = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genes.fa"
     output:
-        directory("results/10_strain_profiling/inStrain/{assembler}/{sample}")
+        directory("results/10_strain_profiling/inStrain/{ani}/{assembler}/{sample}")
     conda:
         "../envs/instrain.yaml"
     log:
-        stdout = "logs/10_strain_profiling/inStrain/{assembler}/{sample}.profile.stdout",
-        stderr = "logs/10_strain_profiling/inStrain/{assembler}/{sample}.profile.stderr"
+        stdout = "logs/10_strain_profiling/inStrain/{ani}/{assembler}/{sample}.profile.stdout",
+        stderr = "logs/10_strain_profiling/inStrain/{ani}/{assembler}/{sample}.profile.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/inStrain/{assembler}/{sample}.profile.benchmark.txt"
+        "benchmarks/10_strain_profiling/inStrain/{ani}/{assembler}/{sample}.profile.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['instrain']['threads']
     shell:
         """
@@ -266,20 +280,21 @@ rule instrain_profiling:
 
 rule instrain_comparing: 
     input:
-        instrain_results = expand("results/10_strain_profiling/inStrain/{{assembler}}/{sample}",
+        instrain_results = expand("results/10_strain_profiling/inStrain/{{ani}}/{{assembler}}/{sample}",
                                   sample=SAMPLES),
-        stb = "results/10_strain_profiling/refs/{assembler}/ref_genomes.stb"
+        stb = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.stb"
     output:
-        directory("results/10_strain_profiling/inStrain/{assembler}/compare")
+        directory("results/10_strain_profiling/inStrain/{ani}/{assembler}/compare")
     conda:
         "../envs/instrain.yaml"
     log:
-        stdout = "logs/10_strain_profiling/inStrain/{assembler}/compare.stdout",
-        stderr = "logs/10_strain_profiling/inStrain/{assembler}/compare.stderr"
+        stdout = "logs/10_strain_profiling/inStrain/{ani}/{assembler}/compare.stdout",
+        stderr = "logs/10_strain_profiling/inStrain/{ani}/{assembler}/compare.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/inStrain/{assembler}/compare.benchmark.txt"
+        "benchmarks/10_strain_profiling/inStrain/{ani}/{assembler}/compare.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['instrain']['threads']
     shell:
         """
@@ -291,26 +306,27 @@ rule instrain_comparing:
 
 rule floria_profiling:
     input:
-        bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
-        indexed_bam = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai",
-        refs = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa",
+        bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam",
+        indexed_bam = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam.bai",
+        refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
         # Floria needs the FASTA file to be indexed
-        refs_indexed = "results/10_strain_profiling/refs/{assembler}/ref_genomes.fa.fai",
-        vcf = "results/10_strain_profiling/freebayes/{assembler}/{sample}.vcf"
+        refs_indexed = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa.fai",
+        vcf = "results/10_strain_profiling/freebayes/{ani}/{assembler}/{sample}.vcf"
     output:
-        "results/10_strain_profiling/floria/{assembler}/{sample}/contig_ploidy_info.tsv"
+        "results/10_strain_profiling/floria/{ani}/{assembler}/{sample}/contig_ploidy_info.tsv"
     conda:
         "../envs/floria.yaml"
     log:
-        stdout = "logs/10_strain_profiling/floria/{assembler}/{sample}.profile.stdout",
-        stderr = "logs/10_strain_profiling/floria/{assembler}/{sample}.profile.stderr"
+        stdout = "logs/10_strain_profiling/floria/{ani}/{assembler}/{sample}.profile.stdout",
+        stderr = "logs/10_strain_profiling/floria/{ani}/{assembler}/{sample}.profile.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/floria/{assembler}/{sample}.profile.benchmark.txt"
+        "benchmarks/10_strain_profiling/floria/{ani}/{assembler}/{sample}.profile.benchmark.txt"
     params:
-        out_dir = "results/10_strain_profiling/floria/{assembler}/{sample}"
+        out_dir = "results/10_strain_profiling/floria/{ani}/{assembler}/{sample}"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['floria']['threads']
     shell:
         """

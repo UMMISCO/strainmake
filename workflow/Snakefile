@@ -52,6 +52,10 @@ samples_table_df = pd.read_csv(SAMPLES_TABLE, sep="\t")
 validate_assemblers(samples_table_df, 
                     ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER)
 
+# for dereplication, MAG profiling...
+ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
+DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
+
 ################################################################################
 #                                   Workflow                                   #
 ################################################################################
@@ -80,21 +84,21 @@ rule all:
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR),
             # bins post-processing
-            expand("results/08_bins_postprocessing/dRep/{assembler}",
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER),
-            expand("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
-                   assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER),
-            expand("results/08_bins_postprocessing/gtdb_tk/{assembler}", 
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER),
-            expand("results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.processed.tsv",
-                   assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
+            expand("results/08_bins_postprocessing/dRep/{ani}/{assembler}",
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = ANI_THRESHOLD),
+            expand("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = ANI_THRESHOLD),
+            expand("results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}", 
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
+            expand("results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.processed.tsv",
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
                    sample=SAMPLES),
             # strains profiling
             #      -> inStrain
-            expand("results/10_strain_profiling/inStrain/{assembler}/compare",
-                   assembler = ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+            expand("results/10_strain_profiling/inStrain/{ani}/{assembler}/compare",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             #      -> Floria
-            expand("results/10_strain_profiling/floria/{assembler}/{sample}/contig_ploidy_info.tsv",
-                   assembler = ASSEMBLER + HYBRID_ASSEMBLER, sample = SAMPLES)
+            expand("results/10_strain_profiling/floria/{ani}/{assembler}/{sample}/contig_ploidy_info.tsv",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER, sample = SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE)

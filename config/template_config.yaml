@@ -112,6 +112,9 @@ bins_postprocessing:
     threads: 1
     other_args: "" # write there others params you'd want to use
   drep:
+    ani:
+      - 95 # species threshold
+      - 97 # strain threshold
     comparison_algorithm: "ANImf" # comparison algorithm used by dRep (goANI, ANIn, gANI, ANImf, fastANI)
     other_args: "" # write there others params you'd want to use (for example "--SkipMash --completeness 90"...)
     threads: 4
@@ -124,6 +127,7 @@ bins_postprocessing:
   genes_prediction:
     prodigal:
       threads: 5
+      ani: 95 # which one of the "drep" -> "ani" dereplicated genomes to use
   profiling:
     checkm1:
       threads: 5

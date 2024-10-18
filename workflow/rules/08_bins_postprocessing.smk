@@ -1,22 +1,27 @@
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
 
+ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
+DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
+
 rule gtdb_tk_taxonomic_annotation:
     input:
         # folder with dereplicated and filtered bins (= MAG)
-        refined_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
+        refined_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
         ref_data = "data/gtdb_tk/release220"
-    output: directory("results/08_bins_postprocessing/gtdb_tk/{assembler}")
+    output: directory("results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}")
     conda:
         "../envs/gtdb_tk.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/classify.stdout",
-        stderr = "logs/08_bins_postprocessing/gtdb_tk/{assembler}/classify.stderr"
+        stdout = "logs/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}/classify.stdout",
+        stderr = "logs/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}/classify.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/gtdb_tk/{assembler}/classify.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}/classify.benchmark.txt"
     params:
         other_args = config['bins_postprocessing']['gtdbtk']['other_args']
     threads: config['bins_postprocessing']['gtdbtk']['threads']
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         gtdbtk classify_wf --genome_dir {input.refined_bins} --cpus {threads} --out_dir {output} \
@@ -84,18 +89,20 @@ rule genomes_dereplication:
     # input is formed of every refined produced no matter the sample
     # it is, however, assembler specific
     input: "results/08_bins_postprocessing/genomes_list/{assembler}/list_unduplicated_filenames.txt"
-    output: directory("results/08_bins_postprocessing/dRep/{assembler}")
+    output: directory("results/08_bins_postprocessing/dRep/{ani}/{assembler}")
     conda:
         "../envs/drep.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/drep/{assembler}/dereplication.stdout",
-        stderr = "logs/08_bins_postprocessing/drep/{assembler}/dereplication.stderr"
+        stdout = "logs/08_bins_postprocessing/drep/{ani}/{assembler}/dereplication.stdout",
+        stderr = "logs/08_bins_postprocessing/drep/{ani}/{assembler}/dereplication.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/drep/{assembler}/dereplication.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/drep/{ani}/{assembler}/dereplication.benchmark.txt"
     params:
         comparison_algorithm = config['bins_postprocessing']['drep']['comparison_algorithm'],
         other_args = config['bins_postprocessing']['drep']['other_args'],
     threads: config['bins_postprocessing']['drep']['threads']
+    wildcard_constraints:
+        ani = "|".join(ANI_THRESHOLD)
     shell:
         """
         dRep dereplicate --genomes {input} --processors {threads} \
@@ -110,24 +117,26 @@ rule genomes_dereplication:
 rule dereplicated_genomes_quality_and_filtering:
     input:
         # folder with dereplicated bins
-        bins = "results/08_bins_postprocessing/dRep/{assembler}", 
+        bins = "results/08_bins_postprocessing/dRep/{ani}/{assembler}", 
         diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
     output:
-        out_dir = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/checkm2"),
-        selected_bins = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins")
+        out_dir = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/checkm2"),
+        selected_bins = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins")
     conda:
         "../envs/checkm2.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/checkm2/{assembler}.assessment.stdout",
-        stderr = "logs/08_bins_postprocessing/checkm2/{assembler}.assessment.stderr",
-        stdout_filtration = "logs/08_bins_postprocessing/genomes_filtration/{assembler}.filtration.stdout",
-        stderr_filtration = "logs/08_bins_postprocessing/genomes_filtration/{assembler}.filtration.stderr"
+        stdout = "logs/08_bins_postprocessing/checkm2/{ani}/{assembler}.assessment.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm2/{ani}/{assembler}.assessment.stderr",
+        stdout_filtration = "logs/08_bins_postprocessing/genomes_filtration/{ani}/{assembler}.filtration.stdout",
+        stderr_filtration = "logs/08_bins_postprocessing/genomes_filtration/{ani}/{assembler}.filtration.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/checkm2/{assembler}.assessment_and_filtration.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/checkm2/{ani}/{assembler}.assessment_and_filtration.benchmark.txt"
     params:
         minimal_completeness = config['bins_postprocessing']['genomes_quality_filtration']['filtration']['min_completeness'],
         maximal_contamination = config['bins_postprocessing']['genomes_quality_filtration']['filtration']['max_contamination']
     threads: config['bins_postprocessing']['genomes_quality_filtration']['checkm2']['threads']
+    wildcard_constraints:
+        ani = "|".join(ANI_THRESHOLD)
     shell:
         """
         checkm2 predict --input {input.bins}/dereplicated_genomes --threads {threads} \
@@ -152,17 +161,19 @@ rule genes_calling:
         # it is better to run Prodigal on each genome individually in normal mode, than running it on 
         # a multiple FASTA file 
         # (https://github.com/hyattpd/prodigal/wiki/Advice-by-Input-Type#metagenomes)
-        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins"
+        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins"
     output:
-        directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/genes")
+        directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/genes")
     conda:
         "../envs/prodigal.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/prodigal/{assembler}.stdout",
-        stderr = "logs/08_bins_postprocessing/prodigal/{assembler}.stderr"
+        stdout = "logs/08_bins_postprocessing/prodigal/{ani}/{assembler}.stdout",
+        stderr = "logs/08_bins_postprocessing/prodigal/{ani}/{assembler}.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/prodigal/{assembler}.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/prodigal/{ani}/{assembler}.benchmark.txt"
     threads: config['bins_postprocessing']['genes_prediction']['prodigal']['threads']
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         python3 workflow/scripts/genes_prediction.py --cpu {threads} {input} {output} \
@@ -174,20 +185,22 @@ rule genes_calling:
 # then, we profile the metagenome using the coverage
 rule coverage_in_mapping:
     input:
-        dereplicated_and_filtered_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{assembler}/bins",
-        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam",
+        dereplicated_and_filtered_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
+        samples_mapped_on_dereplicated_and_filtered_bins = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam",
         # needing the indexed BAM also
-        mapping_index = "results/10_strain_profiling/minimap2/{assembler}/{sample}.sorted.bam.bai"
+        mapping_index = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sorted.bam.bai"
     output:
-        "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/coverage.tsv"
+        "results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/coverage.tsv"
     conda:
         "../envs/checkm1.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.stdout",
-        stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.stderr"
+        stdout = "logs/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.coverage.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.coverage.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/checkm1/{assembler}/{sample}.coverage.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.coverage.benchmark.txt"
     threads: config['bins_postprocessing']['profiling']['checkm1']['threads']
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         checkm coverage -x fa {input.dereplicated_and_filtered_bins} {output} \
@@ -196,30 +209,34 @@ rule coverage_in_mapping:
         """
 
 rule bins_distribution_estimation:
-    input: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/coverage.tsv"
-    output: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.tsv"
+    input: "results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/coverage.tsv"
+    output: "results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.tsv"
     conda:
         "../envs/checkm1.yaml"
     log: 
-        stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.stdout",
-        stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.stderr"
+        stdout = "logs/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.profile.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.profile.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.profile.benchmark.txt"
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         checkm profile --tab_table -f  {output} {input} > {log.stdout} 2> {log.stderr}
         """
 
 rule process_estimated_bins_distribution:
-    input: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.tsv"
-    output: "results/08_bins_postprocessing/checkm1/{assembler}/{sample}/profile.processed.tsv"
+    input: "results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.tsv"
+    output: "results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.processed.tsv"
     conda:
         "../envs/python.yaml"
     log:
-        stdout = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.stdout",
-        stderr = "logs/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.stderr"
+        stdout = "logs/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.profile_processing_table.stdout",
+        stderr = "logs/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.profile_processing_table.stderr"
     benchmark:
-        "benchmarks/08_bins_postprocessing/checkm1/{assembler}/{sample}.profile_processing_table.benchmark.txt"
+        "benchmarks/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}.profile_processing_table.benchmark.txt"
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
         python3 workflow/scripts/process_checkm1_profile_table.py --input_table {input} \
