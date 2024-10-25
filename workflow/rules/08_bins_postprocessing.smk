@@ -100,6 +100,7 @@ rule genomes_dereplication:
     params:
         comparison_algorithm = config['bins_postprocessing']['drep']['comparison_algorithm'],
         other_args = config['bins_postprocessing']['drep']['other_args'],
+        ani_dec = lambda wildcards: f"{float(wildcards.ani) / 100}"
     threads: config['bins_postprocessing']['drep']['threads']
     wildcard_constraints:
         ani = "|".join(ANI_THRESHOLD)
@@ -107,6 +108,7 @@ rule genomes_dereplication:
         """
         dRep dereplicate --genomes {input} --processors {threads} \
             --S_algorithm {params.comparison_algorithm} \
+            --S_ani {params.ani_dec} \
             {params.other_args} \
             {output} \
         > {log.stdout} 2> {log.stderr}
