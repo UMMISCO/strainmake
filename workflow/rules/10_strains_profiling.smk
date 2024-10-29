@@ -269,14 +269,35 @@ rule instrain_profiling:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['instrain']['threads']
-    shell:
-        """
-        inStrain profile --output {output} -p {threads} \
+    run:
+        import os
+        import subprocess
+        
+        # creating the output directory if it doesn't exist
+        os.makedirs(output, exist_ok=True)
+        
+        # command that will be execued
+        cmd = """inStrain profile --output {output} -p {threads} \
             -s {input.stb} \
             --database_mode \
             -g {input.predicted_genes} \
             {input.bam} {input.refs} > {log.stdout} 2> {log.stderr}
         """
+        
+        # running it and capturint the result
+        result = subprocess.run(cmd, shell=True)
+        
+        # checking for success or failure
+        status_file = os.path.join(output, "results.txt")
+        with open(status_file, "w") as f:
+            if result.returncode == 0:
+                f.write("SUCCESS\n")
+            else:
+                f.write("FAILED\n")
+                # capturing stderr for error details
+                with open(log.stderr) as err_log:
+                    error_message = err_log.read()
+                f.write(error_message)
 
 rule instrain_comparing: 
     input:
@@ -296,13 +317,8 @@ rule instrain_comparing:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['instrain']['threads']
-    shell:
-        """
-        inStrain compare -i {input.instrain_results} --output {output} \
-            --database_mode \
-            -s {input.stb} \
-            > {log.stdout} 2> {log.stderr}
-        """
+    script:
+        "scripts/instrain_compare.py"
 
 rule floria_profiling:
     input:
