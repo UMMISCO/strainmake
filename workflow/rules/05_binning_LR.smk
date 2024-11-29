@@ -15,7 +15,7 @@ sequences_file_end = f"_1.{seq_format}.gz"
 rule reads_mapping_LR:
     input:
         # metagenome reads
-        long_read = "results/02_preprocess/bowtie2/{sample_lr}" + sequences_file_end,
+        long_read = "results/02_preprocess/fastp_long_read/{sample_lr}" + sequences_file_end,
         # assembly
         assembly = "results/03_assembly/LR/{assembler_lr}/{sample_lr}/assembly.fa.gz"
     output:
