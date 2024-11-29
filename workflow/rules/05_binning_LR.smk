@@ -10,7 +10,7 @@ if ASSEMBLER_LR == None:
 rule reads_mapping_LR:
     input:
         # metagenome reads
-        long_read = "results/02_preprocess/fastp_long_read/{sample_lr}_1.clean.fastq.gz",
+        long_read = "results/02_preprocess/fastp_long_read/{sample_lr}_1.fastq.gz",
         # assembly
         assembly = "results/03_assembly/LR/{assembler_lr}/{sample_lr}/assembly.fa.gz"
     output:
