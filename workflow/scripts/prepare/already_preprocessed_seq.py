@@ -62,7 +62,8 @@ def get_LR_samples(metadata_table: pd.DataFrame):
 def prepare_results_dir(
     SR_samples,  # type "dict" or None if "get_SR_samples" returned None
     LR_samples,  # type "dict" or None if "get_LR_samples" returned None
-    results_dir  # path where the results folder will be created
+    results_dir, # path where the results folder will be created
+    lr_seq_format: str = "fastq"
 ):
     """ 
     Create or update a `results` folder.
@@ -73,7 +74,7 @@ def prepare_results_dir(
     the real FASTQ.
 
     For long reads samples, it creates or updates `results/02_preprocess/fastp_long_read`
-    folder with inside files named `{sample}_1.fastq.gz` symlinked to the real FASTQ.
+    folder with inside files named `{sample}_1.{lr_seq_format}.gz` symlinked to the real FASTQ/FASTA.
     """
 
     # create results directory structure if not exists
@@ -109,7 +110,7 @@ def prepare_results_dir(
     # handle long reads
     if LR_samples:
         for sample, path in LR_samples.items():
-            lr_target = fastp_long_read_dir / f"{sample}_1.fastq.gz"
+            lr_target = fastp_long_read_dir / f"{sample}_1.{lr_seq_format}.gz"
             
             # convert path to an absolute path
             lr_source = Path(path).resolve()
@@ -152,6 +153,7 @@ def main():
     parser.add_argument("tsv_file", help="path to the input TSV file with sample metadata.")
     parser.add_argument("--clean", action="store_true", help="remove symbolic links from the results folder.")
     parser.add_argument("--results_dir", default="results", help="directory where the 'results' folder will be created (default is './results').")
+    parser.add_argument("--long-reads-seq-format", default="fastq", choices=["fastq", "fasta"], help="whether long reads sequences are in FASTQ or FASTA format (default is 'fastq').")
     args = parser.parse_args()
 
     # convert results_dir to path object
@@ -168,7 +170,8 @@ def main():
         LR_samples = get_LR_samples(metadata_table)
 
         # prepare the results directory and create symlinks
-        prepare_results_dir(SR_samples, LR_samples, results_dir)
+        prepare_results_dir(SR_samples, LR_samples, results_dir,
+                            args.long_reads_seq_format)
 
 if __name__ == "__main__":
     main()
