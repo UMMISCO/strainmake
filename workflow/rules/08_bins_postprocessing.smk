@@ -1,5 +1,11 @@
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
+SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
+
+# adding to "SAMPLES" samples "SAMPLES_LR" that were not found in "SAMPLES"
+for sample in SAMPLES_LR:
+    if sample not in SAMPLES:
+        SAMPLES.append(sample)
 
 ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
 DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])

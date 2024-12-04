@@ -6,11 +6,16 @@ ASSEMBLER_LR = config['assembly']['long_read_assembler']
 if ASSEMBLER_LR == None:
        ASSEMBLER_LR = []
 
+# allows a flexibility for the user to use sequences in FASTA or FASTQ format
+# (minimap2 can map sequences from FASTA or FASTQ)
+seq_format = config["lr_seq_format"]
+sequences_file_end = f"_1.{seq_format}.gz"
+
 # using minimap2 to map the long reads on the assembly
 rule reads_mapping_LR:
     input:
         # metagenome reads
-        long_read = "results/02_preprocess/fastp_long_read/{sample_lr}_1.fastq.gz",
+        long_read = "results/02_preprocess/fastp_long_read/{sample_lr}" + sequences_file_end,
         # assembly
         assembly = "results/03_assembly/LR/{assembler_lr}/{sample_lr}/assembly.fa.gz"
     output:

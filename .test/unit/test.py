@@ -38,6 +38,9 @@ class TestPipeline(unittest.TestCase):
 
         cls.case7 = "7._ALL_already_preprocessed"
         os.makedirs(cls.case6, exist_ok=True)
+
+        cls.case8 = "8._ALL_LR_FASTA"
+        os.makedirs(cls.case8, exist_ok=True)
         
     @classmethod
     def tearDownClass(cls):
@@ -372,6 +375,81 @@ class TestPipeline(unittest.TestCase):
             ])  
 
         shutil.rmtree("../../results")
+
+    def test_lr_reads_fasta(self):
+        """
+        Method for testing if the implementation of FASTA managing for LR samples works well
+        """
+
+        # preparing the results directory such as reads were already preprocessed
+        prepare_results_folder_script = "../../workflow/scripts/prepare/already_preprocessed_seq.py"
+        metadata_table = os.path.join(self.case8, "metadata.tsv")
+
+        # testing if if the results directory folder is well created, with good symlinks
+        result = subprocess.run(
+            [
+                "python3",
+                prepare_results_folder_script,
+                "--results_dir",
+                "../../results",
+                metadata_table
+            ],
+            capture_output=True, text=True
+        )
+
+        subprocess.run(
+                [
+                    "python3",
+                    prepare_results_folder_script,
+                    "--results_dir",
+                    "../../results",
+                    "--long-reads-seq-format",
+                    "fasta",
+                    metadata_table
+                ],
+                capture_output=True, text=True
+            )
+        
+        # run Snakemake with the specified configuration file for short and long reads
+        config_path = os.path.join(self.case8, "config.yaml")
+        result = subprocess.run(
+            [
+                "snakemake", 
+                "-c", "4", 
+                "-p", 
+                "--conda-frontend", "conda", 
+                "--use-conda", 
+                "--configfile", config_path,
+                "-s", "../../workflow/Snakefile.already_preprocessed_seq.smk",
+                "--directory", "../../",
+                "-n"
+            ],
+            capture_output=True, text=True
+        )
+
+        # cleaning by removing symlinks and the "results" directory
+        subprocess.run(
+            [
+                "python3",
+                prepare_results_folder_script,
+                "--clean",
+                "--results_dir",
+                "../../results",
+                metadata_table
+            ])  
+
+        shutil.rmtree("../../results")
+        
+        # check if Snakemake command was successful
+        self.assertEqual(result.returncode, 0, f"Snakemake failed: {result.stderr} {result.stdout}")
+
+        # # checking number of tasks for rules is consistent
+        # snakemake_jobs = self.parse_snakemake_dryrun_output(result.stdout)
+        # reads_mapping_tasks = snakemake_jobs[snakemake_jobs['job'] == 'reads_mapping']
+        # self.assertEqual(int(reads_mapping_tasks['count'].values[0]), 3, "Job 'reads_mapping' count is not 3")
+
+        # reads_mapping_LR_tasks = snakemake_jobs[snakemake_jobs['job'] == 'reads_mapping_LR']
+        # self.assertEqual(int(reads_mapping_LR_tasks['count'].values[0]), 1, "Job 'reads_mapping_LR' count is not 1")
     
     ################ Utils
 

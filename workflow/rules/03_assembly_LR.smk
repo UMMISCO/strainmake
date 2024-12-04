@@ -1,8 +1,13 @@
+# allows a flexibility for the user to use sequences in FASTA or FASTQ format
+# (Flye can assembly sequences using FASTA or FASTQ)
+seq_format = config["lr_seq_format"]
+sequences_file_end = f"_1.{seq_format}.gz"
+
 # metaFlye for long read
 rule metaflye_assembly:
     input:
         # files produced by fastp (should have already been decontaminated before used in the pipeline)
-        long_read = "results/02_preprocess/fastp_long_read/{sample}_1.fastq.gz",
+        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end,
     output:
         assembly = "results/03_assembly/LR/metaflye/{sample}/assembly.fa.gz"
     conda:

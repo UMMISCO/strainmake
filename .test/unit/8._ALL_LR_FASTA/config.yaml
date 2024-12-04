@@ -1,0 +1,2 @@
+samples: .test/unit/8._ALL_LR_FASTA/metadata.tsv
+lr_seq_format: fasta

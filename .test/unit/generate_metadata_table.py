@@ -24,7 +24,7 @@ class MetadataType(str, Enum):
     ALL = "all"
 
 @app.command()
-def generate_metadata(directory: str, metadata_type: MetadataType):
+def generate_metadata(directory: str, metadata_type: MetadataType, lr_format: str = "fastq"):
     """
     Generate a TSV file listing .fastq.gz files in the directory with metadata
     
@@ -34,10 +34,10 @@ def generate_metadata(directory: str, metadata_type: MetadataType):
     """
     # prepare patterns for sample ID extraction
     sr_pattern = r"fake_illumina_R[12]\.(.*)\.fastq\.gz"
-    lr_pattern = r"fake_nanopore_.*\.(.*)\.fastq\.gz"
+    lr_pattern = fr"fake_nanopore_.*\.(.*)\.{lr_format}\.gz"
 
     # list all .fastq.gz files in the directory
-    fastq_files = [f for f in os.listdir(directory) if f.endswith(".fastq.gz")]
+    fastq_files = [f for f in os.listdir(directory) if f.endswith((".fastq.gz", ".fasta.gz"))]
 
     metadata = []
 
@@ -49,7 +49,7 @@ def generate_metadata(directory: str, metadata_type: MetadataType):
             file_type = "R1" if "R1" in fastq_file else "R2"
             metadata.append([sample_id, file_type, file_path])
 
-        elif metadata_type == "LR" and "nanopore" in fastq_file:
+        elif metadata_type == "LR" and "nanopore" in fastq_file and f".{lr_format}" in fastq_file:
             sample_id = extract_sample_id(fastq_file, lr_pattern)
             metadata.append([sample_id, "long", file_path])
 
@@ -57,7 +57,7 @@ def generate_metadata(directory: str, metadata_type: MetadataType):
             if "R1" in fastq_file or "R2" in fastq_file:
                 sample_id = extract_sample_id(fastq_file, sr_pattern)
                 file_type = "R1" if "R1" in fastq_file else "R2"
-            elif "nanopore" in fastq_file:
+            elif "nanopore" in fastq_file and f".{lr_format}" in fastq_file:
                 sample_id = extract_sample_id(fastq_file, lr_pattern)
                 file_type = "long"
             else:

@@ -21,6 +21,11 @@ if ASSEMBLER_LR == None:
 
 DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
 
+# allows a flexibility for the user to use sequences in FASTA or FASTQ format
+# (minimap2 can map sequences from FASTA or FASTQ)
+seq_format = config["lr_seq_format"]
+sequences_file_end = f"_1.{seq_format}.gz"
+
 # rule to concatenate every bins that were dereplicated and filtered into a 
 # unique FASTA file
 rule creating_ref_genomes_fasta:
@@ -110,7 +115,7 @@ rule reads_LR_mapping_on_reference:
         # the bins we concatenated into a single FASTA file
         refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
         # metagenome reads
-        long_read = "results/02_preprocess/fastp_long_read/{sample}_1.fastq.gz"
+        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
     output:
         "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
     conda:

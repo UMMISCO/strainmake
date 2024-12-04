@@ -30,6 +30,8 @@ gzip -v data/*.fastq
 mv data/fake_illumina_R1.fastq.gz data/fake_illumina_R1.SAMPLE1.fastq.gz
 mv data/fake_illumina_R2.fastq.gz data/fake_illumina_R2.SAMPLE1.fastq.gz
 mv data/fake_nanopore_sample0_aligned_reads.fastq.gz data/fake_nanopore_sample0_aligned_reads.SAMPLE1.fastq.gz
+# converting LR FASTQ to FASTA
+seqkit fq2fa data/fake_nanopore_sample0_aligned_reads.SAMPLE1.fastq.gz -o data/fake_nanopore_sample0_aligned_reads.SAMPLE1.fasta.gz
 
 # ensure generated files are correct
 # echo "MD5 sum checking"
@@ -51,11 +53,13 @@ mkdir -p "4._SR_fail_if_LR_only"
 mkdir -p "5._LR_fail_if_SR_only"
 mkdir -p "6._SR_not_paired"
 mkdir -p "7._ALL_already_preprocessed"
+mkdir -p "8._ALL_LR_FASTA"
 
 python3 generate_metadata_table.py data/ SR && mv metadata.tsv "1._SR_only"
 python3 generate_metadata_table.py data/ LR && mv metadata.tsv "2._LR_only"
 python3 generate_metadata_table.py data/ all && mv metadata.tsv "3._ALL_seq"
 python3 generate_metadata_table.py data/ all && mv metadata.tsv "7._ALL_already_preprocessed"
+python3 generate_metadata_table.py data/ --lr-format fasta all && mv metadata.tsv "8._ALL_LR_FASTA"
 
 cp "1._SR_only/metadata.tsv" "5._LR_fail_if_SR_only"
 cp "2._LR_only/metadata.tsv" "4._SR_fail_if_LR_only"
