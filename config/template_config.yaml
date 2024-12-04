@@ -1,5 +1,5 @@
 samples: data/config_data.tsv
-lr_seq_format: fasta # depending on the format of the long reads to use (can be 'fastq', 'fasta')
+lr_seq_format: fastq # depending on the format of the long reads to use (can be 'fastq', 'fasta')
 
 ################################################################################
 #                                Preprocessing                                 #        
