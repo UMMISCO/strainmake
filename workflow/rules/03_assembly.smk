@@ -1,6 +1,12 @@
 # no matter the assembler used next is the assembly name to obtain
 assembly_name = "{sample}.final_assembly.fasta"
 
+
+# allows a flexibility for the user to use sequences in FASTA or FASTQ format
+# (Flye can assembly sequences using FASTA or FASTQ)
+seq_format = config["lr_seq_format"]
+sequences_file_end = f"_1.{seq_format}.gz"
+
 rule megahit_assembly:
     input:
         # files produced by fastp and decontaminated using bowtie2
@@ -120,7 +126,7 @@ rule hybridspades_assembly:
     input:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-        long_read = "results/02_preprocess/fastp_long_read/{sample}_1.fastq.gz"
+        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
     output:
         assembly = "results/03_assembly/hybridspades/{sample}/assembly.fa.gz",
         other_files = "results/03_assembly/hybridspades/{sample}/other_files.tar.gz"
