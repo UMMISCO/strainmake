@@ -13,6 +13,13 @@ if ASSEMBLER == None:
 if HYBRID_ASSEMBLER == None:
        HYBRID_ASSEMBLER = []
 
+# taking into account the case where we don't have LR
+if ASSEMBLER_LR == None:
+       ASSEMBLER_LR = []
+
+SHORT_READ_BINNER = config['binning']['binner']
+LONG_READ_BINNER = config['binning']['long_read_binner']
+
 # download the database for CheckM2
 rule checkm2_database:
     output:
@@ -47,13 +54,41 @@ rule checkm2_assessment:
         stderr = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stderr"
     benchmark:
         "benchmarks/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.benchmark.txt"
-    params:
-        binner = config['binning']['binner'],
-        assembler = config['assembly']['assembler']
     threads: config['checkm2']['threads']
     wildcard_constraints:
-        sample="|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        sample = "|".join(SAMPLES),
+        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
+        binner = "|".join(SHORT_READ_BINNER)
+    shell:
+        """
+        echo {input.bins} \
+        && \
+        checkm2 predict --input {input.bins}/bins --threads {threads} \
+            -x .gz \
+            --database_path {input.diamond_database} \
+            --output-directory {output.out_dir} > {log.stdout} 2> {log.stderr}
+        """
+
+rule checkm2_assessment_LR:
+    input:
+        # folder with bins created in step 05. One folder per binning program
+        bins = "results/05_binning/{long_read_binner}/bins/{assembler_lr}/{sample_lr}", 
+        diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+    output:
+        "results/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}/quality_report.tsv",
+        out_dir = directory("results/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}")
+    conda:
+        "../envs/checkm2.yaml"
+    log:
+        stdout = "logs/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.stdout",
+        stderr = "logs/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.stderr"
+    benchmark:
+        "benchmarks/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.benchmark.txt"
+    threads: config['checkm2']['threads']
+    wildcard_constraints:
+        sample="|".join(SAMPLES_LR),
+        assembler_lr = "|".join(ASSEMBLER_LR),
+        long_read_binner = "|".join(LONG_READ_BINNER)
     shell:
         """
         echo {input.bins} \
@@ -71,14 +106,14 @@ rule checkm2_merge_results:
                assembler = ASSEMBLER + HYBRID_ASSEMBLER,
                binner = config['binning']['binner']),
         # long reads based results
-        expand("results/06_binning_qc/checkm2/LR/{long_read_binner}/{assembler_lr}/{{sample}}/quality_report.tsv",
-               assembler_lr = config['assembly']['long_read_assembler'] if ASSEMBLER_LR != None else [],
-               long_read_binner = config['binning']['long_read_binner'] if ASSEMBLER_LR != None else []) # the conditions
-                                                                                                         # are for requiring such
-                                                                                                         # inputs
-                                                                                                         # only if the user has 
-                                                                                                         # long reads to
-                                                                                                         # analyze 
+        expand("results/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{{sample}}/quality_report.tsv",
+               assembler_lr = ASSEMBLER_LR if ASSEMBLER_LR != None else [],
+               long_read_binner = LONG_READ_BINNER if ASSEMBLER_LR != None else []) # the conditions
+                                                                                    # are for requiring such
+                                                                                    # inputs
+                                                                                    # only if the user has 
+                                                                                    # long reads to
+                                                                                    # analyze 
     output:
         "results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.tsv"
     conda:
