@@ -54,7 +54,9 @@ rule binette_refinement:
         > {log.stdout} 2> {log.stderr} \
         && \
         bash workflow/scripts/check_binette_produced_files.sh {output}/final_bins {input.bins_dirs} \
-        > {log.stdout_check} 2> {log.stderr_check}
+        > {log.stdout_check} 2> {log.stderr_check} \
+        && \
+        find {output}/final_bins -type f -name "*.fa" -exec pigz \;
         """
 
 rule binette_refinement_LR:
@@ -88,5 +90,7 @@ rule binette_refinement_LR:
         > {log.stdout} 2> {log.stderr} \
         && \
         bash workflow/scripts/check_binette_produced_files.sh {output}/final_bins {input.bins_dirs} \
-        > {log.stdout_check} 2> {log.stderr_check}
+        > {log.stdout_check} 2> {log.stderr_check} \
+        && \
+        find {output}/final_bins -type f -name "*.fa" -exec pigz \;
         """

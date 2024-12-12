@@ -4,3 +4,4 @@ channels:
   - conda-forge
 dependencies:
   - binette=1.0.1
+  - pigz
