@@ -10,6 +10,29 @@ for sample in SAMPLES_LR:
 ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
 DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
 
+ASSEMBLER = config['assembly']['assembler']
+
+HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler'] 
+ASSEMBLER_LR = config['assembly']['long_read_assembler']
+
+# taking into account the case where we don't have SR assembly
+if ASSEMBLER == None:
+       ASSEMBLER = []
+
+# taking into account the case where we don't have hybrid assembly
+if HYBRID_ASSEMBLER == None:
+       HYBRID_ASSEMBLER = []
+
+# taking into account the case where we don't have LR
+if ASSEMBLER_LR == None:
+       ASSEMBLER_LR = []
+
+SHORT_READ_BINNER = config['binning']['binner']
+LONG_READ_BINNER = config['binning']['long_read_binner']
+
+# we would have refined bins with Binette only if we used several binning methods
+refined = True if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else False
+
 rule gtdb_tk_taxonomic_annotation:
     input:
         # folder with dereplicated and filtered bins (= MAG)
@@ -38,22 +61,63 @@ rule gtdb_tk_taxonomic_annotation:
         """
 
 # this rule produces text files with list of refined genomes
-rule list_refined_genomes:
-    input: expand("results/07_bins_refinement/binette/{{assembler}}/{sample}", sample=SAMPLES)
-    output: "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
-    log:
-        stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stdout",
-        stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stderr"
-    benchmark:
-        "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/list.benchmark.txt"
-    params:
-        # constructing the precise folder path with bins from the input
-        bins_folder = lambda wildcards, input: [f"{dir}/final_bins" for dir in input]
-    shell:
-        """
-        bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
-            > {log.stdout} 2> {log.stderr}
-        """
+if refined:
+    rule list_refined_genomes_binette:
+        input: 
+            expand("results/07_bins_refinement/binette/{{assembler}}/{sample}", sample=SAMPLES) 
+        output: "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
+        log:
+            stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stdout",
+            stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stderr"
+        benchmark:
+            "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/list.benchmark.txt"
+        params:
+            # constructing the precise folder path with bins from the input
+            bins_folder = lambda wildcards, input: [f"{dir}/final_bins" for dir in input]
+        shell:
+            """
+            bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
+                > {log.stdout} 2> {log.stderr}
+            """
+else:
+    rule list_refined_genomes_no_binette_SR:
+        input:
+            expand("results/05_binning/{binner}/bins/{{assembler}}/{sample}", binner=SHORT_READ_BINNER, sample=SAMPLES)
+        output: "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
+        log:
+            stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stdout",
+            stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stderr"
+        benchmark:
+            "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/list.benchmark.txt"
+        params:
+            # constructing the precise folder path with bins from the input
+            bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input]
+        wildcard_constraints:
+            assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
+        shell:
+            """
+            bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
+                > {log.stdout} 2> {log.stderr}
+            """
+    rule list_refined_genomes_no_binette_LR:
+        input:
+            expand("results/05_binning/{binner}/bins/{{assembler_lr}}/{sample}", binner=LONG_READ_BINNER, sample=SAMPLES_LR)
+        output: "results/08_bins_postprocessing/genomes_list/{assembler_lr}/list.txt"
+        log:
+            stdout = "logs/08_bins_postprocessing/genomes_list/{assembler_lr}/list.stdout",
+            stderr = "logs/08_bins_postprocessing/genomes_list/{assembler_lr}/list.stderr"
+        benchmark:
+            "benchmarks/08_bins_postprocessing/genomes_list/{assembler_lr}/list.benchmark.txt"
+        params:
+            # constructing the precise folder path with bins from the input
+            bins_folder = lambda wildcards, input: [f"{dir}/binss" for dir in input]
+        wildcard_constraints:
+            assembler_lr = "|".join(ASSEMBLER_LR)
+        shell:
+            """
+            bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
+                > {log.stdout} 2> {log.stderr}
+            """
 
 # copying bins into another foler and renaming them if needed to avoid duplicated names 
 # (what makes dRep fail)

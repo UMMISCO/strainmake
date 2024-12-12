@@ -11,20 +11,20 @@ output_file=$1
 # remove the first argument to get the input file paths
 shift
 
-# initialize an empty array to store the .fa file paths
+# initialize an empty array to store the .fa and .fa.gz file paths
 fa_files=()
 
 # iterate over each input path provided as arguments
 for path in "$@"; do
     # check if the path is a directory
     if [ -d "$path" ]; then
-        # find .fa files in the directory and add them to the array
+        # find .fa and .fa.gz files in the directory and add them to the array
         while IFS= read -r -d $'\0' file; do
             fa_files+=("$file")
-        done < <(find "$path" -type f -name "*.fa" -print0)
+        done < <(find "$path" -type f \( -name "*.fa" -o -name "*.fa.gz" \) -print0)
     elif [ -f "$path" ]; then
-        # if the path is a file and ends with .fa, add it to the array
-        if [[ "$path" == *.fa ]]; then
+        # if the path is a file and ends with .fa or .fa.gz, add it to the array
+        if [[ "$path" == *.fa || "$path" == *.fa.gz ]]; then
             fa_files+=("$path")
         fi
     else

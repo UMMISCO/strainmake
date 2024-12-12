@@ -82,9 +82,9 @@ rule all:
                    binner_lr = LONG_READ_BINNER, assembler_lr=ASSEMBLER + HYBRID_ASSEMBLER, sample_lr=SAMPLES),
             expand("results/06_binning_qc/checkm2/samples/{sample}/all_quality_reports.pdf",
                    sample=SAMPLES),
-            # bins refinement
+            # bins refinement (only if multiple binning methods were used)
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
-                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR),
+                   assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR) if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else [],          
             # bins post-processing
             expand("results/08_bins_postprocessing/dRep/{ani}/{assembler}",
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = ANI_THRESHOLD),
