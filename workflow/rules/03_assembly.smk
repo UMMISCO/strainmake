@@ -125,7 +125,7 @@ rule hybridspades_assembly:
     input:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-        long_read = "results/02_preprocess/fastp_long_read/{sample}_1.fastq.gz"
+        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
     output:
         assembly = "results/03_assembly/hybridspades/{sample}/assembly.fa.gz",
         other_files = "results/03_assembly/hybridspades/{sample}/other_files.tar.gz"
