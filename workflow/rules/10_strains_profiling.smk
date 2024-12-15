@@ -99,7 +99,7 @@ rule reads_mapping_on_reference:
     benchmark:
         "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
+        assembler = "|".join(ASSEMBLER),
         sample="|".join(SAMPLES),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     threads: config['strains_profiling']['minimap2']['threads']
@@ -108,6 +108,63 @@ rule reads_mapping_on_reference:
         minimap2 -ax sr -t {threads} \
             {input.refs} {input.r1} {input.r2} > {output} 2> {log.stderr}
         """
+
+# there are two possibilities: reads used in hybrid assemblies were downsized, or reads used 
+# in hybrid assemblies were not downsized
+subsample_hybrid_reads = config["downsizing_for_hybrid"]["lr"] is not None and config["downsizing_for_hybrid"]["sr"] is not None
+
+if not subsample_hybrid_reads:
+    rule reads_mapping_on_reference_hybrid_not_downsized:
+        input:
+            # the bins we concatenated into a single FASTA file
+            refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
+            # metagenome reads
+            r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
+            r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
+        output:
+            "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
+        conda:
+            "../envs/minimap2.yaml"
+        log:
+            stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.stderr"
+        benchmark:
+            "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.benchmark.txt"
+        wildcard_constraints:
+            assembler = "|".join(HYBRID_ASSEMBLER),
+            sample="|".join(SAMPLES),
+            ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+        threads: config['strains_profiling']['minimap2']['threads']
+        shell:
+            """
+            minimap2 -ax sr -t {threads} \
+                {input.refs} {input.r1} {input.r2} > {output} 2> {log.stderr}
+            """
+else:
+    rule reads_hybrid_mapping_on_reference_hybrid_downsized:
+        input:
+            # the bins we concatenated into a single FASTA file
+            refs = "results/10_strain_profiling/refs/{ani}/{assembler}/ref_genomes.fa",
+            # metagenome reads
+            r1 = "results/02_preprocess/downsized/bowtie2/{sample}_1.clean.downsized.fastq.gz",
+            r2 = "results/02_preprocess/downsized/bowtie2/{sample}_2.clean.downsized.fastq.gz",
+        output:
+            "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
+        conda:
+            "../envs/minimap2.yaml"
+        log:
+            stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.stderr"
+        benchmark:
+            "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.benchmark.txt"
+        wildcard_constraints:
+            assembler = "|".join(HYBRID_ASSEMBLER),
+            sample="|".join(SAMPLES),
+            ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+        threads: config['strains_profiling']['minimap2']['threads']
+        shell:
+            """
+            minimap2 -ax sr -t {threads} \
+                {input.refs} {input.r1} {input.r2} > {output} 2> {log.stderr}
+            """
 
 # mapping sample reads (long reads) on the reference genomes (the bins)
 rule reads_LR_mapping_on_reference:

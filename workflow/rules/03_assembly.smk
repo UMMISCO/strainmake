@@ -6,6 +6,9 @@ assembly_name = "{sample}.final_assembly.fasta"
 seq_format = config["lr_seq_format"]
 sequences_file_end = f"_1.{seq_format}.gz"
 
+# whether to subsample reads that whill be used in hybrid assembly or not
+subsample_hybrid_reads = config["downsizing_for_hybrid"]["lr"] is not None and config["downsizing_for_hybrid"]["sr"] is not None
+
 rule megahit_assembly:
     input:
         # files produced by fastp and decontaminated using bowtie2
@@ -120,51 +123,99 @@ rule metaspades_assembly:
         bash {params.compressing_files_script} {params.out_dir}
         """
 
-# hybrid assembly using hybridSPADes
-rule hybridspades_assembly:
-    input:
-        r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
-        r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
-    output:
-        assembly = "results/03_assembly/hybridspades/{sample}/assembly.fa.gz",
-        other_files = "results/03_assembly/hybridspades/{sample}/other_files.tar.gz"
-    conda:
-        "../envs/spades.yaml"
-    log:
-        stdout = "logs/03_assembly/hybridspades/{sample}.stdout",
-        stderr = "logs/03_assembly/hybridspades/{sample}.stderr"
-    benchmark:
-        "benchmarks/03_assembly/hybridspades/{sample}.benchmark.txt"
-    params:
-        out_dir = "results/03_assembly/hybridspades/{sample}",
-        memory_limit = config['assembly']['hybridspades']['memory_limit'],
-        method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
-        min_contig_len = config['assembly']['hybridspades']['min_contig_len'],
-        compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
-        intermediate_assembly = "{sample}_hybridspades_tmp_assembly.fa"
-    threads: config['assembly']['hybridspades']['threads']
-    shell:
-        """
-        spades.py --meta -1 {input.r1} -2 {input.r2} \
-            {params.method_flag} {input.long_read} \
-            --threads {threads} \
-            -o {params.out_dir} \
-            -m {params.memory_limit} \
-            > {log.stdout} 2> {log.stderr} \
-        && \
-        mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
-        && \
-        pigz {params.out_dir}/assembly.fa \
-        && \
-        seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
-        && \
-        pigz {params.intermediate_assembly} \
-        && \
-        mv {params.intermediate_assembly}.gz {output.assembly} \
-        && \
-        bash {params.compressing_files_script} {params.out_dir}
-        """
+if not subsample_hybrid_reads:
+    # hybrid assembly using hybridSPADes
+    rule hybridspades_assembly:
+        input:
+            r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
+            r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
+            long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
+        output:
+            assembly = "results/03_assembly/hybridspades/{sample}/assembly.fa.gz",
+            other_files = "results/03_assembly/hybridspades/{sample}/other_files.tar.gz"
+        conda:
+            "../envs/spades.yaml"
+        log:
+            stdout = "logs/03_assembly/hybridspades/{sample}.stdout",
+            stderr = "logs/03_assembly/hybridspades/{sample}.stderr"
+        benchmark:
+            "benchmarks/03_assembly/hybridspades/{sample}.benchmark.txt"
+        params:
+            out_dir = "results/03_assembly/hybridspades/{sample}",
+            memory_limit = config['assembly']['hybridspades']['memory_limit'],
+            method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
+            min_contig_len = config['assembly']['hybridspades']['min_contig_len'],
+            compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
+            intermediate_assembly = "{sample}_hybridspades_tmp_assembly.fa"
+        threads: config['assembly']['hybridspades']['threads']
+        shell:
+            """
+            spades.py --meta -1 {input.r1} -2 {input.r2} \
+                {params.method_flag} {input.long_read} \
+                --threads {threads} \
+                -o {params.out_dir} \
+                -m {params.memory_limit} \
+                > {log.stdout} 2> {log.stderr} \
+            && \
+            mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
+            && \
+            pigz {params.out_dir}/assembly.fa \
+            && \
+            seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
+            && \
+            pigz {params.intermediate_assembly} \
+            && \
+            mv {params.intermediate_assembly}.gz {output.assembly} \
+            && \
+            bash {params.compressing_files_script} {params.out_dir}
+            """
+# if not, the user wants to use less deep samples for hybrid assembly
+else:
+    # hybrid assembly using hybridSPADes
+    rule hybridspades_assembly_downsized_reads:
+        input:
+            r1 = "results/02_preprocess/downsized/bowtie2/{sample}_1.clean.downsized.fastq.gz",
+            r2 = "results/02_preprocess/downsized/bowtie2/{sample}_2.clean.downsized.fastq.gz",
+            long_read = "results/02_preprocess/downsized/fastp_long_read/{sample}_downsized" + sequences_file_end
+        output:
+            assembly = "results/03_assembly/hybridspades/{sample}/assembly.fa.gz",
+            other_files = "results/03_assembly/hybridspades/{sample}/other_files.tar.gz"
+        conda:
+            "../envs/spades.yaml"
+        log:
+            stdout = "logs/03_assembly/hybridspades/{sample}.stdout",
+            stderr = "logs/03_assembly/hybridspades/{sample}.stderr"
+        benchmark:
+            "benchmarks/03_assembly/hybridspades/{sample}.benchmark.txt"
+        params:
+            out_dir = "results/03_assembly/hybridspades/{sample}",
+            memory_limit = config['assembly']['hybridspades']['memory_limit'],
+            method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
+            min_contig_len = config['assembly']['hybridspades']['min_contig_len'],
+            compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
+            intermediate_assembly = "{sample}_hybridspades_tmp_assembly.fa"
+        threads: config['assembly']['hybridspades']['threads']
+        shell:
+            """
+            spades.py --meta -1 {input.r1} -2 {input.r2} \
+                {params.method_flag} {input.long_read} \
+                --threads {threads} \
+                -o {params.out_dir} \
+                -m {params.memory_limit} \
+                > {log.stdout} 2> {log.stderr} \
+            && \
+            mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
+            && \
+            pigz {params.out_dir}/assembly.fa \
+            && \
+            seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
+            && \
+            pigz {params.intermediate_assembly} \
+            && \
+            mv {params.intermediate_assembly}.gz {output.assembly} \
+            && \
+            bash {params.compressing_files_script} {params.out_dir}
+            """
 
 # metaFlye for long read assembly
 rule metaflye_assembly:

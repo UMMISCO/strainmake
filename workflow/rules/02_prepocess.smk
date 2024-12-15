@@ -110,3 +110,37 @@ rule fastqc_after_preprocessing:
         fastqc {input} -o results/02_preprocess/fastqc/ \
             > {log.stdout} 2> {log.stderr}
         """
+
+# allows a flexibility for the user to use sequences in FASTA or FASTQ format
+seq_format = config["lr_seq_format"]
+sequences_file_end = f"_1.{seq_format}.gz"
+
+rule downsize_reads_for_hybrid_parts_sr:
+    input:
+        sr_1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
+        sr_2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
+        lr = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
+    output:
+        sr_1 = "results/02_preprocess/downsized/bowtie2/{sample}_1.clean.downsized.fastq.gz",
+        sr_2 = "results/02_preprocess/downsized/bowtie2/{sample}_2.clean.downsized.fastq.gz",
+        lr = "results/02_preprocess/downsized/fastp_long_read/{sample}_downsized" + sequences_file_end
+    conda:
+        "../envs/seqkit.yaml"
+    log:
+        stdout = "logs/02_preprocess/downsizing/{sample}.stdout",
+        stderr = "logs/02_preprocess/downsizing/{sample}.stderr"
+    benchmark:
+        "benchmarks/02_preprocess/downsizing/{sample}.benchmark.txt"
+    params:
+        prop_lr = config["downsizing_for_hybrid"]["lr"],
+        prop_sr = config["downsizing_for_hybrid"]["sr"]
+    shell:
+        """
+        (
+            seqkit sample -p {params.prop_sr} {input.sr_1} --rand-seed 11111 > {output.sr_1} \
+            && \
+            seqkit sample -p {params.prop_sr} {input.sr_2} --rand-seed 11111 > {output.sr_2} \
+            && \
+            seqkit sample -p {params.prop_lr} {input.lr} --rand-seed 11111 > {output.lr}
+        ) > {log.stdout} 2> {log.stderr}
+        """
