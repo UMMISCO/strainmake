@@ -45,7 +45,8 @@ rule reads_mapping:
         index_basename = "{sample}",
         assembler = config['assembly']['assembler']
     wildcard_constraints:
-        assembler = "|".join(ASSEMBLER)
+        assembler = "|".join(ASSEMBLER),
+        sample = "|".join(SAMPLES)
     threads: config['binning']['minimap2']['threads']
     shell:
         """
@@ -57,60 +58,33 @@ rule reads_mapping:
 # in hybrid assemblies were not downsized
 subsample_hybrid_reads = config["downsizing_for_hybrid"]["lr"] is not None and config["downsizing_for_hybrid"]["sr"] is not None
 
-if not subsample_hybrid_reads:
-    rule reads_mapping_hybrid_not_downsized:
-        input:
-            # metagenome reads
-            r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
-            r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-            # assembly to map reads on
-            assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
-        output:
-            "results/05_binning/minimap2/{assembler}/{sample}.sam"
-        conda:
-            "../envs/minimap2.yaml"
-        log:
-            stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr"
-        benchmark:
-            "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
-        params:
-            index_basename = "{sample}",
-            assembler = config['assembly']['assembler']
-        wildcard_constraints:
-            assembler = "|".join(HYBRID_ASSEMBLER)
-        threads: config['binning']['minimap2']['threads']
-        shell:
-            """
-            minimap2 -ax sr -t {threads} \
-                {input.assembly} {input.r1} {input.r2} > {output} 2> {log.stderr}
-            """
-else:
-    rule reads_mapping_hybrid_downsized:
-        input:
-            # metagenome reads
-            r1 = "results/02_preprocess/downsized/bowtie2/{sample}_1.clean.downsized.fastq.gz",
-            r2 = "results/02_preprocess/downsized/bowtie2/{sample}_2.clean.downsized.fastq.gz",
-            # assembly to map reads on
-            assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
-        output:
-            "results/05_binning/minimap2/{assembler}/{sample}.sam"
-        conda:
-            "../envs/minimap2.yaml"
-        log:
-            stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr"
-        benchmark:
-            "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
-        params:
-            index_basename = "{sample}",
-            assembler = config['assembly']['assembler']
-        wildcard_constraints:
-            assembler = "|".join(HYBRID_ASSEMBLER)
-        threads: config['binning']['minimap2']['threads']
-        shell:
-            """
-            minimap2 -ax sr -t {threads} \
-                {input.assembly} {input.r1} {input.r2} > {output} 2> {log.stderr}
-            """
+rule reads_mapping_hybrid:
+    input:
+        # select input files based on whether reads are downsized or not
+        r1 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_1.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        # assembly to map reads on
+        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
+    output:
+        "results/05_binning/minimap2/{assembler}/{sample}.sam"
+    conda:
+        "../envs/minimap2.yaml"
+    log:
+        stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr"
+    benchmark:
+        "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
+    params:
+        index_basename = "{sample}",
+        assembler = config['assembly']['assembler']
+    wildcard_constraints:
+        assembler = "|".join(HYBRID_ASSEMBLER),
+        sample = "|".join(SAMPLES)
+    threads: config['binning']['minimap2']['threads']
+    shell:
+        """
+        minimap2 -ax sr -t {threads} \
+            {input.assembly} {input.r1} {input.r2} > {output} 2> {log.stderr}
+        """
 
 rule sam_to_bam:
     input:
