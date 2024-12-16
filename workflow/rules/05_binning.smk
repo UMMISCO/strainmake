@@ -63,6 +63,7 @@ rule reads_mapping_hybrid:
         # select input files based on whether reads are downsized or not
         r1 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_1.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
         r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}",
         # assembly to map reads on
         assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
     output:
@@ -70,12 +71,16 @@ rule reads_mapping_hybrid:
     conda:
         "../envs/minimap2.yaml"
     log:
-        stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr"
+        sr_stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr",
+        lr_stderr = "logs/05_binning/minimap2/LR/{assembler}/{sample}.mapping.stderr"
     benchmark:
         "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        assembler = config['assembly']['assembler']
+        assembler = config['assembly']['assembler'],
+        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb",
+        mapping_sr = "results/05_binning/minimap2/{assembler}/{sample}.SR.sam",
+        mapping_lr = "results/05_binning/minimap2/{assembler}/{sample}.LR.sam"
     wildcard_constraints:
         assembler = "|".join(HYBRID_ASSEMBLER),
         sample = "|".join(SAMPLES)
@@ -83,7 +88,16 @@ rule reads_mapping_hybrid:
     shell:
         """
         minimap2 -ax sr -t {threads} \
-            {input.assembly} {input.r1} {input.r2} > {output} 2> {log.stderr}
+            {input.assembly} {input.r1} {input.r2} \
+            > {params.mapping_sr} 2> {log.sr_stderr} \
+        && \
+        minimap2 -ax {params.method} -t {threads} \
+            {input.assembly} {input.long_read} \
+            > {params.mapping_lr} 2> {log.lr_stderr} \
+        && \
+        samtools merge -o {output} {params.mapping_sr} {params.mapping_lr} \
+        && \
+        rm -v {params.mapping_sr} {params.mapping_lr}
         """
 
 rule sam_to_bam:

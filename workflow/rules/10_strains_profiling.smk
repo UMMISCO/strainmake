@@ -120,23 +120,35 @@ rule reads_mapping_on_reference_hybrid:
         # Select input files based on whether reads are downsized or not
         r1 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_1.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
         r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}"
     output:
         "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.stderr"
+        sr_stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.SR.stderr",
+        lr_stderr = "logs/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.LR.stderr"
     benchmark:
         "benchmarks/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.benchmark.txt"
     wildcard_constraints:
         assembler = "|".join(HYBRID_ASSEMBLER),
         sample="|".join(SAMPLES),
-        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE,
+        mapping_sr = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.SR.sam",
+        mapping_lr = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.LR.sam",
+        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
         minimap2 -ax sr -t {threads} \
-            {input.refs} {input.r1} {input.r2} > {output} 2> {log.stderr}
+            {input.refs} {input.r1} {input.r2} > {params.mapping_sr} 2> {log.sr_stderr} \
+        && \
+        minimap2 -ax {params.method} -t {threads} \
+            {input.refs} {input.long_read} > {params.mapping_lr} 2> {log.lr_stderr}
+        && \
+        samtools merge -o {output} {params.mapping_sr} {params.mapping_lr} \
+        && \
+        rm -v {params.mapping_sr} {params.mapping_lr}
         """
 
 # mapping sample reads (long reads) on the reference genomes (the bins)
