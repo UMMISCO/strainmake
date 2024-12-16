@@ -133,7 +133,8 @@ rule reads_mapping_on_reference_hybrid:
     wildcard_constraints:
         assembler = "|".join(HYBRID_ASSEMBLER),
         sample="|".join(SAMPLES),
-        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE,
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+    params:
         mapping_sr = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.SR.sam",
         mapping_lr = "results/10_strain_profiling/minimap2/{ani}/{assembler}/{sample}.LR.sam",
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
