@@ -1,11 +1,13 @@
 # no matter the assembler used next is the assembly name to obtain
 assembly_name = "{sample}.final_assembly.fasta"
 
-
 # allows a flexibility for the user to use sequences in FASTA or FASTQ format
 # (Flye can assembly sequences using FASTA or FASTQ)
 seq_format = config["lr_seq_format"]
 sequences_file_end = f"_1.{seq_format}.gz"
+
+# whether to subsample reads that whill be used in hybrid assembly or not
+subsample_hybrid_reads = config["downsizing_for_hybrid"]["lr"] is not None and config["downsizing_for_hybrid"]["sr"] is not None
 
 rule megahit_assembly:
     input:
@@ -121,12 +123,11 @@ rule metaspades_assembly:
         bash {params.compressing_files_script} {params.out_dir}
         """
 
-# hybrid assembly using hybridSPADes
 rule hybridspades_assembly:
     input:
-        r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
-        r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
-        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end
+        r1 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_1.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}"
     output:
         assembly = "results/03_assembly/hybridspades/{sample}/assembly.fa.gz",
         other_files = "results/03_assembly/hybridspades/{sample}/other_files.tar.gz"
@@ -165,4 +166,41 @@ rule hybridspades_assembly:
         mv {params.intermediate_assembly}.gz {output.assembly} \
         && \
         bash {params.compressing_files_script} {params.out_dir}
+        """
+
+# metaFlye for long read assembly
+rule metaflye_assembly:
+    input:
+        # files produced by fastp (should have already been decontaminated before used in the pipeline)
+        long_read = "results/02_preprocess/fastp_long_read/{sample}" + sequences_file_end,
+    output:
+        assembly = "results/03_assembly/metaflye/{sample}/assembly.fa.gz"
+    conda:
+        "../envs/flye.yaml"
+    log:
+        stdout = "logs/03_assembly/metaflye/{sample}.stdout",
+        stderr = "logs/03_assembly/metaflye/{sample}.stderr"
+    benchmark:
+        "benchmarks/03_assembly/metaflye/{sample}.benchmark.txt"
+    params:
+        out_dir = "results/03_assembly/metaflye/{sample}",
+        method_flag = "--nano-hq" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio-hifi",
+        min_contig_len = config['assembly']['metaflye']['min_contig_len'],
+        intermediate_assembly = "{sample}_metaflye_tmp_assembly.fa"
+    threads: config['assembly']['metaflye']['threads']
+    shell:
+        """
+        flye {params.method_flag} {input.long_read} --out-dir {params.out_dir} \
+            --meta --threads {threads} \
+            > {log.stdout} 2> {log.stderr} \
+        && \
+        mv {params.out_dir}/assembly.fasta {params.out_dir}/assembly.fa \
+        && \
+        pigz {params.out_dir}/assembly.fa \
+        && \
+        seqkit seq -m {params.min_contig_len} {output.assembly} > {params.intermediate_assembly} \
+        && \
+        pigz {params.intermediate_assembly} \
+        && \
+        mv {params.intermediate_assembly}.gz {output.assembly}
         """

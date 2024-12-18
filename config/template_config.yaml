@@ -20,6 +20,13 @@ bowtie2:
   index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
   threads: 4
 
+# proportion to sample sequencing samples that will be used for hybrid assembly, binning, etc. (only)
+# only fill it if you want to subsample those reads, if, for hybrid assembly, binning, you want to use the 
+# same FASTA/FASTQ used for LR/SR assembly, let those values empty
+downsizing_for_hybrid:
+  sr: 0.5
+  lr: 0.5
+
 ################################################################################
 #                                   Assembly                                   #        
 ################################################################################        
@@ -63,9 +70,9 @@ quast:
 
 binning:
   binner: # currently: metabat2, semibin2. Others to be implemented
-    - metabat2 
+    # - metabat2 
     - semibin2
-    - vamb
+    # - vamb
   long_read_binner:
     - semibin2
   # minimap2 configuration for reads mapping

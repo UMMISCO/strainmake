@@ -1,7 +1,6 @@
-name: binette
+name: seqkit
 channels:
   - bioconda
   - conda-forge
 dependencies:
-  - binette=1.0.1
-  - pigz
+  - seqkit=2.8.2

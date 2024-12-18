@@ -1,7 +1,11 @@
+# allows a flexibility for the user to use sequences in FASTA or FASTQ format
+seq_format = config["lr_seq_format"]
+sequences_file_end = f"_1.{seq_format}.gz"
+
 rule fastp_long_read:
     input: lambda wildcards: get_fastq_long_read(SAMPLES_DF, wildcards.sample_lr)
     output:
-        r1 = "results/02_preprocess/fastp_long_read/{sample_lr}_1.fastq.gz",
+        r1 = "results/02_preprocess/fastp_long_read/{sample_lr}" + sequences_file_end,
         html_report = "results/02_preprocess/fastp_long_read/{sample_lr}_report.html",
         json_report = "results/02_preprocess/fastp_long_read/{sample_lr}_report.json"
     conda: 
