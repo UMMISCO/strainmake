@@ -65,6 +65,17 @@ quast:
   threads: 4
 
 ################################################################################
+#                          Non redundant gene catalog                          #
+################################################################################
+
+cdhit:
+  sequence_identity_threshold: 0.95 # -c arg in CD-HIT-EST
+  alignment_coverage_shorter_sequence: 0.9 # -aS arg in CD-HIT-EST
+  threads: 10
+representative_genes:
+  minimal_gene_length: 100 # minimal non redundant gene length to be kept in the produced catalog
+
+################################################################################
 #                                   Binning                                    #
 ################################################################################
 
