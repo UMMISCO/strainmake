@@ -84,7 +84,7 @@ rule gene_calling_assembly:
         # assemblies produced in step 03
         "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
     output:
-        "results/04_assembly_qc/gene_calling/{assembler}/{sample}/genes.fna.gz"
+        "results/04_assembly_qc/gene_calling/{assembler}/{sample}/genes.fna"
     conda:
         "../envs/prodigal.yaml"
     log:
@@ -93,15 +93,13 @@ rule gene_calling_assembly:
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler}/{sample}.benchmark.txt"
     params:
-        uncompressed_fasta "results/04_assembly_qc/gene_calling/{assembler}/{sample}/genes.fna"
+        uncompressed_fasta = "results/04_assembly_qc/gene_calling/{assembler}/{sample}/genes.fna"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         prodigal -i {input} -d {params.uncompressed_fasta} -p meta \
-            > {log.stdout} 2> {log.stderr} \
-        && \
-        pigz {params.uncompressed_fasta}
+            > {log.stdout} 2> {log.stderr}
         """
 
 rule gene_calling_assembly_long_read:
@@ -182,8 +180,7 @@ rule gene_clustering:
         uncompressed_output = "results/04_assembly_qc/gene_clustering/{assembler}/non_redundant_gene_catalog.fna"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
-    threads:
-        config['cdhit']['threads']
+    threads: config['cdhit']['threads']
     shell:
         """
         cd-hit-est -i {input} -o {params.cdhit_output} -c {params.sequence_identity_threshold} -aS {params.alignment_coverage_shorter_sequence} \
