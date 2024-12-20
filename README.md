@@ -35,10 +35,17 @@ Human assembly for mapping:
 | :---- | :---------------------------------------------------- | :----------------------------------------- | :----------------------------- | :----------- |
 | QUAST | [2013](https://doi.org/10.1093/bioinformatics/btt086) | [Yes](https://anaconda.org/bioconda/quast) | https://github.com/ablab/quast | Yes          |
 
+## Non-redundant gene catalog
+
+| Tool     | Original year                                         | Conda available?                              | Link                                | Implemented? |
+| :------- | :---------------------------------------------------- | :-------------------------------------------- | :---------------------------------- | :----------- |
+| Prodigal | [2010](https://doi.org/10.1186/1471-2105-11-119)      | [Yes](https://anaconda.org/bioconda/prodigal) | https://github.com/hyattpd/Prodigal | Yes          |
+| CD-HIT   | [2012](https://doi.org/10.1093/bioinformatics/bts565) | [Yes](https://anaconda.org/bioconda/cd-hit)   | https://github.com/weizhongli/cdhit | Yes          |
+
 ## Binning
 
 | Tool      | Original year                                          | Conda available?                              | Link                                                  | Implemented? |
-|:--------- |:------------------------------------------------------ |:--------------------------------------------- |:----------------------------------------------------- |:------------ |
+| :-------- | :----------------------------------------------------- | :-------------------------------------------- | :---------------------------------------------------- | :----------- |
 | MetaBAT 2 | [2019](https://doi.org/10.7717%2Fpeerj.7359)           | [Yes](https://anaconda.org/bioconda/metabat2) | https://bitbucket.org/berkeleylab/metabat/src/master/ | Yes          |
 | SemiBin2  | [2023](https://doi.org/10.1093/bioinformatics/btad209) | [Yes](https://anaconda.org/bioconda/semibin)  | https://github.com/BigDataBiology/SemiBin             | Yes          |
 | VAMB      | [2019](https://doi.org/10.1038/s41587-020-00777-4)     | [Yes](https://anaconda.org/bioconda/vamb)     | https://github.com/RasmussenLab/vamb                  | Yes          |
@@ -53,21 +60,21 @@ Human assembly for mapping:
 ## Bins refinement
 
 | Tool    | Original year                                     | Conda available?                             | Link                                        | Implemented? |
-|:------- |:------------------------------------------------- |:-------------------------------------------- |:------------------------------------------- |:------------ |
-| Binette | [2024](https://doi.org/10.1101/2024.04.20.585171) | [Yes](https://anaconda.org/bioconda/binette) | https://github.com/genotoul-bioinfo/Binette | Yes           |
+| :------ | :------------------------------------------------ | :------------------------------------------- | :------------------------------------------ | :----------- |
+| Binette | [2024](https://doi.org/10.1101/2024.04.20.585171) | [Yes](https://anaconda.org/bioconda/binette) | https://github.com/genotoul-bioinfo/Binette | Yes          |
 
 ## Bins post-processing(gene prediction, functional annotation and taxonomy classification)
 
 ### Taxonomic annotation
 
 | Tool    | Original year                                          | Conda available?                            | Link                                  | Implemented? |
-|:------- |:------------------------------------------------------ |:------------------------------------------- |:------------------------------------- |:------------ |
+| :------ | :----------------------------------------------------- | :------------------------------------------ | :------------------------------------ | :----------- |
 | GTDB-Tk | [2022](https://doi.org/10.1093/bioinformatics/btac672) | [Yes](https://anaconda.org/bioconda/gtdbtk) | https://github.com/Ecogenomics/GTDBTk | Yes          |
 
 ### Dereplication
 
 | Tool | Original year                                  | Conda available?                          | Link                          | Implemented? |
-|:---- |:---------------------------------------------- |:----------------------------------------- |:----------------------------- |:------------ |
+| :--- | :--------------------------------------------- | :---------------------------------------- | :---------------------------- | :----------- |
 | dRep | [2017](https://doi.org/10.1038/ismej.2017.126) | [Yes](https://anaconda.org/bioconda/drep) | https://github.com/MrOlm/drep | Yes          |
 
 ### Genes prediction
@@ -79,19 +86,19 @@ Human assembly for mapping:
 ### Coverage estimation
 
 | Tool   | Original year                                 | Conda available?                                   | Link                                  | Implemented? |
-|:------ |:--------------------------------------------- |:-------------------------------------------------- |:------------------------------------- |:------------ |
+| :----- | :-------------------------------------------- | :------------------------------------------------- | :------------------------------------ | :----------- |
 | CheckM | [2015](https://doi.org/10.1101/gr.186072.114) | [Yes](https://anaconda.org/bioconda/checkm-genome) | https://github.com/Ecogenomics/CheckM | Yes          |
 
 ## Taxonomic profiling
 
 | Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |
-|:--------- |:-------------------------------------------------- |:---------------------------------------------- |:-------------------------------------- |:------------ |
+| :-------- | :------------------------------------------------- | :--------------------------------------------- | :------------------------------------- | :----------- |
 | MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn | Yes          |
 
 ## Strains profiling
 
 | Tool     | Original year                                          | Conda available?                              | Link                                    | Implemented?      |
-|:-------- |:------------------------------------------------------ |:--------------------------------------------- |:--------------------------------------- |:----------------- |
+| :------- | :----------------------------------------------------- | :-------------------------------------------- | :-------------------------------------- | :---------------- |
 | inStrain | [2021](https://doi.org/10.1038/s41587-020-00797-0)     | [Yes](https://anaconda.org/bioconda/instrain) | https://github.com/MrOlm/inStrain       | Yes (for SR only) |
 | Floria   | [2024](https://doi.org/10.1093/bioinformatics/btae252) | [Yes](https://anaconda.org/bioconda/floria)   | https://github.com/bluenote-1577/floria | Yes (for SR only) |
 
