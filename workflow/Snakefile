@@ -75,6 +75,9 @@ rule all:
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
             expand("results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}/report.html", 
                    assembler_lr=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
+            # non redundant gene catalog
+            expand("results/04_assembly_qc/gene_clustering/{assembler}/non_redundant_gene_catalog.fna.gz",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER),
             # binning (step 05) + bins qc (step 06)
             expand("results/05_binning/{binner}/bins/{assembler}/{sample}",
                    binner = SHORT_READ_BINNER, assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
