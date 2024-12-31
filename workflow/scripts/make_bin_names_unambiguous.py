@@ -30,10 +30,16 @@ def make_unduplicated_filenames(bins_df: pd.DataFrame):
     # count the number of each filename
     bins_df['filename_count'] = bins_df.groupby('filename').cumcount() + 1
     # adding a new column unambiguous_filename for unduplicated bins name
-    bins_df['unambiguous_filename'] = bins_df.apply(
-        lambda x: f"{os.path.splitext(x['filename'])[0]}_{x['filename_count'] - 1}.fa" if x['filename_count'] > 1 else f"{os.path.splitext(x['filename'])[0]}.fa", 
-        axis=1
-    )
+    def generate_unambiguous_filename(row):
+        filename, ext = os.path.splitext(row['filename'])
+        if row['filename'].endswith('.fa.gz'):
+            filename, ext2 = os.path.splitext(filename)
+            ext = ext2 + ext
+        if row['filename_count'] > 1:
+            return f"{filename}_{row['filename_count'] - 1}{ext}"
+        return row['filename']
+
+    bins_df['unambiguous_filename'] = bins_df.apply(generate_unambiguous_filename, axis=1)
     # Nettoyer en supprimant la colonne temporaire
     bins_df.drop('filename_count', axis=1, inplace=True)
     
