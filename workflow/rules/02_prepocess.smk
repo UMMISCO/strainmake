@@ -125,22 +125,20 @@ rule downsize_reads_for_hybrid_parts_sr:
         sr_2 = "results/02_preprocess/downsized/bowtie2/{sample}_2.clean.downsized.fastq.gz",
         lr = "results/02_preprocess/downsized/fastp_long_read/{sample}_downsized" + sequences_file_end
     conda:
-        "../envs/seqkit.yaml"
+        "../envs/rasusa.yaml"
     log:
         stdout = "logs/02_preprocess/downsizing/{sample}.stdout",
         stderr = "logs/02_preprocess/downsizing/{sample}.stderr"
     benchmark:
         "benchmarks/02_preprocess/downsizing/{sample}.benchmark.txt"
     params:
-        prop_lr = config["downsizing_for_hybrid"]["lr"],
-        prop_sr = config["downsizing_for_hybrid"]["sr"]
+        target_depth_lr = config["downsizing_for_hybrid"]["lr"],
+        target_depth_sr = config["downsizing_for_hybrid"]["sr"]
     shell:
         """
         (
-            seqkit sample -p {params.prop_sr} {input.sr_1} --rand-seed 11111 > {output.sr_1} \
+            rasusa reads --bases {params.target_depth_sr} -o {output.sr_1} -o {output.sr_2} {input.sr_1} {input.sr_2} \
             && \
-            seqkit sample -p {params.prop_sr} {input.sr_2} --rand-seed 11111 > {output.sr_2} \
-            && \
-            seqkit sample -p {params.prop_lr} {input.lr} --rand-seed 11111 > {output.lr}
+            rasusa reads --bases {params.target_depth_lr} -o {output.lr} {input.lr}
         ) > {log.stdout} 2> {log.stderr}
         """

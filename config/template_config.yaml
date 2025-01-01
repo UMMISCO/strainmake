@@ -20,12 +20,12 @@ bowtie2:
   index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
   threads: 4
 
-# proportion to sample sequencing samples that will be used for hybrid assembly, binning, etc. (only)
+# samples sequencing depth that will be used for hybrid assembly, binning, etc. (only)
 # only fill it if you want to subsample those reads, if, for hybrid assembly, binning, you want to use the 
 # same FASTA/FASTQ used for LR/SR assembly, let those values empty
 downsizing_for_hybrid:
-  sr: 0.5
-  lr: 0.5
+  sr: "5g"
+  lr: "5g"
 
 ################################################################################
 #                                   Assembly                                   #        
