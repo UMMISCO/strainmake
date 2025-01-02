@@ -10,6 +10,7 @@ import pandas as pd
 import sys
 import os
 import shutil
+import gzip
 
 def get_bin_filename(bins_df: pd.DataFrame):
     """
@@ -24,7 +25,8 @@ def get_bin_filename(bins_df: pd.DataFrame):
 def make_unduplicated_filenames(bins_df: pd.DataFrame):
     """
     Will check if there are duplicated bins name and, if it the
-    case, it will rename the duplicated ones
+    case, it will rename the duplicated ones. Also, it will ensure
+    that the unambiguous filenames do not have .fa.gz extension.
     """
 
     # count the number of each filename
@@ -34,10 +36,10 @@ def make_unduplicated_filenames(bins_df: pd.DataFrame):
         filename, ext = os.path.splitext(row['filename'])
         if row['filename'].endswith('.fa.gz'):
             filename, ext2 = os.path.splitext(filename)
-            ext = ext2 + ext
+            ext = ext2  # Remove the .gz extension
         if row['filename_count'] > 1:
             return f"{filename}_{row['filename_count'] - 1}{ext}"
-        return row['filename']
+        return filename + ext
 
     bins_df['unambiguous_filename'] = bins_df.apply(generate_unambiguous_filename, axis=1)
     # Nettoyer en supprimant la colonne temporaire
@@ -48,7 +50,8 @@ def make_unduplicated_filenames(bins_df: pd.DataFrame):
 def copy_rename(bins_df: pd.DataFrame, destination_folder: str):
     """
     Will copy the bins located at "path" and rename them if needed as indicated
-    in "unambiguous_filename"
+    in "unambiguous_filename". If the files are gzipped, they will be uncompressed
+    after being copied.
     """
 
     if not os.path.exists(destination_folder):
@@ -59,6 +62,13 @@ def copy_rename(bins_df: pd.DataFrame, destination_folder: str):
         dest_path = os.path.join(destination_folder, row['unambiguous_filename'])
         print(f"Copying {source_path} to {dest_path}")
         shutil.copy(source_path, dest_path)
+        
+        # Check if the file is gzipped and uncompress it
+        if source_path.endswith('.gz'):
+            with gzip.open(dest_path, 'rb') as f_in:
+                with open(dest_path[:-3], 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            os.remove(dest_path)
 
 
 if __name__ == "__main__":

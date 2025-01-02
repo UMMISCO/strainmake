@@ -54,7 +54,7 @@ rule gtdb_tk_taxonomic_annotation:
     shell:
         """
         gtdbtk classify_wf --genome_dir {input.refined_bins} --cpus {threads} --out_dir {output} \
-            --extension ".fa.gz" \
+            --extension ".fa" \
             --skip_ani_screen --pplacer_cpus 1 \
             {params.other_args} \
             > {log.stdout} 2> {log.stderr}
@@ -212,7 +212,7 @@ rule dereplicated_genomes_quality_and_filtering:
     shell:
         """
         checkm2 predict --input {input.bins}/dereplicated_genomes --threads {threads} \
-            -x .fa.gz \
+            -x .fa \
             --database_path {input.diamond_database} \
             --output-directory {output.out_dir} > {log.stdout} 2> {log.stderr} \
         && \
@@ -275,7 +275,7 @@ rule coverage_in_mapping:
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
-        checkm coverage -x fa.gz {input.dereplicated_and_filtered_bins} {output} \
+        checkm coverage -x fa {input.dereplicated_and_filtered_bins} {output} \
             {input.samples_mapped_on_dereplicated_and_filtered_bins} \
             > {log.stdout} 2> {log.stderr}
         """
