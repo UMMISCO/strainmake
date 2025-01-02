@@ -110,7 +110,7 @@ else:
             "benchmarks/08_bins_postprocessing/genomes_list/{assembler_lr}/list.benchmark.txt"
         params:
             # constructing the precise folder path with bins from the input
-            bins_folder = lambda wildcards, input: [f"{dir}/bins for dir in input]
+            bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input]
         wildcard_constraints:
             assembler_lr = "|".join(ASSEMBLER_LR)
         shell:
