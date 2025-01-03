@@ -92,13 +92,11 @@ rule gene_calling_assembly:
         stderr = "logs/04_assembly_qc/gene_calling/{assembler}/{sample}.stderr"
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler}/{sample}.benchmark.txt"
-    params:
-        uncompressed_fasta = "results/04_assembly_qc/gene_calling/{assembler}/{sample}/genes.fna"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
-        prodigal -i {input} -d {params.uncompressed_fasta} -p meta \
+        gunzip -c {input} | prodigal -i /dev/stdin -d {output} -p meta \
             > {log.stdout} 2> {log.stderr}
         """
 
