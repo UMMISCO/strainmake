@@ -119,8 +119,8 @@ rule gene_calling_assembly_long_read:
         assembler_lr = "|".join(ASSEMBLER_LR)
     shell:
         """
-        prodigal -i {input} -d {output} -p meta \
-            > {log.stdout} 2> {log.stderr}        
+        gunzip -c {input} | prodigal -i /dev/stdin -d {output} -p meta \
+            > {log.stdout} 2> {log.stderr}
         """
 
 rule concatenating_assembly_genes:
