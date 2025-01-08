@@ -36,13 +36,13 @@ def make_unduplicated_filenames(bins_df: pd.DataFrame):
         filename, ext = os.path.splitext(row['filename'])
         if row['filename'].endswith('.fa.gz'):
             filename, ext2 = os.path.splitext(filename)
-            ext = ext2  # Remove the .gz extension
+            ext = ext2 + ext  # preserve the original extension
         if row['filename_count'] > 1:
             return f"{filename}_{row['filename_count'] - 1}{ext}"
         return filename + ext
 
     bins_df['unambiguous_filename'] = bins_df.apply(generate_unambiguous_filename, axis=1)
-    # Nettoyer en supprimant la colonne temporaire
+    # clean by removing the temporary column
     bins_df.drop('filename_count', axis=1, inplace=True)
     
     return bins_df.sort_values(by=["filename", "unambiguous_filename"])
@@ -63,12 +63,13 @@ def copy_rename(bins_df: pd.DataFrame, destination_folder: str):
         print(f"Copying {source_path} to {dest_path}")
         shutil.copy(source_path, dest_path)
         
-        # Check if the file is gzipped and uncompress it
+        # check if the file is gzipped and uncompress it
         if source_path.endswith('.gz'):
             with gzip.open(dest_path, 'rb') as f_in:
                 with open(dest_path[:-3], 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
-            os.remove(dest_path)
+            os.remove(dest_path)  # remove the .gz file after uncompressing
+            dest_path = dest_path[:-3]  # update dest_path to the uncompressed file path
 
 
 if __name__ == "__main__":
