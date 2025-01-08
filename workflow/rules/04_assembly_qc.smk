@@ -130,11 +130,13 @@ rule concatenating_assembly_genes:
         "../envs/pigz.yaml"
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler}.benchmark.txt"
+    params:
+        uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler}/genes.fna"
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
-        cat {input} > {output} && pigz {output}
+        cat {input} > {params.uncompressed_output} && pigz {params.uncompressed_output}
         """
 
 rule concatenating_assembly_genes_long_read:
