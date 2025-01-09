@@ -72,7 +72,9 @@ rule reads_mapping_hybrid:
         "../envs/minimap2.yaml"
     log:
         sr_stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr",
-        lr_stderr = "logs/05_binning/minimap2/LR/{assembler}/{sample}.mapping.stderr"
+        lr_stderr = "logs/05_binning/minimap2/LR/{assembler}/{sample}.mapping.stderr",
+        stdout_merge = "logs/05_binning/samtools/merge/{assembler}/{sample}.merge.stdout",
+        stderr_merge = "logs/05_binning/samtools/merge/{assembler}/{sample}.merge.stderr"
     benchmark:
         "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
     params:
@@ -95,9 +97,14 @@ rule reads_mapping_hybrid:
             {input.assembly} {input.long_read} \
             > {params.mapping_lr} 2> {log.lr_stderr} \
         && \
-        samtools merge -o {output} {params.mapping_sr} {params.mapping_lr} \
+        samtools sort -o {params.mapping_sr}.sorted.sam {params.mapping_sr} \
         && \
-        rm -v {params.mapping_sr} {params.mapping_lr}
+        samtools sort -o {params.mapping_lr}.sorted.sam {params.mapping_lr} \
+        && \
+        samtools merge -o {output} {params.mapping_sr}.sorted.sam {params.mapping_lr}.sorted.sam \
+            > {log.stdout_merge} 2> {log.stderr_merge}
+        && \
+        rm -v {params.mapping_sr} {params.mapping_lr} {params.mapping_sr}.sorted.sam {params.mapping_lr}.sorted.sam
         """
 
 rule sam_to_bam:
