@@ -188,6 +188,7 @@ rule gene_clustering:
             > {log.stdout} 2> {log.stderr} \
         && \
         python3 {params.filtering_genes_cluster_script} --minimal_len {params.minimal_gene_length} {params.cdhit_output_clusters} {input} {params.clusters_info} {params.uncompressed_output} \
+            >> {log.stdout} 2>> {log.stderr} \
         && \
         pigz {params.uncompressed_output}
         """
