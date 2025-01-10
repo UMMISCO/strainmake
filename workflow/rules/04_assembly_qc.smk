@@ -64,7 +64,7 @@ rule quast_qc_long_read:
     benchmark:
         "benchmarks/04_assembly_qc/quast/{assembler_lr}/{sample_lr}.benchmark.txt"
     params:
-        out_dir = "results/04_assembly_qc/quast_long_read/{assembler_lr}/{sample_lr}",
+        out_dir = "results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}",
         method = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio"
     threads: config['quast']['threads']
     wildcard_constraints:
