@@ -102,7 +102,7 @@ rule reads_mapping_hybrid:
         samtools sort -o {params.mapping_lr}.sorted.sam {params.mapping_lr} \
         && \
         samtools merge -o {output} {params.mapping_sr}.sorted.sam {params.mapping_lr}.sorted.sam \
-            > {log.stdout_merge} 2> {log.stderr_merge}
+            > {log.stdout_merge} 2> {log.stderr_merge} \
         && \
         rm -v {params.mapping_sr} {params.mapping_lr} {params.mapping_sr}.sorted.sam {params.mapping_lr}.sorted.sam
         """
