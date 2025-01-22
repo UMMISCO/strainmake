@@ -34,8 +34,8 @@ rule meteor_prepare_fastq:
         "benchmarks/09_taxonomic_profiling/meteor/{sample}.prepare_fastq_folder.benchmark.txt"
     shell:
         """
-        ln -sv {input.r1} {output.r1} > {log} 2>&1
-        ln -sv {input.r2} {output.r2} >> {log} 2>&1
+        ln -sv $(realpath {input.r1}) {output.r1} > {log} 2>&1
+        ln -sv $(realpath {input.r2}) {output.r2} >> {log} 2>&1
         """
 
 rule meteor_fastq_indexing:
