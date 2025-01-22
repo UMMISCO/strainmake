@@ -44,7 +44,7 @@ rule meteor_fastq_indexing:
         r2 = "results/09_taxonomic_profiling/meteor/{sample}/fastq/{sample}_2.fastq.gz"
     output:
         # same fastq files, but in another folder
-        "results/09_taxonomic_profiling/meteor/{sample}/fastq_index"
+        directory("results/09_taxonomic_profiling/meteor/{sample}/fastq_index")
     conda:
         "../envs/meteor.yaml"
     log:
@@ -56,14 +56,14 @@ rule meteor_fastq_indexing:
         fastq_data = lambda wildcards: os.path.dirname("results/09_taxonomic_profiling/meteor/{sample}/fastq/{sample}_1.fastq.gz".format(sample=wildcards.sample))
     shell:
         """
-        meteor fastq -i {params.fastq_data} -p -o {output} > {log.stdout} 2> {log.stderr}
+        meteor fastq -i $(realpath {params.fastq_data}) -p -o {output} > {log.stdout} 2> {log.stderr}
         """
 
 rule meteor_mapping:
     input:
        "results/09_taxonomic_profiling/meteor/{sample}/fastq_index"
     output:
-        "results/09_taxonomic_profiling/meteor/{sample}/mapping"
+        directory("results/09_taxonomic_profiling/meteor/{sample}/mapping")
     conda:
         "../envs/meteor.yaml"
     log:
@@ -73,9 +73,11 @@ rule meteor_mapping:
         "benchmarks/09_taxonomic_profiling/meteor/{sample}.fastq_mapping.benchmark.txt"
     threads:
         config['taxonomic_profiling']['meteor']['threads']
+    params:
+        indexed_fastq_file_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/fastq_index", f"{wildcards.sample}")
     shell:
         """
-        meteor mapping -i {input} -o {output} -r $REFERENCE \
+        meteor mapping -i {params.indexed_fastq_file_with_sample} -o {output} -r $REFERENCE \
             --trim 0 --ka --kf -t {threads} \
             > {log.stdout} 2> {log.stderr} 
         """
@@ -84,7 +86,7 @@ rule meteor_profiling:
     input:
         "results/09_taxonomic_profiling/meteor/{sample}/mapping"
     output:
-        "results/09_taxonomic_profiling/meteor/{sample}/profiling"
+        directory("results/09_taxonomic_profiling/meteor/{sample}/profiling")
     conda:
         "../envs/meteor.yaml"
     log:
