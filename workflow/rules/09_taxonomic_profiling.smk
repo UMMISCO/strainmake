@@ -100,5 +100,6 @@ rule meteor_profiling:
         """ 
         meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \
             -n coverage \
+            --seed 100 \
             > {log.stdout} 2> {log.stderr}
         """
