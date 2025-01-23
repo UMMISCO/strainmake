@@ -3,7 +3,7 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - meteor=2.0.17
+  - meteor=2.0.11
 variables:
   REFERENCE: data/meteor_db # should be the path to the catalogue reference to be used by Meteor
                             # https://github.com/metagenopolis/meteor?tab=readme-ov-file#1-download-or-build-a-custom-reference
