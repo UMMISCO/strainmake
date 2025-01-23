@@ -6,3 +6,4 @@ tmp/
 data/gtdb_tk
 __pycache__/
 benchmarks/
+config/gurobi.lic
