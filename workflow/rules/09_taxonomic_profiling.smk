@@ -94,9 +94,11 @@ rule meteor_profiling:
         stderr = "logs/09_taxonomic_profiling/meteor/{sample}_profiling.stderr"
     benchmark:
         "benchmarks/09_taxonomic_profiling/meteor/{sample}.profile.benchmark.txt"
+    params:
+        mapping_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/mapping", f"{wildcards.sample}")
     shell:
         """ 
-        meteor profile -i {input} -o {output} -r $REFERENCE \
+        meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \
             -n coverage \
             > {log.stdout} 2> {log.stderr}
         """
