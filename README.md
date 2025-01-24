@@ -97,9 +97,10 @@ Human assembly for mapping:
 
 ## Taxonomic profiling
 
-| Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |
-| :-------- | :------------------------------------------------- | :--------------------------------------------- | :------------------------------------- | :----------- |
-| MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn | Yes          |
+| Tool      | Original year                                      | Conda available?                               | Link                                    | Implemented? |
+| :-------- | :------------------------------------------------- | :--------------------------------------------- | :-------------------------------------- | :----------- |
+| MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn  | Yes          |
+| Meteor2   | 2024                                               | [Yes](https://anaconda.org/bioconda/meteor)    | https://github.com/metagenopolis/meteor | Yes          |
 
 ## Strains profiling
 
