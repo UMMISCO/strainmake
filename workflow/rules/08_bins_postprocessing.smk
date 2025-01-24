@@ -340,6 +340,7 @@ rule carveme_models_building:
        """
 
 # merging organisms' metabolic models into a community model
+# we then compress all individual models
 rule carveme_merge_models:
     input:
         "results/08_bins_postprocessing/carveme/{ani}/{assembler}"
@@ -356,5 +357,7 @@ rule carveme_merge_models:
         ani = "|".join(ANI_THRESHOLD)
     shell:
         """
-        python3 {params.launch_script} merge -i {input} -o {output} -v > {log.stdout} 2> {log.stderr}
+        python3 {params.launch_script} merge -i {input} -o {output} -v > {log.stdout} 2> {log.stderr} \
+        && \
+        pigz {input}/*.xml
         """

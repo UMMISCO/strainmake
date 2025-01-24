@@ -6,6 +6,7 @@ channels:
 dependencies:
   - carveme=1.6.2
   - gurobi=11.0.3
+  - pigz
 variables:
   # get your Gurobi license and place it in the config folder
   GRB_LICENSE_FILE: config/gurobi.lic # https://support.gurobi.com/hc/en-us/articles/360013417211-Where-do-I-place-the-Gurobi-license-file-gurobi-lic#01H8WQF3NK1Q0YWJEX3XTD2Z3X
