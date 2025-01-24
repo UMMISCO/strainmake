@@ -1,4 +1,5 @@
 import os
+from utils import convert_to_si_units, convert_from_si_units_to_int
 
 rule metaphlan_profiling:
     input: "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz" # on short reads only
@@ -101,5 +102,33 @@ rule meteor_profiling:
         meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \
             -n coverage \
             --seed 100 \
+            > {log.stdout} 2> {log.stderr}
+        """
+
+# taxonomically profile samples using Meteor, but at a downsized level
+# we use the same mapping produced by Meteor in previous steps
+rule meteor_profiling_downsized:
+    input:
+        "results/09_taxonomic_profiling/meteor/{sample}/mapping"
+    output:
+        directory("results/09_taxonomic_profiling/meteor/{sample}/profiling_downsized_{downsize}")
+    conda:
+        "../envs/meteor.yaml"
+    log:
+        stdout = "logs/09_taxonomic_profiling/meteor/{sample}_profiling_downsized_{downsize}M.stdout",
+        stderr = "logs/09_taxonomic_profiling/meteor/{sample}_profiling_downsized_{downsize}M.stderr"
+    benchmark:
+        "benchmarks/09_taxonomic_profiling/meteor/{sample}.profile_downsized_{downsize}M.benchmark.txt"
+    params:
+        mapping_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/mapping", f"{wildcards.sample}"),  
+        downsize_int = lambda wildcards: convert_from_si_units_to_int(wildcards.downsize)   
+    wildcard_constraints:
+        downsize = "|".join([convert_to_si_units(int(size)) for size in config['taxonomic_profiling']['meteor']['downsize']])
+    shell:
+        """
+        meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \
+            -n coverage \
+            --seed 100 \
+            -l {params.downsize_int} \
             > {log.stdout} 2> {log.stderr}
         """

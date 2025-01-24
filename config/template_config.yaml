@@ -160,6 +160,8 @@ taxonomic_profiling:
     threads: 4
   meteor:
     threads: 10
+    downsize:
+      - 10000000 # number of reads to downsize to (in millions) (can pass more values)
 
 ################################################################################
 #                              Strains profiling                               #
