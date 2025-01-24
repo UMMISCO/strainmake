@@ -314,3 +314,47 @@ rule process_estimated_bins_distribution:
         python3 workflow/scripts/process_checkm1_profile_table.py --input_table {input} \
             {output} > {log.stdout} 2> {log.stderr}
         """
+
+# reconstructing metabolic models using CarveMe for MAGs
+rule carveme_models_building:
+    input:
+        "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins"
+    output:
+        directory("results/08_bins_postprocessing/carveme/{ani}/{assembler}")
+    conda:
+        "../envs/carveme.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/carveme/{ani}/{assembler}.stdout",
+        stderr = "logs/08_bins_postprocessing/carveme/{ani}/{assembler}.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/carveme/{ani}/{assembler}.benchmark.txt"
+    wildcard_constraints:
+        ani = "|".join(ANI_THRESHOLD)
+    params:
+        launch_script = "workflow/scripts/carveme_models_building.py"
+    threads:
+        config['bins_postprocessing']['carveme']['threads']
+    shell:
+        """
+       python3 {params.launch_script} carve --cpu {threads} -i {input} -o {output} -v > {log.stdout} 2> {log.stderr}
+       """
+
+# merging organisms' metabolic models into a community model
+rule carveme_merge_models:
+    input:
+        "results/08_bins_postprocessing/carveme/{ani}/{assembler}"
+    output:
+        "results/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model/community.xml"
+    conda:
+        "../envs/carveme.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model.stdout",
+        stderr = "logs/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model.benchmark.txt"
+    wildcard_constraints:
+        ani = "|".join(ANI_THRESHOLD)
+    shell:
+        """
+        python3 {params.launch_script} merge -i {input} -o {output} -v > {log.stdout} 2> {log.stderr}
+        """
