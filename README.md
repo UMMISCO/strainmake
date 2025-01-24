@@ -89,6 +89,12 @@ Human assembly for mapping:
 | :----- | :-------------------------------------------- | :------------------------------------------------- | :------------------------------------ | :----------- |
 | CheckM | [2015](https://doi.org/10.1101/gr.186072.114) | [Yes](https://anaconda.org/bioconda/checkm-genome) | https://github.com/Ecogenomics/CheckM | Yes          |
 
+### Metabolic modeling
+
+| Tool    | Original year                              | Conda available?                             | Link                                      | Implemented? |
+| :------ | :----------------------------------------- | :------------------------------------------- | :---------------------------------------- | :----------- |
+| CarveMe | [2018](https://doi.org/10.1093/nar/gky537) | [Yes](https://anaconda.org/bioconda/carveme) | https://github.com/cdanielmachado/carveme | Yes          |
+
 ## Taxonomic profiling
 
 | Tool      | Original year                                      | Conda available?                               | Link                                   | Implemented? |

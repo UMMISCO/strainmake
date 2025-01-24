@@ -150,6 +150,8 @@ bins_postprocessing:
   profiling:
     checkm1:
       threads: 5
+  carveme:
+    threads: 5
 
 ################################################################################
 #                             Taxonomic profiling                              #
