@@ -4,5 +4,7 @@ results/
 *.fastq.gz
 tmp/
 data/gtdb_tk
+data/meteor_db
 __pycache__/
 benchmarks/
+config/gurobi.lic

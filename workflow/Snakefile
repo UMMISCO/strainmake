@@ -54,6 +54,9 @@ LONG_READ_BINNER = config['binning']['long_read_binner']
 ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
 DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
 
+# for taxonomic profiling
+METEOR_RAREFACTION_LEVELS = [convert_to_si_units(int(level)) for level in config['taxonomic_profiling']['meteor']['downsize']]
+
 ################################################################################
 #                                   Workflow                                   #
 ################################################################################
@@ -97,9 +100,15 @@ rule all:
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             expand("results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.processed.tsv",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
+            expand("results/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model/community.xml",
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = ANI_THRESHOLD),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
                    sample=SAMPLES),
+            expand("results/09_taxonomic_profiling/meteor/{sample}/profiling",
+                   sample=SAMPLES),
+            expand("results/09_taxonomic_profiling/meteor/{sample}/profiling_downsized_{downsize}",
+                   sample=SAMPLES, downsize=METEOR_RAREFACTION_LEVELS),
             # strains profiling
             #      -> inStrain
             expand("results/10_strain_profiling/inStrain/{ani}/{assembler}/compare",

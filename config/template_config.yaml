@@ -150,6 +150,8 @@ bins_postprocessing:
   profiling:
     checkm1:
       threads: 5
+  carveme:
+    threads: 5
 
 ################################################################################
 #                             Taxonomic profiling                              #
@@ -158,6 +160,10 @@ bins_postprocessing:
 taxonomic_profiling:
   metaphlan:
     threads: 4
+  meteor:
+    threads: 10
+    downsize:
+      - 10000000 # number of reads to downsize to (in millions) (can pass more values)
 
 ################################################################################
 #                              Strains profiling                               #

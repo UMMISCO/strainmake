@@ -95,3 +95,44 @@ def validate_assemblers(df: pd.DataFrame, assemblers: list):
         if not sr_valid:
             raise ValueError("Megahit and Metaspades assemblers require 'R1' and 'R2' read files for at least one sample.")
 
+def convert_to_si_units(value):
+    """
+    Convert a numerical value to a string representation using SI units
+
+    Parameters:
+    value (float): The numerical value to convert
+
+    Returns:
+    str: The value converted to a string with an appropriate SI unit suffix
+    """
+
+    units = ["", "K", "M", "G", "T", "P", "E", "Z", "Y"]
+    power = 1000
+    n = 0
+
+    while value >= power and n < len(units) - 1:
+        value /= power
+        n += 1
+
+    return f"{int(value)}{units[n]}"
+
+def convert_from_si_units_to_int(value):
+    """
+    Convert a string representation of a numerical value using SI units to an integer
+
+    Parameters:
+    value (str): The string representation of the value with an SI unit suffix
+
+    Returns:
+    int: The value converted to an integer
+    """
+
+    units = {"": 1, "K": 10**3, "M": 10**6, "G": 10**9, "T": 10**12, "P": 10**15, "E": 10**18, "Z": 10**21, "Y": 10**24}
+    unit = value[-1]
+
+    if unit.isdigit() or unit == '.':
+        return float(value)
+
+    num = float(value[:-1])
+
+    return int(num * units[unit])
