@@ -79,12 +79,10 @@ rule reads_mapping_hybrid_sr_part:
         "benchmarks/05_binning/minimap2/SR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        assembler = config['assembly']['assembler'],
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb",
-        mapping_sr = "results/05_binning/minimap2/{assembler}/{sample}.SR.sam",
-        mapping_lr = "results/05_binning/minimap2/{assembler}/{sample}.LR.sam"
+        mapping_sr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.SR.sam",
+        mapping_lr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.LR.sam"
     wildcard_constraints:
-        assembler = "|".join(HYBRID_ASSEMBLER),
         sample = "|".join(SAMPLES)
     threads: config['binning']['minimap2']['threads']
     shell:
@@ -98,21 +96,19 @@ rule reads_mapping_hybrid_lr_part:
     input:
         long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}",
         # assembly to map reads on
-        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
+        assembly = "results/03_assembly/{assembler_hybrid}/{sample}/assembly.fa.gz"
     output:
-        "results/05_binning/minimap2/{assembler}/{sample}.LR.sam"
+        "results/05_binning/minimap2/{assembler_hybrid}/{sample}.LR.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        lr_stderr = "logs/05_binning/minimap2/LR/{assembler}/{sample}.mapping.stderr"
+        lr_stderr = "logs/05_binning/minimap2/LR/{assembler_hybrid}/{sample}.mapping.stderr"
     benchmark:
-        "benchmarks/05_binning/minimap2/LR/{assembler}/{sample}.mapping.benchmark.txt"
+        "benchmarks/05_binning/minimap2/LR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        assembler = config['assembly']['assembler'],
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb",
     wildcard_constraints:
-        assembler = "|".join(HYBRID_ASSEMBLER),
         sample = "|".join(SAMPLES)
     threads: config['binning']['minimap2']['threads']
     shell:
@@ -124,20 +120,18 @@ rule reads_mapping_hybrid_lr_part:
 
 rule reads_mapping_hybrid_sam_merging:
     input:
-        mapping_sr = "results/05_binning/minimap2/{assembler}/{sample}.SR.sam",
-        mapping_lr = "results/05_binning/minimap2/{assembler}/{sample}.LR.sam",
+        mapping_sr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.SR.sam",
+        mapping_lr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.LR.sam",
     output:
-        "results/05_binning/minimap2/{assembler}/{sample}.sam"
+        "results/05_binning/minimap2/{assembler_hybrid}/{sample}.sam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout_merge = "logs/05_binning/samtools/merge/{assembler}/{sample}.merge.stdout",
-        stderr_merge = "logs/05_binning/samtools/merge/{assembler}/{sample}.merge.stderr"
+        stdout_merge = "logs/05_binning/samtools/merge/{assembler_hybrid}/{sample}.merge.stdout",
+        stderr_merge = "logs/05_binning/samtools/merge/{assembler_hybrid}/{sample}.merge.stderr"
     benchmark:
-            "benchmarks/05_binning/samtools/{assembler}/{sample}.merging.benchmark.txt"
-    params:
+            "benchmarks/05_binning/samtools/{assembler_hybrid}/{sample}.merging.benchmark.txt"
     wildcard_constraints:
-        assembler = "|".join(HYBRID_ASSEMBLER),
         sample = "|".join(SAMPLES)
     threads: config['binning']['samtools']['threads']
     shell:
