@@ -20,6 +20,10 @@ if ASSEMBLER_LR == None:
 SHORT_READ_BINNER = config['binning']['binner']
 LONG_READ_BINNER = config['binning']['long_read_binner']
 
+wildcard_constraints:
+    assembler_sr_hybrid = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
+    assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none"
+
 # download the database for CheckM2
 rule checkm2_database:
     output:
@@ -42,22 +46,20 @@ rule checkm2_database:
 rule checkm2_assessment:
     input:
         # folder with bins created in step 05. One folder per binning program
-        bins = "results/05_binning/{binner}/bins/{assembler}/{sample}", 
+        bins = "results/05_binning/{binner}/bins/{assembler_sr_hybrid}/{sample}", 
         diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
     output:
-        "results/06_binning_qc/checkm2/{binner}/{assembler}/{sample}/quality_report.tsv",
-        out_dir = directory("results/06_binning_qc/checkm2/{binner}/{assembler}/{sample}")
+        "results/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}/quality_report.tsv",
+        out_dir = directory("results/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}")
     conda:
         "../envs/checkm2.yaml"
     log:
-        stdout = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stdout",
-        stderr = "logs/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.stderr"
+        stdout = "logs/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}.assessment.stdout",
+        stderr = "logs/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}.assessment.stderr"
     benchmark:
-        "benchmarks/06_binning_qc/checkm2/{binner}/{assembler}/{sample}.assessment.benchmark.txt"
+        "benchmarks/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}.assessment.benchmark.txt"
     threads: config['checkm2']['threads']
     wildcard_constraints:
-        sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
         binner = "|".join(SHORT_READ_BINNER)
     shell:
         """
@@ -86,8 +88,6 @@ rule checkm2_assessment_LR:
         "benchmarks/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}.assessment.benchmark.txt"
     threads: config['checkm2']['threads']
     wildcard_constraints:
-        sample="|".join(SAMPLES_LR),
-        assembler_lr = "|".join(ASSEMBLER_LR),
         long_read_binner = "|".join(LONG_READ_BINNER)
     shell:
         """

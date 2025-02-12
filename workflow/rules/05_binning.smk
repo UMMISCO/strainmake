@@ -25,6 +25,13 @@ if ASSEMBLER_LR == None:
 seq_format = config["lr_seq_format"]
 sequences_file_end = f"_1.{seq_format}.gz"
 
+wildcard_constraints:
+    assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none",
+    assembler_all = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR) if ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR != [] else "none",
+    assembler_sr = "|".join(ASSEMBLER) if ASSEMBLER != [] else "none",
+    assembler_hybrid = "|".join(HYBRID_ASSEMBLER) if HYBRID_ASSEMBLER != [] else "none",
+    assembler_sr_hybrid = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
+
 ###### short reads ######
 rule reads_mapping:
     input:
@@ -32,21 +39,18 @@ rule reads_mapping:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz",
         # assembly to map reads on
-        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
+        assembly = "results/03_assembly/{assembler_sr}/{sample}/assembly.fa.gz"
     output:
-        "results/05_binning/minimap2/{assembler}/{sample}.sam"
+        "results/05_binning/minimap2/{assembler_sr}/{sample}.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr"
+        stderr = "logs/05_binning/minimap2/SR/{assembler_sr}/{sample}.mapping.stderr"
     benchmark:
-        "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
+        "benchmarks/05_binning/minimap2/SR/{assembler_sr}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
         assembler = config['assembly']['assembler']
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER),
-        sample = "|".join(SAMPLES)
     threads: config['binning']['minimap2']['threads']
     shell:
         """
@@ -65,27 +69,24 @@ rule reads_mapping_hybrid:
         r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
         long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}",
         # assembly to map reads on
-        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
+        assembly = "results/03_assembly/{assembler_hybrid}/{sample}/assembly.fa.gz"
     output:
-        "results/05_binning/minimap2/{assembler}/{sample}.sam"
+        "results/05_binning/minimap2/{assembler_hybrid}/{sample}.sam"
     conda:
         "../envs/minimap2.yaml"
     log:
-        sr_stderr = "logs/05_binning/minimap2/SR/{assembler}/{sample}.mapping.stderr",
-        lr_stderr = "logs/05_binning/minimap2/LR/{assembler}/{sample}.mapping.stderr",
-        stdout_merge = "logs/05_binning/samtools/merge/{assembler}/{sample}.merge.stdout",
-        stderr_merge = "logs/05_binning/samtools/merge/{assembler}/{sample}.merge.stderr"
+        sr_stderr = "logs/05_binning/minimap2/SR/{assembler_hybrid}/{sample}.mapping.stderr",
+        lr_stderr = "logs/05_binning/minimap2/LR/{assembler_hybrid}/{sample}.mapping.stderr",
+        stdout_merge = "logs/05_binning/samtools/merge/{assembler_hybrid}/{sample}.merge.stdout",
+        stderr_merge = "logs/05_binning/samtools/merge/{assembler_hybrid}/{sample}.merge.stderr"
     benchmark:
-        "benchmarks/05_binning/minimap2/SR/{assembler}/{sample}.mapping.benchmark.txt"
+        "benchmarks/05_binning/minimap2/SR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
         assembler = config['assembly']['assembler'],
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb",
-        mapping_sr = "results/05_binning/minimap2/{assembler}/{sample}.SR.sam",
-        mapping_lr = "results/05_binning/minimap2/{assembler}/{sample}.LR.sam"
-    wildcard_constraints:
-        assembler = "|".join(HYBRID_ASSEMBLER),
-        sample = "|".join(SAMPLES)
+        mapping_sr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.SR.sam",
+        mapping_lr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.LR.sam"
     threads: config['binning']['minimap2']['threads']
     shell:
         """
@@ -109,21 +110,20 @@ rule reads_mapping_hybrid:
 
 rule sam_to_bam:
     input:
-        sam = "results/05_binning/minimap2/{assembler}/{sample}.sam"
+        sam = "results/05_binning/minimap2/{assembler_sr_hybrid}/{sample}.sam"
     output:
-        bam = "results/05_binning/minimap2/{assembler}/{sample}.bam"
+        bam = "results/05_binning/minimap2/{assembler_sr_hybrid}/{sample}.bam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stdout",
-        stderr = "logs/05_binning/samtools/{assembler}/{sample}.sam_to_bam.stderr"
+        stdout = "logs/05_binning/samtools/{assembler_sr_hybrid}/{sample}.sam_to_bam.stdout",
+        stderr = "logs/05_binning/samtools/{assembler_sr_hybrid}/{sample}.sam_to_bam.stderr"
     benchmark:
-        "benchmarks/05_binning/samtools/{assembler}/{sample}.sam_to_bam.benchmark.txt"
+        "benchmarks/05_binning/samtools/{assembler_sr_hybrid}/{sample}.sam_to_bam.benchmark.txt"
     params:
         assembler = config['assembly']['assembler']
     wildcard_constraints:
         sample="|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -134,21 +134,18 @@ rule sam_to_bam:
 rule bam_sorting:
     input:
         # reads mapped on the assembly
-        bam = "results/05_binning/minimap2/{assembler}/{sample}.bam"
+        bam = "results/05_binning/minimap2/{assembler_sr_hybrid}/{sample}.bam"
     output:
-        bam = "results/05_binning/minimap2/{assembler}/{sample}.sorted.bam"
+        bam = "results/05_binning/minimap2/{assembler_sr_hybrid}/{sample}.sorted.bam"
     conda:
         "../envs/samtools.yaml"
     log:
-        stdout = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stdout",
-        stderr = "logs/05_binning/samtools/{assembler}/{sample}.sorting.stderr"
+        stdout = "logs/05_binning/samtools/{assembler_sr_hybrid}/{sample}.sorting.stdout",
+        stderr = "logs/05_binning/samtools/{assembler_sr_hybrid}/{sample}.sorting.stderr"
     benchmark:
-        "benchmarks/05_binning/samtools/{assembler}/{sample}.sorting.benchmark.txt"
-    params:
-        assembler = config['assembly']['assembler']
+        "benchmarks/05_binning/samtools/{assembler_sr_hybrid}/{sample}.sorting.benchmark.txt"
     wildcard_constraints:
         sample="|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -184,31 +181,28 @@ rule get_contigs_depth:
 
 rule metabat2_binning:
     input:
-        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        bam_depth_matrix = "results/05_binning/metabat2/{assembler}/{sample}.depth_matrix.tab"
+        assembly = "results/03_assembly/{assembler_sr_hybrid}/{sample}/assembly.fa.gz",
+        bam_depth_matrix = "results/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.depth_matrix.tab"
     output:
-        output = directory("results/05_binning/metabat2/bins/{assembler}/{sample}")
+        output = directory("results/05_binning/metabat2/bins/{assembler_sr_hybrid}/{sample}")
     conda:
         "../envs/metabat.yaml"
     log:
-        stdout = "logs/05_binning/metabat2/{assembler}/{sample}.binning.stdout",
-        stderr = "logs/05_binning/metabat2/{assembler}/{sample}.binning.stderr",
-        stdout_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stdout",
-        stderr_gz = "logs/05_binning/metabat2/{assembler}/{sample}.gzipping.stderr",
-        stdout_mk = "logs/05_binning/metabat2/{assembler}/{sample}.mkdir.stdout",
-        stderr_mk = "logs/05_binning/metabat2/{assembler}/{sample}.mkdir.stderr",
-        stdout_mv = "logs/05_binning/metabat2/{assembler}/{sample}.moving.stdout",
-        stderr_mv = "logs/05_binning/metabat2/{assembler}/{sample}.moving.stderr"
+        stdout = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.binning.stdout",
+        stderr = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.binning.stderr",
+        stdout_gz = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.gzipping.stdout",
+        stderr_gz = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.gzipping.stderr",
+        stdout_mk = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.mkdir.stdout",
+        stderr_mk = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.mkdir.stderr",
+        stdout_mv = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.moving.stdout",
+        stderr_mv = "logs/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.moving.stderr"
     benchmark:
-        "benchmarks/05_binning/metabat2/{assembler}/{sample}.binning.benchmark.txt"
+        "benchmarks/05_binning/metabat2/{assembler_sr_hybrid}/{sample}.binning.benchmark.txt"
     params:
         min_contig_size = config['binning']['metabat2']['min_contig_size'],
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
         min_bin_size = config['binning']['metabat2']['min_bin_size'],
         bin_basename = "{sample}",
-        assembler = config['assembly']['assembler']
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     threads: config['binning']['metabat2']['threads']
     shell:
         """
@@ -231,24 +225,22 @@ rule metabat2_binning:
 # semibin2
 rule semibin2_binning:
     input:
-        assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        bam = "results/05_binning/minimap2/{assembler}/{sample}.sorted.bam"
+        assembly = "results/03_assembly/{assembler_sr_hybrid}/{sample}/assembly.fa.gz",
+        bam = "results/05_binning/minimap2/{assembler_sr_hybrid}/{sample}.sorted.bam"
     output:
-        output = directory("results/05_binning/semibin2/bins/{assembler}/{sample}")
+        output = directory("results/05_binning/semibin2/bins/{assembler_sr_hybrid}/{sample}")
     conda:
         "../envs/semibin.yaml"
     log:
-        stdout = "logs/05_binning/semibin2/{assembler}/{sample}.binning.stdout",
-        stderr = "logs/05_binning/semibin2/{assembler}/{sample}.binning.stderr",
-        stdout_move = "logs/05_binning/semibin2/{assembler}/{sample}.move.stdout",
-        stderr_move = "logs/05_binning/semibin2/{assembler}/{sample}.move.stderr"
+        stdout = "logs/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.binning.stdout",
+        stderr = "logs/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.binning.stderr",
+        stdout_move = "logs/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.move.stdout",
+        stderr_move = "logs/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.move.stderr"
     benchmark:
-        "benchmarks/05_binning/semibin2/{assembler}/{sample}.binning.benchmark.txt"
+        "benchmarks/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.binning.benchmark.txt"
     params:
         environment = config['binning']['semibin2']['environment']
     threads: config['binning']['semibin2']['threads']
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         SemiBin2 single_easy_bin \
@@ -331,8 +323,6 @@ rule reads_mapping_LR:
         "benchmarks/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.mapping.benchmark.txt"
     params:
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
-    wildcard_constraints:
-        assembler_lr = "|".join(ASSEMBLER_LR)    
     threads: config['binning']['minimap2']['threads']
     shell:
         """
@@ -354,9 +344,6 @@ rule sam_to_bam_LR:
         stderr = "logs/05_binning/samtools/LR/{assembler_lr}/{sample_lr}.sam_to_bam.stderr"
     benchmark:
         "benchmarks/05_binning/samtools/LR/{assembler_lr}/{sample_lr}.sam_to_bam.benchmark.txt"
-    wildcard_constraints:
-        sample_lr="|".join(SAMPLES_LR),
-        assembler_lr = "|".join(ASSEMBLER_LR)    
     shell:
         """
         samtools view -o {output.bam} {input.sam} \
@@ -377,9 +364,6 @@ rule bam_sorting_LR:
         stderr = "logs/05_binning/samtools/LR/{assembler_lr}/{sample_lr}.sorting.stderr"
     benchmark:
         "benchmarks/05_binning/samtools/LR/{assembler_lr}/{sample_lr}.sorting.benchmark.txt"
-    wildcard_constraints:
-        sample_lr="|".join(SAMPLES_LR),
-        assembler_lr = "|".join(ASSEMBLER_LR)    
     shell:
         """
         samtools sort -o {output.bam} {input.bam} \
@@ -414,8 +398,6 @@ rule metabat2_binning_LR:
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
         min_bin_size = config['binning']['metabat2']['min_bin_size'],
         bin_basename = "{sample_lr}"
-    wildcard_constraints:
-        assembler_lr = "|".join(ASSEMBLER_LR)
     threads: config['binning']['metabat2']['threads']
     shell:
         """
@@ -454,8 +436,6 @@ rule semibin2_binning_LR:
     params:
         environment = config['binning']['semibin2']['environment']
     threads: config['binning']['semibin2']['threads']
-    wildcard_constraints:
-        assembler_lr = "|".join(ASSEMBLER_LR)
     shell:
         """
         SemiBin2 single_easy_bin \
@@ -496,8 +476,6 @@ rule vamb_binning_LR:
         start_batch_size = config['binning']['vamb']['start_batch_size'],
         assembler_lr = config['assembly']['assembler'],
     threads: config['binning']['vamb']['threads']
-    wildcard_constraints:
-        assembler_lr = "|".join(ASSEMBLER_LR)
     shell:
         """
         vamb --outdir {output.output} \

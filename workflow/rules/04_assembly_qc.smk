@@ -23,6 +23,11 @@ for sample in SAMPLES_LR:
     if sample not in SAMPLES:
         SAMPLES.append(sample)
 
+wildcard_constraints:
+       assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
+       assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER != [] else "none",
+       assembler_all = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR) if ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR != [] else "none", 
+
 rule quast_qc:
     input:
         # assemblies produced in step 03
@@ -39,8 +44,6 @@ rule quast_qc:
     params:
         out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}"
     threads: config['quast']['threads']
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         metaquast.py -t {threads} -o {params.out_dir} \
@@ -67,8 +70,6 @@ rule quast_qc_long_read:
         out_dir = "results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}",
         method = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio"
     threads: config['quast']['threads']
-    wildcard_constraints:
-        assembler_lr = "|".join(ASSEMBLER_LR)
     shell:
         """
         metaquast.py -t {threads} -o {params.out_dir} \
@@ -92,8 +93,6 @@ rule gene_calling_assembly:
         stderr = "logs/04_assembly_qc/gene_calling/{assembler}/{sample}.stderr"
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler}/{sample}.benchmark.txt"
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         gunzip -c {input} | prodigal -i /dev/stdin -d {output} -p meta \
@@ -113,8 +112,6 @@ rule gene_calling_assembly_long_read:
         stderr = "logs/04_assembly_qc/gene_calling/{assembler_lr}/{sample}.stderr"
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler_lr}/{sample}.benchmark.txt"
-    wildcard_constraints:
-        assembler_lr = "|".join(ASSEMBLER_LR)
     shell:
         """
         gunzip -c {input} | prodigal -i /dev/stdin -d {output} -p meta \
@@ -132,8 +129,6 @@ rule concatenating_assembly_genes:
         "benchmarks/04_assembly_qc/gene_calling/{assembler}.benchmark.txt"
     params:
         uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler}/genes.fna"
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
         """
         cat {input} > {params.uncompressed_output} && pigz {params.uncompressed_output}
@@ -141,17 +136,15 @@ rule concatenating_assembly_genes:
 
 rule concatenating_assembly_genes_long_read:
     input:
-        expand("results/04_assembly_qc/gene_calling/{{assembler}}/{sample}/genes.fna", sample=SAMPLES_LR)
+        expand("results/04_assembly_qc/gene_calling/{{assembler_lr}}/{sample}/genes.fna", sample=SAMPLES_LR)
     output:
-        "results/04_assembly_qc/gene_calling/{assembler}/genes.fna.gz"
+        "results/04_assembly_qc/gene_calling/{assembler_lr}/genes.fna.gz"
     conda:
         "../envs/pigz.yaml"
     benchmark:
-        "benchmarks/04_assembly_qc/gene_calling/{assembler}.benchmark.txt"
+        "benchmarks/04_assembly_qc/gene_calling/{assembler_lr}.benchmark.txt"
     params:
-        uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler}/genes.fna"
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER_LR)
+        uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler_lr}/genes.fna"
     shell:
         """
         cat {input} > {params.uncompressed_output} && pigz {params.uncompressed_output}
@@ -161,27 +154,25 @@ rule concatenating_assembly_genes_long_read:
 # we select best gene for cluster based on their length
 rule gene_clustering:
     input:
-        "results/04_assembly_qc/gene_calling/{assembler}/genes.fna.gz"
+        "results/04_assembly_qc/gene_calling/{assembler_all}/genes.fna.gz"
     output:
-        "results/04_assembly_qc/gene_clustering/{assembler}/non_redundant_gene_catalog.fna.gz"
+        "results/04_assembly_qc/gene_clustering/{assembler_all}/non_redundant_gene_catalog.fna.gz"
     conda:
         "../envs/cd-hit.yaml"
     benchmark:
-        "benchmarks/04_assembly_qc/gene_clustering/{assembler}_gene_clustering.benchmark.txt"
+        "benchmarks/04_assembly_qc/gene_clustering/{assembler_all}_gene_clustering.benchmark.txt"
     log:
-        stdout = "logs/04_assembly_qc/gene_clustering/{assembler}_gene_clustering.stdout",
-        stderr = "logs/04_assembly_qc/gene_clustering/{assembler}_gene_clustering.stderr"
+        stdout = "logs/04_assembly_qc/gene_clustering/{assembler_all}_gene_clustering.stdout",
+        stderr = "logs/04_assembly_qc/gene_clustering/{assembler_all}_gene_clustering.stderr"
     params:
         filtering_genes_cluster_script = "workflow/scripts/process_cd_hit_output.py",
         sequence_identity_threshold = config['cdhit']['sequence_identity_threshold'],
         alignment_coverage_shorter_sequence = config['cdhit']['alignment_coverage_shorter_sequence'],
-        cdhit_output = "results/04_assembly_qc/gene_clustering/{assembler}/genes_clust",
-        cdhit_output_clusters = "results/04_assembly_qc/gene_clustering/{assembler}/genes_clust.clstr",
+        cdhit_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/genes_clust",
+        cdhit_output_clusters = "results/04_assembly_qc/gene_clustering/{assembler_all}/genes_clust.clstr",
         minimal_gene_length = config['representative_genes']['minimal_gene_length'],
-        clusters_info = "results/04_assembly_qc/gene_clustering/{assembler}/genes_cluster.csv",
-        uncompressed_output = "results/04_assembly_qc/gene_clustering/{assembler}/non_redundant_gene_catalog.fna"
-    wildcard_constraints:
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR)
+        clusters_info = "results/04_assembly_qc/gene_clustering/{assembler_all}/genes_cluster.csv",
+        uncompressed_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/non_redundant_gene_catalog.fna"
     threads: config['cdhit']['threads']
     shell:
         """

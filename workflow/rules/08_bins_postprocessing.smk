@@ -33,6 +33,11 @@ LONG_READ_BINNER = config['binning']['long_read_binner']
 # we would have refined bins with Binette only if we used several binning methods
 refined = True if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else False
 
+wildcard_constraints:
+    assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+    assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none",
+    assembler_sr_hybrid = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none"
+
 rule gtdb_tk_taxonomic_annotation:
     input:
         # folder with dereplicated and filtered bins (= MAG)
@@ -82,18 +87,16 @@ if refined:
 else:
     rule list_refined_genomes_no_binette_SR:
         input:
-            expand("results/05_binning/{binner}/bins/{{assembler}}/{sample}", binner=SHORT_READ_BINNER, sample=SAMPLES)
-        output: "results/08_bins_postprocessing/genomes_list/{assembler}/list.txt"
+            expand("results/05_binning/{binner}/bins/{{assembler_sr_hybrid}}/{sample}", binner=SHORT_READ_BINNER, sample=SAMPLES)
+        output: "results/08_bins_postprocessing/genomes_list/{assembler_sr_hybrid}/list.txt"
         log:
-            stdout = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stdout",
-            stderr = "logs/08_bins_postprocessing/genomes_list/{assembler}/list.stderr"
+            stdout = "logs/08_bins_postprocessing/genomes_list/{assembler_sr_hybrid}/list.stdout",
+            stderr = "logs/08_bins_postprocessing/genomes_list/{assembler_sr_hybrid}/list.stderr"
         benchmark:
-            "benchmarks/08_bins_postprocessing/genomes_list/{assembler}/list.benchmark.txt"
+            "benchmarks/08_bins_postprocessing/genomes_list/{assembler_sr_hybrid}/list.benchmark.txt"
         params:
             # constructing the precise folder path with bins from the input
             bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input]
-        wildcard_constraints:
-            assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
         shell:
             """
             bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
@@ -111,8 +114,6 @@ else:
         params:
             # constructing the precise folder path with bins from the input
             bins_folder = lambda wildcards, input: [f"{dir}/bins" for dir in input]
-        wildcard_constraints:
-            assembler_lr = "|".join(ASSEMBLER_LR)
         shell:
             """
             bash workflow/scripts/list_refined_genomes.sh {output} {params.bins_folder} \
