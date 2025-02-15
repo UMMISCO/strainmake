@@ -25,7 +25,7 @@ for sample in SAMPLES_LR:
 
 wildcard_constraints:
        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
-       assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER != [] else "none",
+       assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none",
        assembler_all = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR) if ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR != [] else "none", 
 
 rule quast_qc:
@@ -118,6 +118,7 @@ rule gene_calling_assembly_long_read:
             > {log.stdout} 2> {log.stderr}
         """
 
+# concatenating all genes from all samples for each assembly approach and making sequence names unique
 rule concatenating_assembly_genes:
     input:
         expand("results/04_assembly_qc/gene_calling/{{assembler}}/{sample}/genes.fna", sample=SAMPLES)
@@ -131,9 +132,10 @@ rule concatenating_assembly_genes:
         uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler}/genes.fna"
     shell:
         """
-        cat {input} > {params.uncompressed_output} && pigz {params.uncompressed_output}
+        cat {input} | seqkit rename -o {params.uncompressed_output} && pigz {params.uncompressed_output}
         """
 
+# concatenating all genes from all samples for each assembly approach and making sequence names unique
 rule concatenating_assembly_genes_long_read:
     input:
         expand("results/04_assembly_qc/gene_calling/{{assembler_lr}}/{sample}/genes.fna", sample=SAMPLES_LR)
@@ -147,7 +149,7 @@ rule concatenating_assembly_genes_long_read:
         uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler_lr}/genes.fna"
     shell:
         """
-        cat {input} > {params.uncompressed_output} && pigz {params.uncompressed_output}
+        cat {input} | seqkit rename -o {params.uncompressed_output} && pigz {params.uncompressed_output}
         """
 
 # clustering genes to obtain a non redundant catalog

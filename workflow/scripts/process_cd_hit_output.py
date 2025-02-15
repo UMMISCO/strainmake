@@ -1,12 +1,6 @@
 """
 This script processes the output from CD-HIT, identifies the best gene in each cluster based on length, and filters the input FASTA file to 
 include only these best genes.
-The script performs the following steps:
-1. Parses command-line arguments to get the paths for the input CD-HIT output file, input FASTA file, output filtered table file, and output FASTA file.
-2. Processes the CD-HIT output to create a DataFrame.
-3. Identifies the best gene in each cluster based on the specified minimal length.
-4. Saves the filtered table of best genes to the specified output file.
-5. Opens the input FASTA file and filters it to include only the best genes, saving the result to the specified output FASTA file.
 """
 
 import argparse
@@ -14,6 +8,8 @@ import pandas as pd
 from tqdm import tqdm
 from Bio import SeqIO
 import gzip
+import time
+import os
 
 def process_cd_hit_output(input_file: str) -> pd.DataFrame:
     """
@@ -39,6 +35,12 @@ def process_cd_hit_output(input_file: str) -> pd.DataFrame:
 
     # create a DataFrame with the collected data
     df = pd.DataFrame(data, columns=['cluster_number', 'sequence_name', 'sequence_length'])
+    
+    # print the number of clusters processed
+    print(f"Number of clusters processed: {df['cluster_number'].nunique()}")
+    # print the total number of sequences processed
+    print(f"Total number of sequences processed: {len(df)}")
+    
     return df
 
 def identify_best_gene(df: pd.DataFrame, minimal_len: int = 0) -> pd.DataFrame:
@@ -58,24 +60,35 @@ def identify_best_gene(df: pd.DataFrame, minimal_len: int = 0) -> pd.DataFrame:
     
     return best_genes
 
-def open_genes_list(fasta: str) -> list:
-    with gzip.open(fasta, "rt") as handle:
-        return list(SeqIO.parse(handle, "fasta"))
-
-def filter_genes_list(genes_list: list, best_genes: pd.DataFrame, output_fasta: str) -> None:
+def filter_genes_list(best_genes: pd.DataFrame, input_fasta: str, output_fasta: str) -> None:
     """
     Filters a list of genes based on a DataFrame of best genes and writes the filtered genes to a FASTA file.
 
     Args:
-        genes_list (list): A list of gene objects to be filtered.
-        best_genes (pd.DataFrame): A DataFrame containing the best genes with a column 'sequence_name' to match against gene IDs.
-        output_fasta (str): The file path where the filtered genes will be written in FASTA format.
+        best_genes (pd.DataFrame): A DataFrame containing a column 'sequence_name' with the names of the sequences to be filtered.
+        input_fasta (str): Path to the input FASTA file containing all sequences.
+        output_fasta (str): Path to the output FASTA file where the filtered sequences will be written.
+
+    Returns:
+        None
     """
 
-    filtered_genes = [gene for gene in genes_list if gene.id in best_genes['sequence_name'].values]
-    print(len(filtered_genes))
-    # Write the filtered genes to the specified output FASTA file
-    SeqIO.write(filtered_genes, output_fasta, "fasta")
+    # Export the sequence_name column to a temporary TXT file without header
+    temp_txt_file = "temp_sequence_names.txt"
+    # Ensure the output directory exists
+    os.makedirs(os.path.dirname(output_fasta), exist_ok=True)
+
+    # Export the sequence_name column to a temporary TXT file without header
+    temp_txt_file = os.path.join(os.path.dirname(output_fasta), "temp_sequence_names.txt")
+    best_genes['sequence_name'].to_csv(temp_txt_file, index=False, header=False)
+
+    # seqkit command to extract these sequences from the input FASTA file
+    seqkit_cmd = f"seqkit grep -f {temp_txt_file} {input_fasta} -o {output_fasta}"
+    print(f"Running seqkit command: {seqkit_cmd}")
+    os.system(seqkit_cmd)
+
+    # Remove the temporary TXT file
+    os.remove(temp_txt_file)
 
 def main():
 
@@ -97,12 +110,9 @@ def main():
     
     # Save the filtered table to the specified output file
     best_genes.to_csv(args.output_file, index=False)
-    
-    # Open the genes list from the input FASTA file
-    genes_list = open_genes_list(args.input_fasta)
-    
-    # Filter the genes list to get only the best genes
-    filter_genes_list(genes_list, best_genes, args.output_fasta)
+        
+    # Filter the genes to get only the best genes
+    filter_genes_list(best_genes, args.input_fasta, args.output_fasta)
 
 if __name__ == "__main__":
     main()
