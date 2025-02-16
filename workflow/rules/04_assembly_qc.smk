@@ -125,7 +125,7 @@ rule concatenating_assembly_genes:
     output:
         "results/04_assembly_qc/gene_calling/{assembler}/genes.fna.gz"
     conda:
-        "../envs/pigz.yaml"
+        "../envs/seqkit.yaml"
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler}.benchmark.txt"
     params:
@@ -142,7 +142,7 @@ rule concatenating_assembly_genes_long_read:
     output:
         "results/04_assembly_qc/gene_calling/{assembler_lr}/genes.fna.gz"
     conda:
-        "../envs/pigz.yaml"
+        "../envs/seqkit.yaml"
     benchmark:
         "benchmarks/04_assembly_qc/gene_calling/{assembler_lr}.benchmark.txt"
     params:
