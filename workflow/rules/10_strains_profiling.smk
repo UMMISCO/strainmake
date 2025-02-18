@@ -128,7 +128,7 @@ rule reads_mapping_on_reference_hybrid:
         r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
         long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}"
     output:
-        "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.sam"
+        "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.sorted.bam"
     conda:
         "../envs/minimap2.yaml"
     log:
@@ -140,19 +140,19 @@ rule reads_mapping_on_reference_hybrid:
         sample="|".join(SAMPLES),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     params:
-        mapping_sr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.SR.sam",
-        mapping_lr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.LR.sam",
+        mapping_sr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.SR.bam",
+        mapping_lr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.LR.bam",
         method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
         minimap2 -ax sr -t {threads} \
-            {input.refs} {input.r1} {input.r2} > {params.mapping_sr} 2> {log.sr_stderr} \
+            {input.refs} {input.r1} {input.r2} | samtools view -Sb - | samtools sort -o {params.mapping_sr} 2> {log.sr_stderr} \
         && \
         minimap2 -ax {params.method} -t {threads} \
-            {input.refs} {input.long_read} > {params.mapping_lr} 2> {log.lr_stderr}
+            {input.refs} {input.long_read} | samtools view -Sb - | samtools sort -o {params.mapping_lr} 2> {log.lr_stderr} \
         && \
-        samtools merge -o {output} {params.mapping_sr} {params.mapping_lr} \
+        samtools merge --threads {threads} -o {output} {params.mapping_sr} {params.mapping_lr} \
         && \
         rm -v {params.mapping_sr} {params.mapping_lr}
         """
@@ -199,11 +199,12 @@ rule sam_to_bam_strains_profiling:
         "benchmarks/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sam_to_bam.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        assembler = "|".join(ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+    threads: config['binning']['samtools']['threads']
     shell:
         """
-        samtools view -o {output.bam} {input.sam} \
+        samtools view --threads {threads} -o {output.bam} {input.sam} \
             > {log.stdout} 2> {log.stderr} \
         && rm {input.sam}
         """
@@ -223,7 +224,7 @@ rule bam_sorting_strains_profiling:
         "benchmarks/10_strain_profiling/samtools/{ani}/{assembler}/{sample}.sorting.benchmark.txt"
     wildcard_constraints:
         sample="|".join(SAMPLES),
-        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
+        assembler = "|".join(ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
