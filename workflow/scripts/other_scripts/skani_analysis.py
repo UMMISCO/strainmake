@@ -21,10 +21,12 @@ def parse_arguments():
 
     compare_parser.add_argument('--bins', required=True, choices=['refined', 'dereplicated'], 
                         help='Type of bins to analyze')
+    compare_parser.add_argument('--drep_ani', required=False, default=97, type=int,
+                                help="If selected '--bins dereplicated', it is the dereplicated ANI threshold to find the MAG to analyze. For example, if you ran dRep with ANI 97%%, use '--ani_threshold 97' (default: 97)",)
     compare_parser.add_argument('--tmp', required=True, help='Temporary directory for intermediate files')
     compare_parser.add_argument('--output_file', required=True, help='File to save the output results (Skani matrix)')
     compare_parser.add_argument('--tsv_output', required=True, help='File to save the Skani matrix in TSV format')
-    compare_parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same")
+    compare_parser.add_argument('--ani_threshold', type=float, required=True, default=99.9, help="Minimal ANI to consider two bins as the same (default: 99.9)")
     compare_parser.add_argument('--json_output', required=True, help='File to save the bins similarity results according to assembly methods (JSON)')
     compare_parser.add_argument('--venn_diagram', required=True, help='Where to save the Venn diagram')
     compare_parser.add_argument('--cpu', type=int, required=True, help='Number of CPU cores to use')
@@ -38,16 +40,23 @@ def parse_arguments():
 
     return parser.parse_args()
 
-def copy_and_rename_bins_refined(src_dir, tmp_dir):
+def symlink_bins(src_dir, tmp_dir):
+    """
+    Create symbolic links for bin files from a source directory to a temporary directory.
+    This function scans through the source directory, identifies bin files with the '.fa' extension
+    within the 'final_bins' subdirectories of each sample, and creates symbolic links to these bin files
+    in the temporary directory. It also generates a 'list_bins.txt' file in the temporary directory
+    containing the paths to all the created symbolic links.
+    """
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
     
     list_bins = []
 
-    print("Copying and renaming bins files")
+    print("Creating symlinks for bins files")
     for assembly in os.listdir(src_dir):
         assembly_dir = os.path.join(src_dir, assembly)
-        print(f"Copying and renaming bins from {assembly} assembly (progress bar displays samples)")
+        print(f"Creating symlinks for bins from {assembly} assembly (progress bar displays samples)")
         if os.path.isdir(assembly_dir):
             for sample in tqdm(os.listdir(assembly_dir)):
                 sample_dir = os.path.join(assembly_dir, sample, 'final_bins')
@@ -55,9 +64,10 @@ def copy_and_rename_bins_refined(src_dir, tmp_dir):
                     for bin_file in os.listdir(sample_dir):
                         if bin_file.endswith('.fa'):
                             src_bin = os.path.join(sample_dir, bin_file)
+                            src_bin = os.path.abspath(src_bin)
                             new_bin_name = f"{assembly}.{sample}.{bin_file}"
                             dst_bin = os.path.join(tmp_dir, new_bin_name)
-                            shutil.copy2(src_bin, dst_bin)
+                            os.symlink(src_bin, dst_bin)
                             list_bins.append(dst_bin)
     
     print("Creating the list_bins.txt file")
@@ -68,23 +78,30 @@ def copy_and_rename_bins_refined(src_dir, tmp_dir):
     
     return list_bins_path
 
-def copy_and_rename_bins_dereplicated(src_dir, tmp_dir):
+def symlink_bins_dereplicated(src_dir, tmp_dir):
+    """
+    Symlinks and renames dereplicated bin files from source directory to a temporary directory.
+    This function scans through the source directory for assemblies, finds the bin files within each assembly,
+    creates symbolic links to these bin files in the temporary directory with a new naming convention, and 
+    generates a list of these new paths in a text file.
+    """
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
     
     list_bins = []
 
-    print("Copying and renaming dereplicated bins files")
+    print("Symlinking and renaming dereplicated bins files")
     for assembly in os.listdir(src_dir):
         assembly_dir = os.path.join(src_dir, assembly, 'bins')
         if os.path.exists(assembly_dir):
-            print(f"Copying and renaming bins from {assembly} assembly")
+            print(f"Symlinking and renaming bins from {assembly} assembly")
             for bin_file in tqdm(os.listdir(assembly_dir)):
                 if bin_file.endswith('.fa'):
                     src_bin = os.path.join(assembly_dir, bin_file)
+                    src_bin = os.path.abspath(src_bin)
                     new_bin_name = f"{assembly}.{bin_file}"
                     dst_bin = os.path.join(tmp_dir, new_bin_name)
-                    shutil.copy2(src_bin, dst_bin)
+                    os.symlink(src_bin, dst_bin)
                     list_bins.append(dst_bin)
     
     print("Creating the list_bins.txt file")
@@ -114,7 +131,6 @@ def read_phylip_lower_triangular(filepath):
 
     # initialize an empty numpy array
     matrix = np.zeros((num_elements, num_elements))
-
     bin_names = []
 
     # fill the numpy array with values
@@ -125,11 +141,10 @@ def read_phylip_lower_triangular(filepath):
         bin_name = os.path.basename(elements[0])
         bin_names.append(bin_name)
         
-        matrix[i-1, :i] = values
-        matrix[:i, i-1] = values
+        matrix[i-1, :len(values)] = values
+        matrix[:len(values), i-1] = values
 
     skani_results = pd.DataFrame(matrix, index=bin_names, columns=bin_names)
-
     return skani_results
 
 def build_shared_bins_dictionary_dereplicated(skani_results, threshold=99.9):
@@ -368,10 +383,10 @@ def subcommand_compare(args):
     """
     if args.bins == 'refined':
         src_dir = 'results/07_bins_refinement/binette'
-        list_bins_path = copy_and_rename_bins_refined(src_dir, args.tmp)
+        list_bins_path = symlink_bins(src_dir, args.tmp)
     elif args.bins == 'dereplicated':
-        src_dir = 'results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality'
-        list_bins_path = copy_and_rename_bins_dereplicated(src_dir, args.tmp)
+        src_dir = f'results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{args.drep_ani}'
+        list_bins_path = symlink_bins_dereplicated(src_dir, args.tmp)
 
     run_skani(list_bins_path, args.output_file, args.cpu)
 
