@@ -37,6 +37,18 @@ def parse_arguments():
     check_parser.add_argument('--json_results', required=True, help='Path to the JSON produced using "skani_analysis.py compare"')
     check_parser.add_argument('--tsv_output', required=True, help='File to save the results in TSV format')
     check_parser.add_argument('--assembly', required=True, choices=['unique', 'megahit', 'metaflye', 'metaspades', 'hybridspades'], help="Choose 'unique' to get a list of bins that were not found from at least a second assembly method, at the given ANI threshold you used with the 'compare' subcommand. Chose any other possible assembly method to get a list of bins recovered from the given assembly (it won't return the redundant bins coming from other asssemblies)")
+    check_parser.add_argument('--drep_ani', required=False, default=97, type=int,
+                              help="If selected '--bins dereplicated', it is the dereplicated ANI threshold to find the MAG to analyze. For example, if you ran dRep with ANI 97%%, use '--ani_threshold 97' (default: 97)",)
+
+    # checking "clusters"
+    clusters_parser = subparsers.add_parser('cluster', help="Recovering the groups of bins that share a certain identity threshold")
+
+    clusters_parser.add_argument('--tsv_results', required=True, help='Path to matrix (TSV) produced using "skani_analysis.py compare"')
+    clusters_parser.add_argument('--quality', action='store_true', help='Retrieve the CheckM2 metrics for the bins')
+    clusters_parser.add_argument('--threshold', type=int, required=True, default=97,
+                                 help='Minimal identity to consider two bins as being in the same cluster (default: 97)')
+    clusters_parser.add_argument('--tsv_output_full', required=True, help='Path to save the bin-by-bin results in TSV format')
+    clusters_parser.add_argument('--tsv_output_summary', required=True, help='Path to save the summary results in TSV format')
 
     return parser.parse_args()
 
@@ -203,6 +215,134 @@ def build_assembly_bins_dictionary_dereplicated(shared_bins_dict):
 
     return assembly_bins_dict
 
+def build_clusters_bins_dictionary(skani_results: pd.DataFrame, threshold=99.9):
+    """
+    Builds a dictionary with each key being a "cluster" and the values being a list of bins that share >= `threshold` identity
+    The idea is to iterate over `skani_results`'s bins, and for each bin not already assigned in a cluster check if it shares identity with other bins,
+    if so, add them to the same cluster
+    """
+
+    already_checked_bins =[]
+    # of the form: {'1': ['bin1', 'bin2', 'bin3'], '2: ['bin4', 'bin5']}
+    clusters_dict = {}
+    # dictionary to quiclky find the cluster of a bin
+    # of the form: {'bin1': '1', 'bin2': '1', 'bin3': '1', 'bin4': '2', 'bin5': '2'}
+    clusters_index = {}
+
+    for idx, row in skani_results.iterrows():
+        if idx not in already_checked_bins:
+            for col, value in row.items():
+                # those two bins share identity, so they are in the same cluster
+                if value >= threshold:
+                    if idx != col:
+                        # if col has already been added to a cluster, we add idx to the same cluster
+                        if col in clusters_index:
+                            cluster = clusters_index[col]
+                            clusters_dict[cluster].append(idx)
+                            clusters_index[idx] = cluster
+                            already_checked_bins.append(idx)
+                        # if idx has not been added to any cluster, we create a new one and add it to it
+                        elif idx not in clusters_index:
+                            new_cluster = str(len(clusters_dict) + 1)
+                            clusters_dict[new_cluster] = [idx, col]
+                            clusters_index[idx] = new_cluster
+                            clusters_index[col] = new_cluster
+                            already_checked_bins.append(idx)
+                            already_checked_bins.append(col)
+                        # if idx has been added to a cluster, but col has not, we add col to the same cluster
+                        else:
+                            cluster = clusters_index[idx]
+                            clusters_dict[cluster].append(col)
+                            clusters_index[col] = cluster
+                            already_checked_bins.append(col)
+
+            # if idx has not been added to any cluster, we create a new one and add it to it
+            if idx not in clusters_index:
+                new_cluster = str(len(clusters_dict) + 1)
+                clusters_dict[new_cluster] = [idx]
+                clusters_index[idx] = new_cluster
+                already_checked_bins.append(idx)
+
+    assert len(clusters_index) == skani_results.shape[0], "The number of clusters does not match the number of bins in the Skani results"
+
+    return clusters_dict
+
+def checkm_metrics_bins_clusters(clusters_dict: dict, ani_threshold=97):
+    """
+    Retrieves the CheckM metrics for each bin in a cluster and returns a DataFrame with the metrics
+    """
+    # dictionary to store paths for corresponding name files based on assembly method
+    corresponding_names_paths = {
+        'hybridspades': "results/08_bins_postprocessing/genomes_list/hybridspades/unduplicated.tsv",
+        'metaflye': "results/08_bins_postprocessing/genomes_list/metaflye/unduplicated.tsv",
+        'megahit': "results/08_bins_postprocessing/genomes_list/megahit/unduplicated.tsv",
+        'metaspades': "results/08_bins_postprocessing/genomes_list/metaspades/unduplicated.tsv"
+    }
+
+    for method, path in corresponding_names_paths.items():
+        if os.path.isfile(path):
+            corresponding_names_paths[method] = pd.read_csv(path, sep="\t")
+
+    checkm_results_dir = f"results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani_threshold}"
+
+    # preparing a dictionary to store the results
+    results = {
+        'cluster': [],
+        'assembly': [],
+        'bin': [],
+        'contamination': [],
+        'completeness': [],
+        'contig_n50': [],
+        'genome_size': []
+    }
+
+    for cluster, bins in tqdm(clusters_dict.items()):
+        for bin in bins:
+            # extracting the method from the bin name using regex
+            method_match = re.match(r'^(hybridspades|metaflye|metaspades|megahit)', bin)
+            if method_match:
+                method = method_match.group(1)
+            else:
+                raise ValueError(f"Could not identify the assembly method from bin name: {bin}")
+
+            bin = bin.replace(f"{method}.", "")
+            bin = bin.replace(".fa", "")
+
+            # constructing the path to the CheckM2 results table and loading it
+            checkm2_quality_report = os.path.join(checkm_results_dir, method, "checkm2", "quality_report.tsv")
+            checkm2_results_df = pd.read_csv(checkm2_quality_report, sep="\t")[['Name', 'Completeness', 'Contamination', 'Contig_N50', 'Genome_Size']]
+
+            # filtering the results to keep only the rows related to this bin
+            checkm2_results_df = checkm2_results_df[checkm2_results_df['Name'] == bin]
+
+            # storing the results
+            results['cluster'].append(cluster)
+            results['assembly'].append(method)
+            results['bin'].append(bin)
+            results['contamination'].append(checkm2_results_df['Contamination'].values[0])
+            results['completeness'].append(checkm2_results_df['Completeness'].values[0])
+            results['contig_n50'].append(checkm2_results_df['Contig_N50'].values[0])
+            results['genome_size'].append(checkm2_results_df['Genome_Size'].values[0])
+
+    # returning the results as a DataFrame
+    results_df = pd.DataFrame(results)
+
+    # summarize the results by cluster
+    summary_df = results_df.groupby('cluster').agg(
+            num_bins=('bin', 'count'),  # number of bins in each cluster
+            mean_contamination=('contamination', 'mean'),  # mean contamination for bins in each cluster
+            mean_completeness=('completeness', 'mean'),  # mean completeness for bins in each cluster
+            mean_contig_n50=('contig_n50', 'mean'),  # mean contig N50 for bins in each cluster
+            mean_genome_size=('genome_size', 'mean'),  # mean genome size for bins in each cluster
+            best_contamination=('contamination', lambda x: results_df.loc[x.idxmin(), 'assembly']),  # assembly method with the best (lowest) contamination
+            best_completeness=('completeness', lambda x: results_df.loc[x.idxmax(), 'assembly']),  # assembly method with the best (highest) completeness
+            best_contig_n50=('contig_n50', lambda x: results_df.loc[x.idxmax(), 'assembly']),  # assembly method with the best (highest) contig N50
+        ).reset_index()
+    summary_df['cluster'] = summary_df['cluster'].astype(int)
+    summary_df = summary_df.set_index('cluster').sort_index()
+
+    return results_df, summary_df
+
 def save_assembly_bins_dict_to_json(assembly_bins_dict, output_path):
     with open(output_path, 'w') as json_file:
         json.dump(assembly_bins_dict, json_file, indent=4, default=list)
@@ -338,7 +478,7 @@ def get_bins_taxo(assembly_bins_dict):
     # returning the results as a DataFrame
     return pd.DataFrame(results)
 
-def get_bins_quality(bins_taxonomy: pd.DataFrame):
+def get_bins_quality(bins_taxonomy: pd.DataFrame, ani_threshold: int):
     """
     Gets the bin quality check using the CheckM2 results obtained by the pipeline
 
@@ -346,7 +486,7 @@ def get_bins_quality(bins_taxonomy: pd.DataFrame):
     """
 
     # ensuring we have the folder containing the CheckM2 results for dereplicated bins
-    dereplication_checkm_qc_dir = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality"
+    dereplication_checkm_qc_dir = f"results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani_threshold}"
     
     if not os.path.isdir(dereplication_checkm_qc_dir):
         raise FileNotFoundError(f"Folder '{dereplication_checkm_qc_dir}' does not exist.")
@@ -433,10 +573,28 @@ def subcommand_check(args):
         bins_taxonomy = get_bins_taxo(bins)
         
         # getting the quality of these bins
-        bins_taxonomy_quality = get_bins_quality(bins_taxonomy)
+        bins_taxonomy_quality = get_bins_quality(bins_taxonomy, args.drep_ani)
 
         # saving the results
         bins_taxonomy_quality.to_csv(args.tsv_output, sep="\t", index=False)
+
+def subcommand_cluster(args):
+    """
+    Handling `skani_analysis.py cluster ...`
+    """
+
+    # reading the TSV file as a DataFrame
+    skani_results = pd.read_csv(args.tsv_results, sep="\t", index_col=0)
+
+    # building the clusters dictionary
+    clusters_dict = build_clusters_bins_dictionary(skani_results, args.threshold)
+
+    # getting the quality of the bins in each cluster
+    bins_quality, summary_quality = checkm_metrics_bins_clusters(clusters_dict, args.threshold)
+
+    # saving the quality results
+    bins_quality.to_csv(args.tsv_output_full, sep="\t", index=False)
+    summary_quality.to_csv(args.tsv_output_summary, sep="\t", index=False)
 
 def main():
     args = parse_arguments()
@@ -446,6 +604,8 @@ def main():
         subcommand_compare(args)
     elif args.subparser == 'check':
         subcommand_check(args)
+    elif args.subparser == 'cluster':
+        subcommand_cluster(args)
 
 if __name__ == "__main__":
     main()
