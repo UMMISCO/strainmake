@@ -1,3 +1,5 @@
+import os 
+
 ASSEMBLER = config['assembly']['assembler']
 HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler'] 
 ASSEMBLER_LR = config['assembly']['long_read_assembler']
@@ -23,6 +25,18 @@ for sample in SAMPLES_LR:
     if sample not in SAMPLES:
         SAMPLES.append(sample)
 
+# mananing genomes of reference (if any)
+reference_genomes_dir = config['quast']['reference_genomes_dir']
+if reference_genomes_dir is not None:
+    reference_genomes_extension = config['quast']['reference_genomes_extension']
+    REFERENCE_GENOMES = ",".join(
+        os.path.join(reference_genomes_dir, f) for f in os.listdir(reference_genomes_dir) if f.endswith(reference_genomes_extension)
+    )
+    # adding the `metaquast` flag (`-r genome1,genome2,...`) to the `REFERENCE_GENOMES` variable
+    REFERENCE_GENOMES = f"-r {REFERENCE_GENOMES}"
+else:
+    REFERENCE_GENOMES = "none"
+
 wildcard_constraints:
        assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
        assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none",
@@ -42,13 +56,15 @@ rule quast_qc:
     benchmark:
         "benchmarks/04_assembly_qc/quast/{assembler}/{sample}.benchmark.txt"
     params:
-        out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}"
+        out_dir = "results/04_assembly_qc/quast/{assembler}/{sample}",
+        ref_genomes = REFERENCE_GENOMES if REFERENCE_GENOMES != "none" else "",
     threads: config['quast']['threads']
     shell:
         """
         metaquast.py -t {threads} -o {params.out_dir} \
             --max-ref-number 0 \
             --circos \
+            {params.ref_genomes} \
             {input} \
             > {log.stdout} 2> {log.stderr} 
         """
@@ -68,6 +84,7 @@ rule quast_qc_long_read:
         "benchmarks/04_assembly_qc/quast/{assembler_lr}/{sample_lr}.benchmark.txt"
     params:
         out_dir = "results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}",
+        ref_genomes = REFERENCE_GENOMES if REFERENCE_GENOMES != "none" else "",
         method = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio"
     threads: config['quast']['threads']
     shell:
@@ -75,6 +92,7 @@ rule quast_qc_long_read:
         metaquast.py -t {threads} -o {params.out_dir} \
             --max-ref-number 0 \
             --circos \
+            {params.ref_genomes} \
             {input.assembly} \
             > {log.stdout} 2> {log.stderr} 
         """
