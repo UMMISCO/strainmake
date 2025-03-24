@@ -34,6 +34,8 @@ if reference_genomes_dir is not None:
     )
     # adding the `metaquast` flag (`-r genome1,genome2,...`) to the `REFERENCE_GENOMES` variable
     REFERENCE_GENOMES = f"-r {REFERENCE_GENOMES}"
+    # adding options for making the process faster (https://quast.sourceforge.net/docs/manual.html#faq_q14)
+    REFERENCE_GENOMES = f"--min-alignment 200 --fast {REFERENCE_GENOMES}"
 else:
     REFERENCE_GENOMES = "none"
 
@@ -47,7 +49,7 @@ rule quast_qc:
         # assemblies produced in step 03
         "results/03_assembly/{assembler}/{sample}/assembly.fa.gz"
     output:
-        "results/04_assembly_qc/quast/{assembler}/{sample}/report.html"
+        "results/04_assembly_qc/quast/{assembler}/{sample}/combined_reference/report.tsv"
     conda:
         "../envs/quast.yaml"
     log:
@@ -63,10 +65,9 @@ rule quast_qc:
         """
         metaquast.py -t {threads} -o {params.out_dir} \
             --max-ref-number 0 \
-            --circos \
             {params.ref_genomes} \
             {input} \
-            > {log.stdout} 2> {log.stderr} 
+            > {log.stdout} 2> {log.stderr}; rm -rf {params.out_dir}/quast_corrected_input
         """
 
 rule quast_qc_long_read:
@@ -74,7 +75,7 @@ rule quast_qc_long_read:
         # long read assemblies produced in step 03
         assembly = "results/03_assembly/{assembler_lr}/{sample_lr}/assembly.fa.gz"
     output:
-        "results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}/report.html"
+        "results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}/combined_reference/report.tsv"
     conda:
         "../envs/quast.yaml"
     log:
@@ -91,10 +92,9 @@ rule quast_qc_long_read:
         """
         metaquast.py -t {threads} -o {params.out_dir} \
             --max-ref-number 0 \
-            --circos \
             {params.ref_genomes} \
             {input.assembly} \
-            > {log.stdout} 2> {log.stderr} 
+            > {log.stdout} 2> {log.stderr}; rm -rf {params.out_dir}/quast_corrected_input 
         """
 
 # building a non redundant gene catalog for each assembly approach
