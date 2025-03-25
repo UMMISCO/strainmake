@@ -1,0 +1,7 @@
+name: mmseqs2
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - mmseqs2=15.6f452
+  - seqkit

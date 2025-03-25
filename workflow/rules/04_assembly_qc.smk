@@ -178,30 +178,34 @@ rule gene_clustering:
     output:
         "results/04_assembly_qc/gene_clustering/{assembler_all}/non_redundant_gene_catalog.fna.gz"
     conda:
-        "../envs/cd-hit.yaml"
+        "../envs/mmseqs2.yaml"
     benchmark:
         "benchmarks/04_assembly_qc/gene_clustering/{assembler_all}_gene_clustering.benchmark.txt"
     log:
         stdout = "logs/04_assembly_qc/gene_clustering/{assembler_all}_gene_clustering.stdout",
         stderr = "logs/04_assembly_qc/gene_clustering/{assembler_all}_gene_clustering.stderr"
     params:
-        filtering_genes_cluster_script = "workflow/scripts/process_cd_hit_output.py",
-        sequence_identity_threshold = config['cdhit']['sequence_identity_threshold'],
-        alignment_coverage_shorter_sequence = config['cdhit']['alignment_coverage_shorter_sequence'],
-        cdhit_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/genes_clust",
-        cdhit_output_clusters = "results/04_assembly_qc/gene_clustering/{assembler_all}/genes_clust.clstr",
+        sequence_identity_threshold = config['mmseqs2']['sequence_identity_threshold'],
+        alignment_coverage_shorter_sequence = config['mmseqs2']['alignment_coverage_shorter_sequence'],
         minimal_gene_length = config['representative_genes']['minimal_gene_length'],
-        clusters_info = "results/04_assembly_qc/gene_clustering/{assembler_all}/genes_cluster.csv",
-        uncompressed_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/non_redundant_gene_catalog.fna"
-    threads: config['cdhit']['threads']
+        tmp = "{assembler_all}_tmp",
+        mmseqs2_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/clustering",
+        uncompressed_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/non_redundant_gene_catalog.fna",
+        uncompressed_output_before_renaming = "results/04_assembly_qc/gene_clustering/{assembler_all}/clustering_rep_seq.fasta",
+    threads: config['mmseqs2']['threads']
     shell:
         """
-        cd-hit-est -i {input} -o {params.cdhit_output} -c {params.sequence_identity_threshold} -aS {params.alignment_coverage_shorter_sequence} \
-            -G 0 -d 0 -M 0 -T {threads} \
-            > {log.stdout} 2> {log.stderr} \
+        mmseqs easy-cluster {input} {params.mmseqs2_output} {params.tmp} \
+            --min-seq-id {params.sequence_identity_threshold} -c {params.alignment_coverage_shorter_sequence} \
+            --alignment-mode 3 \
+            --cov-mode 1 \
+            --dbtype 2 \
+            --threads {threads} \
+        > {log.stdout} 2> {log.stderr} \
         && \
-        python3 {params.filtering_genes_cluster_script} --minimal_len {params.minimal_gene_length} {params.cdhit_output_clusters} {input} {params.clusters_info} {params.uncompressed_output} \
-            >> {log.stdout} 2>> {log.stderr} \
+        seqkit seq -m {params.minimal_gene_length} {params.uncompressed_output_before_renaming} > {params.uncompressed_output} \
+        && \
+        rm {params.uncompressed_output_before_renaming} \
         && \
         pigz {params.uncompressed_output}
         """
