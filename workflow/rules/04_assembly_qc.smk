@@ -192,10 +192,10 @@ rule gene_clustering:
         mmseqs2_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/clustering",
         uncompressed_output = "results/04_assembly_qc/gene_clustering/{assembler_all}/non_redundant_gene_catalog.fna",
         uncompressed_output_before_renaming = "results/04_assembly_qc/gene_clustering/{assembler_all}/clustering_rep_seq.fasta",
-    threads: config['cdhit']['threads']
+    threads: config['mmseqs2']['threads']
     shell:
         """
-        mmseqs easy-cluster {input} {params.output} {params.tmp} \
+        mmseqs easy-cluster {input} {params.mmseqs2_output} {params.tmp} \
             --min-seq-id {params.sequence_identity_threshold} -c {params.alignment_coverage_shorter_sequence} \
             --alignment-mode 3 \
             --cov-mode 1 \
