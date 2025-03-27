@@ -137,6 +137,7 @@ rule gene_calling_assembly_long_read:
         """
 
 # concatenating all genes from all samples for each assembly approach and making sequence names unique
+# we also add the assembly method to the sequence ID and replace the spaces induced by Prodigal by "__" to not make sequences be redundant/duplicated for MMseqs2
 rule concatenating_assembly_genes:
     input:
         expand("results/04_assembly_qc/gene_calling/{{assembler}}/{sample}/genes.fna", sample=SAMPLES)
@@ -150,10 +151,12 @@ rule concatenating_assembly_genes:
         uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler}/genes.fna"
     shell:
         """
-        cat {input} | seqkit rename -o {params.uncompressed_output} && pigz {params.uncompressed_output}
+        cat {input} | seqkit rename | seqkit replace -p " " -r "__" | seqkit replace -p "(.*)" -r "{wildcards.assembler}___\\$1" -o {params.uncompressed_output} \
+            && pigz {params.uncompressed_output}
         """
 
 # concatenating all genes from all samples for each assembly approach and making sequence names unique
+# we also add the assembly method to the sequence ID and replace the spaces induced by Prodigal by "__" to not make sequences be redundant/duplicated for MMseqs2
 rule concatenating_assembly_genes_long_read:
     input:
         expand("results/04_assembly_qc/gene_calling/{{assembler_lr}}/{sample}/genes.fna", sample=SAMPLES_LR)
@@ -167,7 +170,8 @@ rule concatenating_assembly_genes_long_read:
         uncompressed_output = "results/04_assembly_qc/gene_calling/{assembler_lr}/genes.fna"
     shell:
         """
-        cat {input} | seqkit rename -o {params.uncompressed_output} && pigz {params.uncompressed_output}
+        cat {input} | seqkit rename | seqkit replace -p " " -r "__" | seqkit replace -p "(.*)" -r "{wildcards.assembler_lr}___\\$1" -o {params.uncompressed_output} \
+            && pigz {params.uncompressed_output}
         """
 
 # clustering genes to obtain a non redundant catalog
