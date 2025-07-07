@@ -25,6 +25,8 @@ Human assembly for mapping:
 | :----------- | :------------------------------------------------------------- | :---------------------------------------------- | :------------------------------------------------------------ | :----------- |
 | MEGAHIT      | [2015](https://doi.org/10.1093/bioinformatics/btv033)          | [Yes](https://anaconda.org/bioconda/megahit)    | https://github.com/voutcn/megahit                             | Yes          |
 | (Meta)SPAdes | [2017](https://doi.org/10.1101/gr.213959.116)                  | [Yes](https://anaconda.org/bioconda/spades)     | https://github.com/ablab/spades                               | Yes          |
+| (Meta)Flye   | [2020](https://doi.org/10.1038/s41592-020-00971-x)             | [Yes](https://anaconda.org/bioconda/flye)       | https://github.com/mikolmogorov/Flye                          | Yes          |
+| HyLight      | [2024](https://doi.org/10.1038/s41467-024-52907-0)             | [Yes](https://anaconda.org/bioconda/hylight)    | https://github.com/LuoGroup2023/HyLight                       | Yes          |
 | IDBA-UD      | [2012](https://doi.org/10.1093/bioinformatics/bts174)          | [Yes](https://anaconda.org/bioconda/idba)       | https://github.com/loneknightpy/idba                          | No           |
 | MetaVelvet   | [2012](https://doi.org/10.1093/nar/gks678)                     | [Yes](https://anaconda.org/bioconda/metavelvet) | https://github.com/hacchy/MetaVelvet                          | No           |
 | MetaCompass  | [2024](https://arxiv.org/ftp/arxiv/papers/2403/2403.01578.pdf) | No                                              | https://gitlab.umiacs.umd.edu/mpop/metacompass (can't access) | No           |
