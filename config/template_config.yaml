@@ -56,6 +56,10 @@ assembly:
     threads: 4
     memory_limit: 50 # in GB
     min_contig_len: 500 # minimal contig length to be kept in the produced assembly
+  hylight:
+    threads: 4
+    min_contig_len: 500 # minimal contig length to be kept in the produced assembly
+    other_params: "" # other parameters to pass to hylight (e.g. "--nsplit 100")
 
 ################################################################################
 #                               Assembly quality                               #

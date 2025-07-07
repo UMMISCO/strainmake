@@ -1,0 +1,8 @@
+name: hylight
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - hylight=1.0.*
+  - seqtk=r82
+  - pigz=2.*

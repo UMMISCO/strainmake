@@ -168,6 +168,51 @@ rule hybridspades_assembly:
         bash {params.compressing_files_script} {params.out_dir}
         """
 
+rule hylight_assembly:
+    input:
+        r1 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_1.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        r2 = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}bowtie2/{wildcards.sample}_2.clean{'.downsized' if subsample_hybrid_reads else ''}.fastq.gz",
+        long_read = lambda wildcards: f"results/02_preprocess/{'downsized/' if subsample_hybrid_reads else ''}fastp_long_read/{wildcards.sample}{'_downsized' if subsample_hybrid_reads else ''}{sequences_file_end}"
+    output:
+        assembly = "results/03_assembly/hylight/{sample}/assembly.fa.gz",
+        other_files = "results/03_assembly/hylight/{sample}/other_files.tar.gz"
+    conda:
+        "../envs/hylight.yaml"
+    log:
+        stdout = "logs/03_assembly/hylight/{sample}.stdout",
+        stderr = "logs/03_assembly/hylight/{sample}.stderr"
+    benchmark:
+        "benchmarks/03_assembly/hylight/{sample}.benchmark.txt"
+    params: 
+        other_params = config['assembly']['hylight']['other_params'],
+        out_dir = "results/03_assembly/hylight/{sample}",
+        min_contig_len = config['assembly']['hylight']['min_contig_len'],
+    threads: config['assembly']['hylight']['threads']
+    shell:
+        """ 
+        # HyLight needs interleaved reads, so we need to merge paired-end reads
+        tmp_interleaved=$(mktemp)
+        seqtk mergepe {input.r1} {input.r2} > $tmp_interleaved 
+        pigz $tmp_interleaved
+        tmp_interleaved_gz="${tmp_interleaved}.gz"
+
+        # assembly part
+        hylight -l {input.long_read} -s $tmp_interleaved_gz \
+            -o {params.out_dir} \
+            -t {threads} \
+            {params.other_params} \
+            > {log.stdout} 2> {log.stderr}
+
+        # filtering assembly to remove short contigs, it produces {output.assembly}
+        seqkit seq -m {params.min_contig_len} {params.out_dir}/final_contigs.fa > {params.out_dir}/assembly.fa
+        pigz {params.out_dir}/assembly.fa
+
+        # tar and gzip all files in the output directory except the main assembly file
+        find {params.out_dir} -type f ! -name "$(basename {output.assembly})" -print0 | tar --null -czf {output.other_files} --files-from=-
+
+        rm -fv $tmp_interleaved
+        """
+
 # metaFlye for long read assembly
 rule metaflye_assembly:
     input:
