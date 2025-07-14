@@ -187,3 +187,21 @@ To do this, provide a TSV file formatted like [`config_data.tsv`](data/config_da
 This approach ensures that the pipeline can use your preprocessed data without needing to process the FASTQ files again.
 
 
+## Help with configuration file
+
+An interactive CLI for editing YAML configuration and including relevant pipeline sections is available in [`config_generator.py`](workflow/scripts/config_generator/config_generator.py).
+
+```
+ Usage: config_generator.py [OPTIONS]                                                                                                                                                        
+                                                                                                                                                                                             
+ Generate a configuration YAML file for the pipeline.                                                                                                                                        
+                                                                                                                                                                                             
+╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  --samples                   PATH  Path to sample metadata file needed by the pipeline (TSV) [default: None] [required]                                                                 │
+│    --lr-seq-format             TEXT  Format of long reads: 'fastq' or 'fasta' [default: fastq]                                                                                            │
+│    --output                    PATH  Path to write the final YAML [default: config.yaml]                                                                                                  │
+│    --install-completion              Install completion for the current shell.                                                                                                            │
+│    --show-completion                 Show completion for the current shell, to copy it or customize the installation.                                                                     │
+│    --help                            Show this message and exit.                                                                                                                          │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```

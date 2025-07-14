@@ -8,3 +8,5 @@ data/meteor_db
 __pycache__/
 benchmarks/
 config/gurobi.lic
+workflow/scripts/config_generator/defaults.py
+workflow/scripts/config_generator/config.yaml
