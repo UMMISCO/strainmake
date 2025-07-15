@@ -10,3 +10,4 @@ benchmarks/
 config/gurobi.lic
 workflow/scripts/config_generator/defaults.py
 workflow/scripts/config_generator/config.yaml
+workflow/scripts/config_generator/Snakefile
