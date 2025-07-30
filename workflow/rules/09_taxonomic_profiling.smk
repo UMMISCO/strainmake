@@ -11,7 +11,7 @@ rule metaphlan_profiling:
         stderr = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stderr"
     benchmark:
         "benchmarks/09_taxonomic_profiling/metaphlan/{sample}.profile.benchmark.txt"
-    threads: config['taxonomic_profiling']['metaphlan']['threads']
+    threads: config.get('taxonomic_profiling', {}).get('metaphlan', {}).get('threads', 0)
     shell:
         """
         metaphlan --input_type fastq --nproc {threads} \
@@ -73,7 +73,7 @@ rule meteor_mapping:
     benchmark:
         "benchmarks/09_taxonomic_profiling/meteor/{sample}.fastq_mapping.benchmark.txt"
     threads:
-        config['taxonomic_profiling']['meteor']['threads']
+        config.get('taxonomic_profiling', {}).get('meteor', {}).get('threads', 0)
     params:
         indexed_fastq_file_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/fastq_index", f"{wildcards.sample}")
     shell:
@@ -123,7 +123,7 @@ rule meteor_profiling_downsized:
         mapping_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/mapping", f"{wildcards.sample}"),  
         downsize_int = lambda wildcards: convert_from_si_units_to_int(wildcards.downsize)   
     wildcard_constraints:
-        downsize = "|".join([convert_to_si_units(int(size)) for size in config['taxonomic_profiling']['meteor']['downsize']])
+        downsize = "|".join([convert_to_si_units(int(size)) for size in config.get('taxonomic_profiling', {}).get('meteor', {}).get('downsize', {})])
     shell:
         """
         meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \

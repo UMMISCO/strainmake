@@ -20,6 +20,14 @@ if ASSEMBLER_LR == None:
 SHORT_READ_BINNER = config['binning']['binner']
 LONG_READ_BINNER = config['binning']['long_read_binner']
 
+# taking into account the case where we don't have SR binner
+if SHORT_READ_BINNER == None:
+       SHORT_READ_BINNER = []
+
+# taking into account the case where we don't have LR binner
+if LONG_READ_BINNER == None:
+       LONG_READ_BINNER = []
+
 wildcard_constraints:
     assembler_sr_hybrid = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
     assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none"

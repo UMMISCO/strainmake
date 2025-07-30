@@ -30,6 +30,14 @@ if ASSEMBLER_LR == None:
 SHORT_READ_BINNER = config['binning']['binner']
 LONG_READ_BINNER = config['binning']['long_read_binner']
 
+# taking into account the case where we don't have SR binner
+if SHORT_READ_BINNER == None:
+       SHORT_READ_BINNER = []
+
+# taking into account the case where we don't have LR binner
+if LONG_READ_BINNER == None:
+       LONG_READ_BINNER = []
+
 # we would have refined bins with Binette only if we used several binning methods
 refined = True if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else False
 
@@ -346,7 +354,7 @@ rule carveme_merge_models:
     input:
         "results/08_bins_postprocessing/carveme/{ani}/{assembler}"
     output:
-        "results/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model/community.xml"
+        "results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}/community.xml"
     conda:
         "../envs/carveme.yaml"
     log:
@@ -356,6 +364,8 @@ rule carveme_merge_models:
         "benchmarks/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model.benchmark.txt"
     wildcard_constraints:
         ani = "|".join(ANI_THRESHOLD)
+    params:
+        launch_script = "workflow/scripts/carveme_models_building.py"
     shell:
         """
         python3 {params.launch_script} merge -i {input} -o {output} -v > {log.stdout} 2> {log.stderr} \

@@ -79,7 +79,7 @@ rule reads_mapping_hybrid_sr_part:
         "benchmarks/05_binning/minimap2/SR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb",
+        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb",
         mapping_sr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.SR.sam",
         mapping_lr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.LR.sam"
     wildcard_constraints:
@@ -107,7 +107,7 @@ rule reads_mapping_hybrid_lr_part:
         "benchmarks/05_binning/minimap2/LR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb",
+        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb",
     wildcard_constraints:
         sample = "|".join(SAMPLES)
     threads: config['binning']['minimap2']['threads']
@@ -133,7 +133,7 @@ rule reads_mapping_hybrid_sam_merging:
             "benchmarks/05_binning/samtools/{assembler_hybrid}/{sample}.merging.benchmark.txt"
     wildcard_constraints:
         sample = "|".join(SAMPLES)
-    threads: config['binning']['samtools']['threads']
+    threads: config['binning'].get('samtools', {}).get('threads', 0)
     shell:
         """
         samtools sort -T /tmp -@ {threads} -o {input.mapping_sr}.sorted.sam {input.mapping_sr} \
@@ -249,7 +249,7 @@ rule metabat2_binning:
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
         min_bin_size = config['binning']['metabat2']['min_bin_size'],
         bin_basename = "{sample}",
-    threads: config['binning']['metabat2']['threads']
+    threads: config['binning'].get('metabat2').get('threads', 0)
     shell:
         """
         metabat2 -i {input.assembly} -o "{output.output}/{params.bin_basename}" \
@@ -285,7 +285,7 @@ rule semibin2_binning:
     benchmark:
         "benchmarks/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.binning.benchmark.txt"
     params:
-        environment = config['binning']['semibin2']['environment']
+        environment = config['binning'].get('semibin2', {}).get('environment', 0)
     threads: config['binning']['semibin2']['threads']
     shell:
         """
@@ -319,13 +319,12 @@ rule vamb_binning:
     benchmark:
         "benchmarks/05_binning/vamb/{assembler}/{sample}.binning.benchmark.txt"
     params:
-        minfasta = config['binning']['vamb']['minfasta'],
-        gpu = config['binning']['vamb']['gpu'],
-        epochs = config['binning']['vamb']['epochs'],
-        batch_sizes = config['binning']['vamb']['batch_sizes'],
-        start_batch_size = config['binning']['vamb']['start_batch_size'],
-        assembler = config['assembly']['assembler'],
-    threads: config['binning']['vamb']['threads']
+        minfasta = config['binning'].get('vamb', {}).get('minfasta'),
+        gpu = config['binning'].get('vamb', {}).get('gpu'),
+        epochs = config['binning'].get('vamb', {}).get('epochs'),
+        batch_sizes = config['binning'].get('vamb', {}).get('batch_sizes'),
+        start_batch_size = config['binning'].get('vamb', {}).get('start_batch_size'),
+    threads: config['binning'].get('vamb', {}).get('threads', 0)
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     shell:
@@ -368,7 +367,7 @@ rule reads_mapping_LR:
     benchmark:
         "benchmarks/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.mapping.benchmark.txt"
     params:
-        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
+        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb"
     threads: config['binning']['minimap2']['threads']
     shell:
         """
@@ -444,7 +443,7 @@ rule metabat2_binning_LR:
         minimum_mean_coverage = config['binning']['metabat2']['minimum_mean_coverage'],
         min_bin_size = config['binning']['metabat2']['min_bin_size'],
         bin_basename = "{sample_lr}"
-    threads: config['binning']['metabat2']['threads']
+    threads: config['binning'].get('metabat2', {}).get('threads', 0)
     shell:
         """
         metabat2 -i {input.assembly} -o "{output.output}/{params.bin_basename}" \
@@ -481,7 +480,7 @@ rule semibin2_binning_LR:
         "benchmarks/05_binning/semibin2/{assembler_lr}/{sample_lr}.binning.benchmark.txt"
     params:
         environment = config['binning']['semibin2']['environment']
-    threads: config['binning']['semibin2']['threads']
+    threads: config['binning'].get('semibin2', {}).get('threads', 0)
     shell:
         """
         SemiBin2 single_easy_bin \
@@ -515,13 +514,13 @@ rule vamb_binning_LR:
     benchmark:
         "benchmarks/05_binning/vamb/{assembler_lr}/{sample_lr}.binning.benchmark.txt"
     params:
-        minfasta = config['binning']['vamb']['minfasta'],
-        gpu = config['binning']['vamb']['gpu'],
-        epochs = config['binning']['vamb']['epochs'],
-        batch_sizes = config['binning']['vamb']['batch_sizes'],
-        start_batch_size = config['binning']['vamb']['start_batch_size'],
-        assembler_lr = config['assembly']['assembler'],
-    threads: config['binning']['vamb']['threads']
+        minfasta = config['binning'].get('vamb', {}).get('minfasta'),
+        gpu = config['binning'].get('vamb', {}).get('gpu'),
+        epochs = config['binning'].get('vamb', {}).get('epochs'),
+        batch_sizes = config['binning'].get('vamb', {}).get('batch_sizes'),
+        start_batch_size = config['binning'].get('vamb', {}).get('start_batch_size'),
+        assembler_lr = config['assembly'].get('assembler'),
+    threads: config['binning'].get('vamb', {}).get('threads', 0)
     shell:
         """
         vamb --outdir {output.output} \

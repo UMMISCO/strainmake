@@ -142,7 +142,7 @@ rule reads_mapping_on_reference_hybrid:
     params:
         mapping_sr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.SR.bam",
         mapping_lr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.LR.bam",
-        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
+        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb"
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
@@ -176,7 +176,7 @@ rule reads_LR_mapping_on_reference:
         sample="|".join(SAMPLES),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     params:
-        method = "map-ont" if config['assembly']['metaflye']['method'] == "nanopore" else "map-pb"
+        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb"
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
@@ -287,8 +287,8 @@ rule variant_calling:
     benchmark:
         "benchmarks/10_strain_profiling/freeboys/{ani}/{assembler}/{sample}.variant_calling.benchmark.txt"
     params:
-        min_alternate_count = config['strains_profiling']['freebayes']['min_alternate_count'],
-        min_alternate_fraction = config['strains_profiling']['freebayes']['min_alternate_fraction']
+        min_alternate_count = config['strains_profiling'].get('freebayes', {}).get('min_alternate_count'),
+        min_alternate_fraction = config['strains_profiling'].get('freebayes', {}).get('min_alternate_fraction')
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE

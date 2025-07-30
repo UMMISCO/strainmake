@@ -27,8 +27,8 @@ rule megahit_assembly:
         out_dir = "results/03_assembly/megahit/{sample}",
         tmp_dir = "tmp/",
         tmp_output = "{sample}_tmp_megahit_output",
-        min_contig_len = config['assembly']['megahit']['min_contig_len']
-    threads: config['assembly']['megahit']['threads']
+        min_contig_len = config['assembly'].get('megahit', {}).get('min_contig_len', 0)
+    threads: config['assembly'].get('megahit', {}).get('threads', 0)
     shell:
         """
         mkdir -p {params.tmp_dir} \
@@ -97,11 +97,11 @@ rule metaspades_assembly:
         "benchmarks/03_assembly/metaspades/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/metaspades/{sample}",
-        memory_limit = config['assembly']['metaspades']['memory_limit'],
-        min_contig_len = config['assembly']['metaspades']['min_contig_len'],
+        memory_limit = config['assembly'].get('metaspades', {}).get('memory_limit', 0),
+        min_contig_len = config['assembly'].get('metaspades', {}).get('min_contig_len', 0),
         compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
         intermediate_assembly = "{sample}_metaspades_tmp_assembly.fa"
-    threads: config['assembly']['metaspades']['threads']
+    threads: config['assembly'].get('metaspades', {}).get('threads', 0)
     shell:
         """
         spades.py --meta -1 {input.r1} -2 {input.r2} \
@@ -140,12 +140,12 @@ rule hybridspades_assembly:
         "benchmarks/03_assembly/hybridspades/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/hybridspades/{sample}",
-        memory_limit = config['assembly']['hybridspades']['memory_limit'],
-        method_flag = "--nanopore" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio",
-        min_contig_len = config['assembly']['hybridspades']['min_contig_len'],
+        memory_limit = config['assembly'].get('hybridspades', {}).get('memory_limit', 0),
+        method_flag = "--nanopore" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "--pacbio",
+        min_contig_len = config['assembly'].get('hybridspades', {}).get('min_contig_len', 0),
         compressing_files_script = "workflow/scripts/compress_spades_megahit_results.sh",
         intermediate_assembly = "{sample}_hybridspades_tmp_assembly.fa"
-    threads: config['assembly']['hybridspades']['threads']
+    threads: config['assembly'].get('hybridspades', {}).get('threads', 0)
     shell:
         """
         spades.py --meta -1 {input.r1} -2 {input.r2} \
@@ -184,17 +184,17 @@ rule hylight_assembly:
     benchmark:
         "benchmarks/03_assembly/hylight/{sample}.benchmark.txt"
     params: 
-        other_params = config['assembly']['hylight']['other_params'],
+        other_params = config['assembly'].get('hylight', {}).get('other_params', ''),
         out_dir = "results/03_assembly/hylight/{sample}",
-        min_contig_len = config['assembly']['hylight']['min_contig_len'],
-    threads: config['assembly']['hylight']['threads']
+        min_contig_len = config['assembly'].get('hylight', {}).get('min_contig_len', 0),
+    threads: config['assembly'].get('hylight', {}).get('threads', 0),
     shell:
         """ 
         # HyLight needs interleaved reads, so we need to merge paired-end reads
         tmp_interleaved=$(mktemp)
         seqtk mergepe {input.r1} {input.r2} > $tmp_interleaved 
         pigz $tmp_interleaved
-        tmp_interleaved_gz="${tmp_interleaved}.gz"
+        tmp_interleaved_gz="${{tmp_interleaved}}.gz"
 
         # assembly part
         hylight -l {input.long_read} -s $tmp_interleaved_gz \
@@ -229,10 +229,10 @@ rule metaflye_assembly:
         "benchmarks/03_assembly/metaflye/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/metaflye/{sample}",
-        method_flag = "--nano-hq" if config['assembly']['metaflye']['method'] == "nanopore" else "--pacbio-hifi",
-        min_contig_len = config['assembly']['metaflye']['min_contig_len'],
+        method_flag = "--nano-hq" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "--pacbio-hifi",
+        min_contig_len = config['assembly'].get('metaflye', {}).get('min_contig_len', 0),
         intermediate_assembly = "{sample}_metaflye_tmp_assembly.fa"
-    threads: config['assembly']['metaflye']['threads']
+    threads: config['assembly'].get('metaflye', {}).get('threads', 0)
     shell:
         """
         flye {params.method_flag} {input.long_read} --out-dir {params.out_dir} \
