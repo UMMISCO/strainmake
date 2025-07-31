@@ -3,5 +3,5 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - binette=1.0.1
+  - binette=1.1.2
   - pigz
