@@ -6,6 +6,7 @@ channels:
 dependencies:
   - carveme=1.6.2
   - gurobi=11.0.3
+  - pandas=2.2.* # https://github.com/cdanielmachado/carveme/issues/218
   - pigz
 variables:
   # get your Gurobi license and place it in the config folder

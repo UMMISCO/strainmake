@@ -354,7 +354,7 @@ rule carveme_merge_models:
     input:
         "results/08_bins_postprocessing/carveme/{ani}/{assembler}"
     output:
-        "results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}/community.xml"
+        "results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}/community.xml.gz"
     conda:
         "../envs/carveme.yaml"
     log:
@@ -365,10 +365,13 @@ rule carveme_merge_models:
     wildcard_constraints:
         ani = "|".join(ANI_THRESHOLD)
     params:
-        launch_script = "workflow/scripts/carveme_models_building.py"
+        launch_script = "workflow/scripts/carveme_models_building.py",
+        out_dir = "results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}"
     shell:
         """
-        python3 {params.launch_script} merge -i {input} -o {output} -v > {log.stdout} 2> {log.stderr} \
+        mkdir -p {params.out_dir} \
         && \
-        pigz {input}/*.xml
+        python3 {params.launch_script} merge -i {input} -o {params.out_dir} -v > {log.stdout} 2> {log.stderr} \
+        && \
+        pigz {input}/*.xml {params.out_dir}/community.xml \
         """
