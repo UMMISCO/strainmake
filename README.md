@@ -1,3 +1,5 @@
+An example of use is available on the [wiki](https://github.com/baptwr/metageno-pipeline/wiki/An-example-of-using-the-pipeline).
+
 Ongoing implementation of several metagenomic tools into a single pipeline.
 
 # Roadmap
