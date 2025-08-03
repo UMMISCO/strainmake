@@ -142,7 +142,12 @@ rule reads_mapping_on_reference_hybrid:
     params:
         mapping_sr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.SR.bam",
         mapping_lr = "results/10_strain_profiling/minimap2/{ani}/{assembler_hybrid}/{sample}.LR.bam",
-        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb"
+        method = (
+            "map-ont" if config.get('lr_technology', '') == "nanopore"
+            else "map-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
+            else "map-pb" if config.get('lr_technology', '') == "pacbio"
+            else ""
+        ),
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
@@ -176,7 +181,12 @@ rule reads_LR_mapping_on_reference:
         sample="|".join(SAMPLES),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     params:
-        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb"
+        method = (
+            "map-ont" if config.get('lr_technology', '') == "nanopore"
+            else "map-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
+            else "map-pb" if config.get('lr_technology', '') == "pacbio"
+            else ""
+        ),
     threads: config['strains_profiling']['minimap2']['threads']
     shell:
         """
@@ -380,7 +390,7 @@ rule floria_profiling:
         sample = "|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
-    threads: config['strains_profiling']['floria']['threads']
+    threads: config['strains_profiling'].get('floria', {}).get('threads', 0)
     shell:
         """
         floria -b {input.bam} -v  {input.vcf} -r {input.refs} \

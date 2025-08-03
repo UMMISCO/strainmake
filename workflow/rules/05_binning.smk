@@ -79,7 +79,12 @@ rule reads_mapping_hybrid_sr_part:
         "benchmarks/05_binning/minimap2/SR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb",
+        method = (
+            "map-ont" if config.get('lr_technology', '') == "nanopore"
+            else "map-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
+            else "map-pb" if config.get('lr_technology', '') == "pacbio"
+            else ""
+        ),
         mapping_sr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.SR.sam",
         mapping_lr = "results/05_binning/minimap2/{assembler_hybrid}/{sample}.LR.sam"
     wildcard_constraints:
@@ -107,7 +112,12 @@ rule reads_mapping_hybrid_lr_part:
         "benchmarks/05_binning/minimap2/LR/{assembler_hybrid}/{sample}.mapping.benchmark.txt"
     params:
         index_basename = "{sample}",
-        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb",
+        method = (
+            "map-ont" if config.get('lr_technology', '') == "nanopore"
+            else "map-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
+            else "map-pb" if config.get('lr_technology', '') == "pacbio"
+            else ""
+        ),
     wildcard_constraints:
         sample = "|".join(SAMPLES)
     threads: config['binning']['minimap2']['threads']
@@ -286,7 +296,7 @@ rule semibin2_binning:
         "benchmarks/05_binning/semibin2/{assembler_sr_hybrid}/{sample}.binning.benchmark.txt"
     params:
         environment = config['binning'].get('semibin2', {}).get('environment', 0)
-    threads: config['binning']['semibin2']['threads']
+    threads: config['binning'].get('semibin2', {}).get('threads', 0)
     shell:
         """
         SemiBin2 single_easy_bin \
@@ -367,7 +377,12 @@ rule reads_mapping_LR:
     benchmark:
         "benchmarks/05_binning/minimap2/LR/{assembler_lr}/{sample_lr}.mapping.benchmark.txt"
     params:
-        method = "map-ont" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "map-pb"
+        method = (
+            "map-ont" if config.get('lr_technology', '') == "nanopore"
+            else "map-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
+            else "map-pb" if config.get('lr_technology', '') == "pacbio"
+            else ""
+        ),
     threads: config['binning']['minimap2']['threads']
     shell:
         """
@@ -479,7 +494,7 @@ rule semibin2_binning_LR:
     benchmark:
         "benchmarks/05_binning/semibin2/{assembler_lr}/{sample_lr}.binning.benchmark.txt"
     params:
-        environment = config['binning']['semibin2']['environment']
+        environment = config['binning'].get('semibin2', {}).get('environment', '')
     threads: config['binning'].get('semibin2', {}).get('threads', 0)
     shell:
         """

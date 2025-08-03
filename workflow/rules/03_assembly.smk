@@ -229,7 +229,12 @@ rule metaflye_assembly:
         "benchmarks/03_assembly/metaflye/{sample}.benchmark.txt"
     params:
         out_dir = "results/03_assembly/metaflye/{sample}",
-        method_flag = "--nano-hq" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "--pacbio-hifi",
+        method_flag = (
+            "--nano-hq" if config.get('lr_technology', '') == "nanopore"
+            else "--pacbio-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
+            else "--pacbio-raw" if config.get('lr_technology', '') == "pacbio-raw"
+            else ""
+        ),
         min_contig_len = config['assembly'].get('metaflye', {}).get('min_contig_len', 0),
         intermediate_assembly = "{sample}_metaflye_tmp_assembly.fa"
     threads: config['assembly'].get('metaflye', {}).get('threads', 0)

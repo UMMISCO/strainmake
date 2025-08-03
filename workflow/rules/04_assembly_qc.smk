@@ -85,7 +85,7 @@ rule quast_qc_long_read:
     params:
         out_dir = "results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}",
         ref_genomes = REFERENCE_GENOMES if REFERENCE_GENOMES != "none" else "",
-        method = "--nanopore" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "--pacbio"
+        method = "--nanopore" if config['lr_technology'] == "nanopore" else "--pacbio"
     threads: config['quast']['threads']
     shell:
         """
