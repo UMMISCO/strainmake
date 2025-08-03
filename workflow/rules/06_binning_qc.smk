@@ -74,7 +74,7 @@ rule checkm2_assessment:
         echo {input.bins} \
         && \
         checkm2 predict --input {input.bins}/bins --threads {threads} \
-            -x .gz \
+            -x .fa.gz \
             --database_path {input.diamond_database} \
             --output-directory {output.out_dir} > {log.stdout} 2> {log.stderr}
         """
@@ -102,7 +102,7 @@ rule checkm2_assessment_LR:
         echo {input.bins} \
         && \
         checkm2 predict --input {input.bins}/bins --threads {threads} \
-            -x .gz \
+            -x .fa.gz \
             --database_path {input.diamond_database} \
             --output-directory {output.out_dir} > {log.stdout} 2> {log.stderr}
         """
