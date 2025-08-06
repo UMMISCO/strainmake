@@ -232,7 +232,7 @@ rule metaflye_assembly:
         method_flag = (
             "--nano-hq" if config.get('lr_technology', '') == "nanopore"
             else "--pacbio-hifi" if config.get('lr_technology', '') == "pacbio-hifi"
-            else "--pacbio-raw" if config.get('lr_technology', '') == "pacbio-raw"
+            else "--pacbio-raw" if config.get('lr_technology', '') == "pacbio"
             else ""
         ),
         min_contig_len = config['assembly'].get('metaflye', {}).get('min_contig_len', 0),

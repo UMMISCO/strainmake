@@ -211,7 +211,7 @@ rule sam_to_bam_strains_profiling:
         sample = "|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
-    threads: config['binning']['samtools']['threads']
+    threads: config['binning'].get('samtools', {}).get('threads', 0)
     shell:
         """
         samtools view --threads {threads} -o {output.bam} {input.sam} \

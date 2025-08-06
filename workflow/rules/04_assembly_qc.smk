@@ -26,7 +26,7 @@ for sample in SAMPLES_LR:
         SAMPLES.append(sample)
 
 # mananing genomes of reference (if any)
-reference_genomes_dir = config['quast']['reference_genomes_dir']
+reference_genomes_dir = config['quast'].get('reference_genomes_dir', None)
 if reference_genomes_dir is not None:
     reference_genomes_extension = config['quast']['reference_genomes_extension']
     REFERENCE_GENOMES = ",".join(
