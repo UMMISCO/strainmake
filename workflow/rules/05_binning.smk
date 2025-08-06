@@ -174,7 +174,7 @@ rule sam_to_bam:
         sample="|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     threads:
-        config['binning']['samtools']['threads']
+        config['binning'].get('samtools', {}).get('threads', 0)
     shell:
         """
         samtools view --threads {threads} \
@@ -200,7 +200,7 @@ rule bam_sorting:
         sample="|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER)
     threads:
-        config['binning']['samtools']['threads']
+        config['binning'].get('samtools', {}).get('threads', 0)
     shell:
         """
         samtools sort -T /tmp -@ {threads} \
