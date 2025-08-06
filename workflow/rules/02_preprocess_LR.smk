@@ -9,7 +9,7 @@ rule fastp_long_read:
         html_report = "results/02_preprocess/fastp_long_read/{sample_lr}_report.html",
         json_report = "results/02_preprocess/fastp_long_read/{sample_lr}_report.json"
     conda: 
-        "../envs/fastp.yaml"
+        "../envs/fastplong.yaml"
     log:
         stdout = "logs/02_preprocess/fastp_long_read/{sample_lr}.stdout",
         stderr = "logs/02_preprocess/fastp_long_read/{sample_lr}.stderr"
@@ -21,7 +21,7 @@ rule fastp_long_read:
         min_read_length = config['fastp_long_read']['minimal_read_length']
     shell:
         """
-        fastp -i {input} -o {output.r1} \
+        fastplong -i {input} -o {output.r1} \
             --length_required {params.min_read_length} \
             --qualified_quality_phred {params.min_phred} \
             --compression {params.compression_level} \
