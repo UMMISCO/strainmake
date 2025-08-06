@@ -15,7 +15,8 @@ rule fastp:
     params:
         compression_level = config['fastp']['compression'],
         min_phred = config['fastp']['qualified_quality_phred'],
-        min_read_length = config['fastp']['minimal_read_length']
+        min_read_length = config['fastp']['minimal_read_length'],
+        other_params = config['fastp']['other_params']
     shell:
         """
         fastp -i {input[0]} -I {input[1]} -o {output.r1} -O {output.r2} \
@@ -25,6 +26,7 @@ rule fastp:
             --compression {params.compression_level} \
             --json {output.json_report} \
             --html {output.html_report} \
+            {params.other_params} \
             > {log.stdout} 2> {log.stderr}
         """
 

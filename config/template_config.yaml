@@ -9,12 +9,14 @@ fastp:
   compression: 2 # --compression command of fastp
   minimal_read_length: 50 # --length_required command of fastp
   qualified_quality_phred: 15 # quality value (phred) that a base is qualified
+  other_params: "" # other parameters to pass to fastp (e.g. "--nsplit 100")
 
 # the same, but for long reads
 fastp_long_read:
   compression: 2 # --compression command of fastp
   minimal_read_length: 1000 # --length_required command of fastp
   qualified_quality_phred: 12 # quality value (phred) that a base is qualified
+  other_params: "" # other parameters to pass to fastplong (e.g. "--n_base_limit 100")
 
 bowtie2:
   index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml

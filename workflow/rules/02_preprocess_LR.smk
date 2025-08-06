@@ -18,7 +18,8 @@ rule fastp_long_read:
     params:
         compression_level = config['fastp_long_read']['compression'],
         min_phred = config['fastp_long_read']['qualified_quality_phred'],
-        min_read_length = config['fastp_long_read']['minimal_read_length']
+        min_read_length = config['fastp_long_read']['minimal_read_length'],
+        other_params = config['fastp_long_read']['other_params']
     shell:
         """
         fastplong -i {input} -o {output.r1} \
@@ -27,5 +28,6 @@ rule fastp_long_read:
             --compression {params.compression_level} \
             --json {output.json_report} \
             --html {output.html_report} \
+            {params.other_params} \
             > {log.stdout} 2> {log.stderr}
         """
