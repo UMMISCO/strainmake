@@ -48,7 +48,11 @@ validate_assemblers(samples_table_df,
                     ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER)
 
 SHORT_READ_BINNER = config['binning']['binner']
+if SHORT_READ_BINNER is None:
+    SHORT_READ_BINNER = []
 LONG_READ_BINNER = config['binning']['long_read_binner']
+if LONG_READ_BINNER is None:
+    LONG_READ_BINNER = []
 
 # for dereplication, MAG profiling...
 ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
@@ -100,7 +104,7 @@ rule all:
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             expand("results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.processed.tsv",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
-            expand("results/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model/community.xml",
+            expand("results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}/community.xml.gz",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = ANI_THRESHOLD),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
