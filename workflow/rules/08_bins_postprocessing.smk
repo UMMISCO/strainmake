@@ -375,3 +375,68 @@ rule carveme_merge_models:
         && \
         pigz {input}/*.xml {params.out_dir}/community.xml \
         """
+
+# annotating bacterial MAGs using Bakta
+# here, we generate the commands to run Bakta (one command per MAG) and we run them in parallel
+rule bakta_annotation:
+    input:
+        dereplicated_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
+        # needing GTDB-Tk annotation to know which MAGs are bacterial
+        gtdb_tk_annotation = "results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}"
+    output:
+        directory("results/08_bins_postprocessing/bakta/{ani}/{assembler}/annotation")
+    conda:
+        "../envs/bakta.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/bakta/{ani}/{assembler}.stdout",
+        stderr = "logs/08_bins_postprocessing/bakta/{ani}/{assembler}.stderr"
+    params:
+        bakta_threads_by_process = config['bins_postprocessing']['bakta']['threads'],
+        bakta_gnu_parallel = config['bins_postprocessing']['bakta']['parallel_jobs'],
+        gtdb_tk_annotation_bacterial = f"{input.gtdb_tk_annotation}/gtdbtk.bac120.summary.tsv",
+    benchmark:
+        "benchmarks/08_bins_postprocessing/bakta/{ani}/{assembler}.benchmark.txt"
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+    threads: config['bins_postprocessing']['bakta']['parallel_jobs'] * config['bins_postprocessing']['bakta']['threads'] # for sizing well the number of threads, we need to account for both the number of parallel jobs and the number of threads per job
+    shell:
+        """
+        python3 workflow/scripts/generate_bakta_commands.py bakta_annot \
+            --gtdb_tk {params.gtdb_tk_annotation_bacterial} \
+            --threads {params.bakta_threads_by_process} --extension ".fa" \
+            --genomes_dir {input.dereplicated_bins} \
+            --output_commands {wildcards.ani}_{wildcards.assembler}_bakta_annotation.txt \
+            --output_dir {output}  \
+        > {log.stdout} 2> {log.stderr} \
+        && \
+        cat {wildcards.ani}_{wildcards.assembler}_bakta_annotation.txt | parallel --jobs {params.bakta_gnu_parallel}
+        """
+
+# producing genome plots from Bakta annotations
+# https://github.com/oschwengers/bakta?tab=readme-ov-file#genome-plots
+rule bakta_plot:
+    input:
+        "results/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots"
+    output:
+        directory("results/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots_processed")
+    conda:
+        "../envs/bakta.yaml"
+    log:
+        stdout = "logs/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots.stdout",
+        stderr = "logs/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots.stderr"
+    benchmark:
+        "benchmarks/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots.benchmark.txt"
+    wildcard_constraints:
+        ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
+    threads: config['bins_postprocessing']['bakta']['parallel_jobs']
+    shell:
+        """ 
+        python3 workflow/scripts/generate_bakta_commands.py bakta_plot \
+            --gtdb_tk {input} \
+            --bakta_annot_dir {input} \
+            --output_dir {output} \
+            --output_commands {wildcards.ani}_{wildcards.assembler}_bakta_plot.txt \
+        > {log.stdout} 2> {log.stderr} \
+        && \
+        cat {wildcards.ani}_{wildcards.assembler}_bakta_plot.txt | parallel --jobs {threads}
+        """

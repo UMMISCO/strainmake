@@ -160,6 +160,9 @@ bins_postprocessing:
       threads: 5
   carveme:
     threads: 5
+  bakta:
+    threads: 10
+    parallel_jobs: 2 # number of Bakta processes to run in parallel
 
 ################################################################################
 #                             Taxonomic profiling                              #

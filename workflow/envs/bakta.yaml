@@ -1,0 +1,7 @@
+name: bakta
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bakta=1.11.3
+  - parallel
