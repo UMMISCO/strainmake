@@ -60,8 +60,6 @@ class TestGenerateBaktaCommands(unittest.TestCase):
         for cmd in expected_commands:
             self.assertIn(cmd, bakta_commands)
 
-        print(bakta_commands)
-
 
 if __name__ == "__main__":
     unittest.main()
