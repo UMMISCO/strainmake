@@ -7,7 +7,7 @@ import os
 import pandas as pd
 import shlex
 
-def generate_bakta_commands_annot(gtdb_summary_path: str, genomes_dir: str, out_dir: str, extension: str = ".fa", threads: int = 1) -> list:
+def generate_bakta_commands_annot(gtdb_summary_path: str, genomes_dir: str, out_dir: str, extension: str = ".fa", threads: int = 1, bakta_database: str = "") -> list:
     """ 
     Reads the GTDB-Tk summary file and generates Bakta commands for each MAG.
     """
@@ -25,8 +25,6 @@ def generate_bakta_commands_annot(gtdb_summary_path: str, genomes_dir: str, out_
 
         # constructing the output directory for the Bakta annotation
         out_dir_genome = os.path.join(out_dir, mag_name)
-        if not os.path.exists(out_dir_genome):
-            os.makedirs(out_dir_genome)
 
         # if there is an assigned genus in the annotation we use it
         genus = None
@@ -44,7 +42,12 @@ def generate_bakta_commands_annot(gtdb_summary_path: str, genomes_dir: str, out_
         for taxon in taxonomy:
             if taxon.startswith("s__") and len(taxon) > 3:
                 # using shlex.quote to safely escape the species name for shell commands
-                species = shlex.quote(taxon[3:])
+                species_full = taxon[3:]
+                species_parts = species_full.split()
+                if species_parts and genus and species_parts[0] == genus:
+                    species = shlex.quote(" ".join(species_parts[1:]))
+                else:
+                    species = shlex.quote(species_full)
                 species_arg = f"--species {species}"
                 break
             # if there is no species, it should be set to empty
@@ -52,7 +55,7 @@ def generate_bakta_commands_annot(gtdb_summary_path: str, genomes_dir: str, out_
                 species_arg = ""
 
         # construct the command, in case there is no genus or species, nothing is added since it would be empty
-        command = f"bakta {genus_arg} {species_arg} --output {out_dir_genome} --prefix {mag_name} --threads {threads} --verbose {path_to_genome}"
+        command = f"bakta {genus_arg} {species_arg} --skip-plot --output {out_dir_genome} --prefix {mag_name} --threads {threads} --verbose --db {bakta_database} {path_to_genome}"
         bakta_commands.append(command)
 
 
@@ -71,15 +74,13 @@ def generate_bakta_commands_plot(gtdb_summary_path: str, bakta_annot_dir: str, o
 
         # constructing the output directory for the Bakta annotation
         out_dir_genome = os.path.join(out_dir, mag_name)
-        if not os.path.exists(out_dir_genome):
-            os.makedirs(out_dir_genome)
     
         # we should have the following Bakta annotation output (JSON)
         results_json = os.path.join(bakta_annot_dir, mag_name, f"{mag_name}.json")
 
         if os.path.exists(results_json):
             # constructing the command for plotting
-            command = f"bakta_plot --output {out_dir_genome} --verbose {results_json}"
+            command = f"bakta_plot --output {out_dir_genome} --type cog --verbose {results_json}"
             bakta_plot_commands.append(command)
         else:
             raise FileNotFoundError(f"Bakta annotation results for {mag_name} not found at {results_json}")
@@ -99,6 +100,7 @@ def main():
     bakta_parser.add_argument("--genomes_dir", required=True, help="Directory containing genome files")
     bakta_parser.add_argument("--output_commands", required=True, help="Output file to write Bakta commands")
     bakta_parser.add_argument("--extension", required=True, help="Genome file extension (e.g., .fa)")
+    bakta_parser.add_argument("--bakta_database", required=True, help="Path to the Bakta database directory")
     bakta_parser.add_argument("--threads", type=int, default=1, help="Number of threads for Bakta (default: 1)")
     bakta_parser.add_argument("--output_dir", default=".", help="Output directory for Bakta annotations (default: current directory)")
 
@@ -117,7 +119,8 @@ def main():
             genomes_dir=args.genomes_dir,
             out_dir=args.output_dir,
             extension=args.extension,
-            threads=args.threads
+            threads=args.threads,
+            bakta_database=args.bakta_database
         )
 
         with open(args.output_commands, "w") as f:
