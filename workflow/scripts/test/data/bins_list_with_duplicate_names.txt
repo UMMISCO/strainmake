@@ -1,0 +1,4 @@
+workflow/scripts/test/data/bins_for_renaming/a.fa.gz
+workflow/scripts/test/data/bins_for_renaming/bin_2.fa
+workflow/scripts/test/data/bins/bin_2.fa
+workflow/scripts/test/data/bins/bin_34.fa

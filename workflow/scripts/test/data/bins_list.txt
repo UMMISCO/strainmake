@@ -1,0 +1,2 @@
+workflow/scripts/test/data/bins/bin_2.fa
+workflow/scripts/test/data/bins/bin_34.fa
