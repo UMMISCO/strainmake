@@ -40,5 +40,6 @@ class TestGenesPrediction(unittest.TestCase):
         # Clean up the output file after the test
         os.remove(OUTPUT_GENOME)
 
+
 if __name__ == "__main__":
     unittest.main()

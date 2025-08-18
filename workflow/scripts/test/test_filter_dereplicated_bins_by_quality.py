@@ -9,6 +9,7 @@ CHECKM2_REPORT = "workflow/scripts/test/data/quality_report.tsv"
 BINS_DIRECTORY = "workflow/scripts/test/data/bins"
 OUTPUT_DIR = "workflow/scripts/test/data/filtered_bins"
 
+
 class TestFilterDereplicatedBinsByQuality(unittest.TestCase):
     def test_filter_bins(self):
 
@@ -19,13 +20,26 @@ class TestFilterDereplicatedBinsByQuality(unittest.TestCase):
         max_contamination = 10.0
 
         # calling the function to test
-        fdbq.filter_bins(CHECKM2_REPORT, BINS_DIRECTORY, 
-                         min_completeness, max_contamination, OUTPUT_DIR)
+        fdbq.filter_bins(
+            CHECKM2_REPORT,
+            BINS_DIRECTORY,
+            min_completeness,
+            max_contamination,
+            OUTPUT_DIR,
+        )
 
         # asserting the expected outcome: only bin_2.fa and bin_34.fa should be present in OUTPUT_DIR
         expected_files = {"bin_2.fa", "bin_34.fa"}
-        bin_files = {f for f in os.listdir(OUTPUT_DIR) if os.path.isfile(os.path.join(OUTPUT_DIR, f))}
-        self.assertSetEqual(bin_files, expected_files, f"Expected only {expected_files} in the output directory")
+        bin_files = {
+            f
+            for f in os.listdir(OUTPUT_DIR)
+            if os.path.isfile(os.path.join(OUTPUT_DIR, f))
+        }
+        self.assertSetEqual(
+            bin_files,
+            expected_files,
+            f"Expected only {expected_files} in the output directory",
+        )
 
         # Remove all files in OUTPUT_DIR
         for f in os.listdir(OUTPUT_DIR):
@@ -34,12 +48,10 @@ class TestFilterDereplicatedBinsByQuality(unittest.TestCase):
                 os.remove(file_path)
         os.rmdir(OUTPUT_DIR)
 
-
     def test_filter_bins_no_bins(self):
         """
         Test the case where no bins pass the filtration criteria.
         """
-
 
         os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -49,13 +61,26 @@ class TestFilterDereplicatedBinsByQuality(unittest.TestCase):
         max_contamination = 1.0
 
         # calling the function to test
-        fdbq.filter_bins(CHECKM2_REPORT, BINS_DIRECTORY,
-                         min_completeness, max_contamination, OUTPUT_DIR)
+        fdbq.filter_bins(
+            CHECKM2_REPORT,
+            BINS_DIRECTORY,
+            min_completeness,
+            max_contamination,
+            OUTPUT_DIR,
+        )
 
         # asserting the expected outcome: no bins should be present in OUTPUT_DIR
         expected_files = set()
-        bin_files = {f for f in os.listdir(OUTPUT_DIR) if os.path.isfile(os.path.join(OUTPUT_DIR, f))}
-        self.assertSetEqual(bin_files, expected_files, f"Expected only {expected_files} in the output directory")
+        bin_files = {
+            f
+            for f in os.listdir(OUTPUT_DIR)
+            if os.path.isfile(os.path.join(OUTPUT_DIR, f))
+        }
+        self.assertSetEqual(
+            bin_files,
+            expected_files,
+            f"Expected only {expected_files} in the output directory",
+        )
 
         # Remove all files in OUTPUT_DIR
         for f in os.listdir(OUTPUT_DIR):
