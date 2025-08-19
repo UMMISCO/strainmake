@@ -30,7 +30,7 @@ def list_mag(dir: str, ext: str, verbose: bool) -> list:
                     logging.info(f"Found MAG file: {mag_path}")
     return mag_list
 
-def carveme_carve(mag_list: list, out_dir: str, cpu: int, verbose: bool) -> None:
+def carveme_carve(mag_list: list, out_dir: str, cpu: int, verbose: bool, dryrun: bool = False) -> None:
     """ 
     Function to infer metabolic models using CarveMe on 
     the genomes (MAG) given in the `mag_list`
@@ -52,13 +52,16 @@ def carveme_carve(mag_list: list, out_dir: str, cpu: int, verbose: bool) -> None
         if verbose:
             logging.info(f"Running command: {command}")
 
-        os.system(command)
+        if dryrun:
+            print(command)
+        else:
+            os.system(command)
 
     # using ThreadPoolExecutor to parallelize the carving process
     with ThreadPoolExecutor(max_workers=cpu) as executor:
         executor.map(carve, mag_list)
 
-def carveme_merge_community(communities: str, out_dir: str, verbose: bool) -> None:
+def carveme_merge_community(communities: str, out_dir: str, verbose: bool, dryrun: bool = False) -> None:
     """ 
     Function to merge the individual metabolic models of the organisms that were inferred using `carve`
     """
@@ -68,7 +71,10 @@ def carveme_merge_community(communities: str, out_dir: str, verbose: bool) -> No
     if verbose:
         logging.info(f"Running command: {command}")
 
-    os.system(command)
+    if dryrun:
+        print(command)
+    else:
+        os.system(command)
 
 
 def main():

@@ -22,6 +22,8 @@ def identify_assembly_program(report_path: str):
         return 'metaflye'
     elif 'hybridspades' in report_path:
         return 'hybridspades'
+    elif 'hylight' in report_path:
+        return 'hylight'
     else:
         return None
     

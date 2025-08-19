@@ -1,6 +1,6 @@
 .snakemake/
 logs/
-results/
+/results/
 *.fastq.gz
 tmp/
 data/gtdb_tk
