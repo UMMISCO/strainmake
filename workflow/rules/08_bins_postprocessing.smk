@@ -345,8 +345,10 @@ rule carveme_models_building:
         config['bins_postprocessing']['carveme']['threads']
     shell:
         """
-       python3 {params.launch_script} carve --cpu {threads} -i {input} -o {output} -v > {log.stdout} 2> {log.stderr}
-       """
+        mkdir -p results/08_bins_postprocessing/carveme/{wildcards.ani}/{wildcards.assembler} \
+        && \
+        python3 {params.launch_script} carve --cpu {threads} -i {input} -o {output} -v > {log.stdout} 2> {log.stderr}
+        """
 
 # merging organisms' metabolic models into a community model
 # we then compress all individual models
