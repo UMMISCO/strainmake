@@ -1,0 +1,4 @@
+path	filename	unambiguous_filename
+workflow/scripts/test/data/bins/bin_2.fa	bin_2.fa	bin_2.fa
+workflow/scripts/test/DUMMY_PATH/data/bin_2.fa	bin_2.fa	bin_2_1.fa
+workflow/scripts/test/data/bins/bin_34.fa	bin_34.fa	bin_34.fa

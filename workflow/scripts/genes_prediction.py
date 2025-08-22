@@ -10,13 +10,18 @@ import gzip
 import argparse
 
 
-def run_prodigal(input_file, output_file):
+def run_prodigal(input_file, output_file, dry_run=False):
     """
     Run Prodigal on an input genome (`input_file`) and write the prediction results 
     into `output_file
     """
     cmd = ['prodigal', '-i', input_file, '-d', output_file]
-    subprocess.run(cmd, check=True)
+
+    if dry_run:
+        print("Dry run: ", ' '.join(cmd))
+        return
+    else:
+        subprocess.run(cmd, check=True)
 
 def process_file(file_path, output_dir):
     """

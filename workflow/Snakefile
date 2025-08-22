@@ -106,6 +106,8 @@ rule all:
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             expand("results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}/community.xml.gz",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = ANI_THRESHOLD),
+            expand("results/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots_processed",
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
                    sample=SAMPLES),
