@@ -18,7 +18,7 @@ rule fastqc_before_preprocessing:
         out_dir = "results/01_qc/fastqc/{sample}"
     shell:
         """
-        mkdir {params.out_dir} \
+        mkdir -p {params.out_dir} \
         && \
         fastqc {input[0]} -o {params.out_dir} > {log.stdout} 2> {log.stderr} \
         && \
