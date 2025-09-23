@@ -14,7 +14,12 @@ RUN conda create -n ${CONDA_ENV_NAME} -c bioconda -c conda-forge -y snakemake=${
 RUN echo "source activate ${CONDA_ENV_NAME}" > ~/.bashrc
 
 # getting pipeline code
-RUN git clone ${PIPELINE_REPO} -b ${PIPELINE_COMMIT_SHA} /opt/strainmake
+RUN git clone ${PIPELINE_REPO} /opt/strainmake
+WORKDIR /opt/strainmake
+# checkout the desired commit
+RUN git checkout ${PIPELINE_COMMIT_SHA}
 # where the results, logs, benchmarks, will be stored
 # the user should mount a volume to /opt/strainmake when running the container in order to keep the data
 RUN mkdir -p /opt/strainmake/results /opt/strainmake/logs /opt/strainmake/benchmarks
+
+ENTRYPOINT ["/opt/conda/envs/snakemake8.24.1/bin/snakemake"]
