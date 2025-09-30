@@ -24,6 +24,7 @@ rule megahit_assembly:
     benchmark:
         "benchmarks/03_assembly/megahit/{sample}.benchmark.txt"
     params:
+        other_params = config['assembly'].get('megahit', {}).get('other_params', ''),
         out_dir = "results/03_assembly/megahit/{sample}",
         tmp_dir = "tmp/",
         tmp_output = "{sample}_tmp_megahit_output",
@@ -37,7 +38,9 @@ rule megahit_assembly:
             --min-contig-len {params.min_contig_len} \
             --num-cpu-threads {threads} \
             --tmp-dir {params.tmp_dir} \
-            --out-dir {params.tmp_output} > {log.stdout} 2> {log.stderr} \
+            --out-dir {params.tmp_output} \
+            {params.other_params} \
+            > {log.stdout} 2> {log.stderr} \
         && \
         mv {params.tmp_output}/* {params.out_dir} \
         && \
@@ -96,6 +99,7 @@ rule metaspades_assembly:
     benchmark:
         "benchmarks/03_assembly/metaspades/{sample}.benchmark.txt"
     params:
+        other_params = config['assembly'].get('metaspades', {}).get('other_params', ''),
         out_dir = "results/03_assembly/metaspades/{sample}",
         memory_limit = config['assembly'].get('metaspades', {}).get('memory_limit', 0),
         min_contig_len = config['assembly'].get('metaspades', {}).get('min_contig_len', 0),
@@ -108,6 +112,7 @@ rule metaspades_assembly:
             --threads {threads} \
             -o {params.out_dir} \
             -m {params.memory_limit} \
+            {params.other_params} \
             > {log.stdout} 2> {log.stderr} \
         && \
         mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
@@ -139,6 +144,7 @@ rule hybridspades_assembly:
     benchmark:
         "benchmarks/03_assembly/hybridspades/{sample}.benchmark.txt"
     params:
+        other_params = config['assembly'].get('hybridspades', {}).get('other_params', ''),
         out_dir = "results/03_assembly/hybridspades/{sample}",
         memory_limit = config['assembly'].get('hybridspades', {}).get('memory_limit', 0),
         method_flag = "--nanopore" if config['assembly'].get('metaflye', {}).get('method', '') == "nanopore" else "--pacbio",
@@ -153,6 +159,7 @@ rule hybridspades_assembly:
             --threads {threads} \
             -o {params.out_dir} \
             -m {params.memory_limit} \
+            {params.other_params} \
             > {log.stdout} 2> {log.stderr} \
         && \
         mv {params.out_dir}/scaffolds.fasta {params.out_dir}/assembly.fa \
@@ -228,6 +235,7 @@ rule metaflye_assembly:
     benchmark:
         "benchmarks/03_assembly/metaflye/{sample}.benchmark.txt"
     params:
+        other_params = config['assembly'].get('metaflye', {}).get('other_params', ''),
         out_dir = "results/03_assembly/metaflye/{sample}",
         method_flag = (
             "--nano-hq" if config.get('lr_technology', '') == "nanopore"
@@ -242,6 +250,7 @@ rule metaflye_assembly:
         """
         flye {params.method_flag} {input.long_read} --out-dir {params.out_dir} \
             --meta --threads {threads} \
+            {params.other_params} \
             > {log.stdout} 2> {log.stderr} \
         && \
         mv {params.out_dir}/assembly.fasta {params.out_dir}/assembly.fa \
