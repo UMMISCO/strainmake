@@ -3,7 +3,7 @@ FROM continuumio/miniconda3:25.3.1-1
 # metadata
 LABEL org.opencontainers.image.url="https://github.com/UMMISCO/strainmake"
 
-ARG PIPELINE_COMMIT_SHA="f533a52ed9b"
+ARG PIPELINE_COMMIT_SHA="20410722bc2"
 ARG PIPELINE_REPO="https://github.com/UMMISCO/strainmake.git"
 ARG SNAKEMAKE_VERSION="8.24.1"
 ARG CONDA_ENV_NAME="snakemake${SNAKEMAKE_VERSION}"
