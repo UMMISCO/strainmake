@@ -19,22 +19,26 @@ theme_set(theme_pubclean())
 completeness <- ggplot(report, aes(x=binning, y=Completeness, color=binning)) + 
                 geom_boxplot() + 
                 geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5) +
+                scale_color_brewer(palette = "Set1") +
                 labs(x = "Tool", y = "Predicted completeness") +
                 ylim(0, 100) +
                 facet_grid(. ~ assembly)
 contamination <- ggplot(report, aes(x=binning, y=Contamination, color=binning)) + 
                  geom_boxplot() + 
                  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5) +
+                 scale_color_brewer(palette = "Set1") +
                  labs(x = "Tool", y = "Predicted contamination") +
                  ylim(0, 100)  +
                  facet_grid(. ~ assembly)                
 n50 <- ggplot(report, aes(x=binning, y=Contig_N50, color=binning)) + 
        geom_boxplot() + 
        geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5) +
+       scale_color_brewer(palette = "Set1") +
        labs(x = "Tool", y = "N50") +
        facet_grid(. ~ assembly)
 nb_bins <- ggplot(report, aes(x = binning, fill = binning)) +
            geom_bar() + 
+           scale_fill_brewer(palette = "Set1") +
            labs(x = "Tool", y = "Number of bins") +
            facet_grid(. ~ assembly)
 
