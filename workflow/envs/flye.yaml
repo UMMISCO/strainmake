@@ -3,6 +3,6 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - flye=2.9.*
+  - flye=2.9.6
   - pigz=2.*
   - seqkit=2.8.*

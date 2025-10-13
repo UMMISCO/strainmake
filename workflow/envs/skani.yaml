@@ -3,4 +3,4 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  -  skani=0.2.*
+  -  skani=0.2.2
