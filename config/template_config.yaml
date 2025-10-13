@@ -19,7 +19,7 @@ fastp_long_read:
   other_params: "" # other parameters to pass to fastplong (e.g. "--n_base_limit 100")
 
 bowtie2:
-  index_name: GRCh38_noalt_as # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
+  index_name: chm13v2.0 # for human. See others at https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml
   threads: 4
 
 # samples sequencing depth that will be used for hybrid assembly, binning, etc. (only)
