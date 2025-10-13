@@ -13,4 +13,4 @@ dependencies:
   - pip
   - pip:
     - mkl==2024.0.0 # https://github.com/pytorch/pytorch/issues/123097
-    - vamb==4.1.*
+    - vamb==4.1.3

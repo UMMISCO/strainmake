@@ -3,4 +3,4 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - metaphlan=4.*
+  - metaphlan=4.2.2

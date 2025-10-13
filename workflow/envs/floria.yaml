@@ -3,4 +3,4 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - floria=0.0.*
+  - floria=0.0.2

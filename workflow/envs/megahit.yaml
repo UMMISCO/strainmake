@@ -3,5 +3,5 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - megahit=1.2.*
+  - megahit=1.2.9
   - pigz=2.*

@@ -3,4 +3,4 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - semibin=2.1.*
+  - semibin=2.1.0

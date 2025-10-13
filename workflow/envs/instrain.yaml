@@ -3,5 +3,5 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - instrain=1.9.*
+  - instrain=1.9.1
   - samtools=1.19.*
