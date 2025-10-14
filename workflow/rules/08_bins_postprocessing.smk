@@ -1,3 +1,5 @@
+import yaml
+
 SAMPLES_TABLE = config['samples']
 SAMPLES = read_table(SAMPLES_TABLE)
 SAMPLES_LR = read_table_long_reads(SAMPLES_TABLE)
@@ -41,6 +43,11 @@ if LONG_READ_BINNER == None:
 # we would have refined bins with Binette only if we used several binning methods
 refined = True if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else False
 
+# path to GTDB reference data
+with open("workflow/envs/gtdb_tk.yaml") as f:
+    gtdbtk_yaml = yaml.safe_load(f)
+GTDBTK_DATA_PATH = gtdbtk_yaml['variables']['GTDBTK_DATA_PATH']
+
 wildcard_constraints:
     assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
     assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none",
@@ -50,7 +57,7 @@ rule gtdb_tk_taxonomic_annotation:
     input:
         # folder with dereplicated and filtered bins (= MAG)
         refined_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
-        ref_data = "data/gtdb_tk/release220"
+        ref_data = GTDBTK_DATA_PATH
     output: directory("results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}")
     conda:
         "../envs/gtdb_tk.yaml"
