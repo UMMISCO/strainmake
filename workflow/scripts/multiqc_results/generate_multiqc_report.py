@@ -1,4 +1,4 @@
-# a CLI that will find all supported results by MultiQC, renaming them if needed using symlinks, generating one or several MultiQC reports in case where several assembler were used
+# a CLI that will find all supported results by MultiQC, renaming them if needed by copying files, generating one or several MultiQC reports in case where several assemblers were used
 
 import os
 import typer
@@ -79,7 +79,7 @@ class HandleResults:
     def prepare_results(self):
         """
         Prepare the results for MultiQC.
-        This method creates symlinks, with different name if needed, to the results files in a common directory structure.
+        This method copies, with different name if needed, to the results files in a common directory structure.
         """
 
         # creating a directory for MultiQC results
@@ -94,9 +94,9 @@ class HandleResults:
                 os.makedirs(bowtie2_dir, exist_ok=True)
 
                 for sample_name, file_path in self.bowtie2_results.items():
-                    symlink_path = os.path.join(bowtie2_dir, f"{sample_name}.txt")
-                    if not os.path.exists(symlink_path):
-                        os.symlink(file_path, symlink_path)
+                    dest_path = os.path.join(bowtie2_dir, f"{sample_name}.txt")
+                    if not os.path.exists(dest_path):
+                        shutil.copy2(file_path, dest_path)
 
         # FastQC results
         if self.fastqc_results:
@@ -105,9 +105,9 @@ class HandleResults:
                 os.makedirs(fastqc_dir, exist_ok=True)
 
                 for sample_name, file_path in self.fastqc_results.items():
-                    symlink_path = os.path.join(fastqc_dir, f"{sample_name}_fastqc.zip")
-                    if not os.path.exists(symlink_path):
-                        os.symlink(file_path, symlink_path)
+                    dest_path = os.path.join(fastqc_dir, f"{sample_name}_fastqc.zip")
+                    if not os.path.exists(dest_path):
+                        shutil.copy2(file_path, dest_path)
 
         # fastp results
         if self.fastp_results:
@@ -116,9 +116,9 @@ class HandleResults:
                 os.makedirs(fastp_dir, exist_ok=True)
 
                 for sample_name, file_path in self.fastp_results.items():
-                    symlink_path = os.path.join(fastp_dir, f"{sample_name}.json")
-                    if not os.path.exists(symlink_path):
-                        os.symlink(file_path, symlink_path)
+                    dest_path = os.path.join(fastp_dir, f"{sample_name}.json")
+                    if not os.path.exists(dest_path):
+                        shutil.copy2(file_path, dest_path)
 
         # QUAST results
         if self.quast_results:
@@ -153,9 +153,9 @@ class HandleResults:
                 os.makedirs(checkm2_dir, exist_ok=True)
 
                 for assembler, file_path in self.checkm2_results.items():
-                    symlink_path = os.path.join(checkm2_dir, f"{assembler}.tsv")
-                    if not os.path.exists(symlink_path):
-                        os.symlink(file_path, symlink_path)
+                    dest_path = os.path.join(checkm2_dir, f"{assembler}.tsv")
+                    if not os.path.exists(dest_path):
+                        shutil.copy2(file_path, dest_path)
 
         # GTDB-Tk results
         if self.gtdbtk_results:
@@ -167,15 +167,15 @@ class HandleResults:
                     if isinstance(reports, dict):
                         for key, file_path in reports.items():
                             if key == "bact":
-                                symlink_path = os.path.join(
+                                dest_path = os.path.join(
                                     gtdbtk_dir, f"{assembler}_bact.tsv"
                                 )
                             elif key == "ar":
-                                symlink_path = os.path.join(
+                                dest_path = os.path.join(
                                     gtdbtk_dir, f"{assembler}_ar.tsv"
                                 )
-                            if not os.path.exists(symlink_path):
-                                os.symlink(file_path, symlink_path)
+                            if not os.path.exists(dest_path):
+                                shutil.copy2(file_path, dest_path)
 
         # Bakta results
         if self.bakta_results:
@@ -188,10 +188,9 @@ class HandleResults:
                     os.makedirs(assembler_dir, exist_ok=True)
 
                     for mag_name, file_path in mags.items():
-                        symlink_path = os.path.join(assembler_dir, f"{mag_name}.txt")
-                        if not os.path.exists(symlink_path):
-                            os.symlink(file_path, symlink_path)
-
+                        dest_path = os.path.join(assembler_dir, f"{mag_name}.txt")
+                        if not os.path.exists(dest_path):
+                            shutil.copy2(file_path, dest_path)
     def bowtie2(self):
         """
         Bowtie2 mapping stats on reference during the decontamination step
