@@ -1,3 +1,6 @@
+![Docker Image Version](https://img.shields.io/docker/v/bapt931894/strainmake)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/ummisco/strainmake)
+
 Ongoing implementation of several metagenomic tools into a single pipeline.
 
 # Set up
@@ -277,4 +280,5 @@ Use the following CLI: [`generate_multiqc_report.py`](workflow/scripts/multiqc_r
 │    --show-completion                      Show completion for the current shell, to copy it or customize the installation.                                                                   │
 │    --help                                 Show this message and exit.                                                                                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
 ```
