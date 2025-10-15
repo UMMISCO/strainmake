@@ -4,3 +4,4 @@ channels:
   - conda-forge
 dependencies:
   - drep=3.5.0
+  - numpy<2
