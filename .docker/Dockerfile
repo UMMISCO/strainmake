@@ -10,6 +10,8 @@ ARG CONDA_ENV_NAME="snakemake${SNAKEMAKE_VERSION}"
 
 # installing Snakemake
 RUN conda create -n ${CONDA_ENV_NAME} -c bioconda -c conda-forge -y snakemake=${SNAKEMAKE_VERSION}
+# installing MultiQC for report building
+RUN conda install -n ${CONDA_ENV_NAME} -c bioconda -c conda-forge -y multiqc=1.31 typer
 # making Snakemake conda env the default one
 RUN echo "source activate ${CONDA_ENV_NAME}" > ~/.bashrc
 
