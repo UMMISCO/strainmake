@@ -2,8 +2,8 @@
 # build and push strainmake Docker image
 
 IMAGE=strainmake
-TAG=$(date +%y%m%d.%H%M%S)
+VERSION=v0.1.0-pre1
 
-docker build -t bapt931894/${IMAGE}:latest -t bapt931894/${IMAGE}:${TAG} .
+docker build -t bapt931894/${IMAGE}:latest -t bapt931894/${IMAGE}:${VERSION} .
 docker push bapt931894/${IMAGE}:latest
-docker push bapt931894/${IMAGE}:${TAG}
+docker push bapt931894/${IMAGE}:${VERSION}
