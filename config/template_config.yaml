@@ -164,6 +164,7 @@ bins_postprocessing:
       threads: 5
   carveme:
     threads: 5
+    solver: gurobi # or scip. If using gurobi, ensure you have a valid license file at the path specified in the conda environment
   bakta:
     threads: 10
     parallel_jobs: 2 # number of Bakta processes to run in parallel
