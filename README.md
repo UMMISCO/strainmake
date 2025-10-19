@@ -2,7 +2,7 @@
 ![Docker Image Version](https://img.shields.io/docker/v/bapt931894/strainmake?style=for-the-badge&label=docker%20image%20version)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/ummisco/strainmake?style=for-the-badge)
 
-Ongoing implementation of several metagenomic tools into a single pipeline.
+![](v0.1.0-pre.png)
 
 # Set up
 
