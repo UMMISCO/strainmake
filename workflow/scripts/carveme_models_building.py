@@ -30,7 +30,7 @@ def list_mag(dir: str, ext: str, verbose: bool) -> list:
                     logging.info(f"Found MAG file: {mag_path}")
     return mag_list
 
-def carveme_carve(mag_list: list, out_dir: str, cpu: int, verbose: bool, dryrun: bool = False) -> None:
+def carveme_carve(mag_list: list, out_dir: str, solver: str, cpu: int, verbose: bool, dryrun: bool = False) -> None:
     """ 
     Function to infer metabolic models using CarveMe on 
     the genomes (MAG) given in the `mag_list`
@@ -47,7 +47,7 @@ def carveme_carve(mag_list: list, out_dir: str, cpu: int, verbose: bool, dryrun:
             logging.info(f"Output will be saved to: {output_file}")
 
         # running the CarveMe command to infer the metabolic model
-        command = f"carve --solver gurobi --dna --output {output_file} {mag}"
+        command = f"carve --solver {solver} --dna --output {output_file} {mag}"
 
         if verbose:
             logging.info(f"Running command: {command}")
@@ -85,6 +85,7 @@ def main():
     parser_carve = subparsers.add_parser("carve", help="Infer metabolic models using CarveMe")
     parser_carve.add_argument("-i", "--input_dir", required=True, help="Input directory containing MAG files")
     parser_carve.add_argument("-o", "--output_dir", required=True, help="Output directory to save the models")
+    parser_carve.add_argument("-s", "--solver", choices=["gurobi", "scip"], default="gurobi", help="Solver to use (default: gurobi)")
     parser_carve.add_argument("-e", "--extension", default=".fa", help="Extension of MAG files (default: .fa)")
     parser_carve.add_argument("-c", "--cpu", type=int, default=1, help="Number of CPU cores to use (default: 1)")
     parser_carve.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -102,7 +103,7 @@ def main():
 
     if args.command == "carve":
         mag_list = list_mag(args.input_dir, args.extension, args.verbose)
-        carveme_carve(mag_list, args.output_dir, args.cpu, args.verbose)
+        carveme_carve(mag_list, args.output_dir, args.solver, args.cpu, args.verbose)
     elif args.command == "merge":
         carveme_merge_community(args.input_dir, args.output_dir, args.verbose)
 

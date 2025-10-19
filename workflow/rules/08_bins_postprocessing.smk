@@ -347,14 +347,15 @@ rule carveme_models_building:
     wildcard_constraints:
         ani = "|".join(ANI_THRESHOLD)
     params:
-        launch_script = "workflow/scripts/carveme_models_building.py"
+        launch_script = "workflow/scripts/carveme_models_building.py",
+        solver = config['bins_postprocessing']['carveme']['solver']
     threads:
         config['bins_postprocessing']['carveme']['threads']
     shell:
         """
         mkdir -p results/08_bins_postprocessing/carveme/{wildcards.ani}/{wildcards.assembler} \
         && \
-        python3 {params.launch_script} carve --cpu {threads} -i {input} -o {output} -v > {log.stdout} 2> {log.stderr}
+        python3 {params.launch_script} carve --cpu {threads} -i {input} -o {output} --solver {params.solver} -v > {log.stdout} 2> {log.stderr}
         """
 
 # merging organisms' metabolic models into a community model
