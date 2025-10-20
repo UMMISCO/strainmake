@@ -1,8 +1,13 @@
+<div align="center">
+
+# StrainMake
+
 ![GitHub Release](https://img.shields.io/github/v/release/ummisco/strainmake?include_prereleases&style=for-the-badge)
 ![Docker Image Version](https://img.shields.io/docker/v/bapt931894/strainmake?style=for-the-badge&label=docker%20image%20version)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/ummisco/strainmake?style=for-the-badge)
 
 ![](v0.1.0-pre.png)
+</div>
 
 # Set up
 
@@ -283,5 +288,6 @@ Use the following CLI: [`generate_multiqc_report.py`](workflow/scripts/multiqc_r
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ```
+
 
 
