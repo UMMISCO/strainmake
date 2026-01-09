@@ -4,3 +4,4 @@ channels:
   - conda-forge
 dependencies:
   - seqkit=2.8.2
+  - pigz=2.*
