@@ -1,0 +1,6 @@
+name: strainscan
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - strainscan=1.0.14

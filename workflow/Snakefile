@@ -115,6 +115,8 @@ rule all:
                    sample=SAMPLES),
             expand("results/09_taxonomic_profiling/meteor/{sample}/profiling_downsized_{downsize}",
                    sample=SAMPLES, downsize=METEOR_RAREFACTION_LEVELS),
+            expand("results/09_taxonomic_profiling/strainscan/{sample}/final_report.txt",
+                   sample=SAMPLES),
             # strains profiling
             #      -> inStrain
             expand("results/10_strain_profiling/inStrain/{ani}/{assembler}/compare",

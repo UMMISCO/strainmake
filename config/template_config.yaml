@@ -180,6 +180,8 @@ taxonomic_profiling:
     threads: 10
     downsize:
       - 10000000 # number of reads to downsize to (in millions) (can pass more values)
+  strainscan:
+    database_path: "" # see https://github.com/liaoherui/StrainScan?tab=readme-ov-file#pre-built-databases-download for prebuilt databases
 
 ################################################################################
 #                              Strains profiling                               #
