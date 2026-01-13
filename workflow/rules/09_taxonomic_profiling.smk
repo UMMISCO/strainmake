@@ -146,7 +146,6 @@ rule strainscan_profiling:
     benchmark:
         "benchmarks/09_taxonomic_profiling/strainscan/{sample}.profile.benchmark.txt"
     params:
-        database_path = lambda wildcards: config.get('taxonomic_profiling', {}).get('strainscan', {}).get('database_path', ''),
         output_dir = lambda wildcards: f"results/09_taxonomic_profiling/strainscan/{wildcards.sample}"
     wildcard_constraints:
         sample = "|".join(SAMPLES)
@@ -155,7 +154,7 @@ rule strainscan_profiling:
         strainscan \
             -i {input.r1} \
             -j {input.r2} \
-            -d {params.database_path} \
+            -d $REFERENCE \
             -o {params.output_dir} \
         > {log.stdout} 2> {log.stderr}
         """
