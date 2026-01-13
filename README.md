@@ -68,12 +68,12 @@ Human assembly for mapping:
 
 ## Asssembly
 
-| Tool         | First release                                                  | Conda available?                                | Link                                                          | Implemented? |
-| :----------- | :------------------------------------------------------------- | :---------------------------------------------- | :------------------------------------------------------------ | :----------- |
-| MEGAHIT      | [2015](https://doi.org/10.1093/bioinformatics/btv033)          | [Yes](https://anaconda.org/bioconda/megahit)    | https://github.com/voutcn/megahit                             | Yes          |
-| (Meta)SPAdes | [2017](https://doi.org/10.1101/gr.213959.116)                  | [Yes](https://anaconda.org/bioconda/spades)     | https://github.com/ablab/spades                               | Yes          |
-| (Meta)Flye   | [2020](https://doi.org/10.1038/s41592-020-00971-x)             | [Yes](https://anaconda.org/bioconda/flye)       | https://github.com/mikolmogorov/Flye                          | Yes          |
-| HyLight      | [2024](https://doi.org/10.1038/s41467-024-52907-0)             | [Yes](https://anaconda.org/bioconda/hylight)    | https://github.com/LuoGroup2023/HyLight                       | Yes          |
+| Tool         | First release                                         | Conda available?                             | Link                                    | Implemented? |
+| :----------- | :---------------------------------------------------- | :------------------------------------------- | :-------------------------------------- | :----------- |
+| MEGAHIT      | [2015](https://doi.org/10.1093/bioinformatics/btv033) | [Yes](https://anaconda.org/bioconda/megahit) | https://github.com/voutcn/megahit       | Yes          |
+| (Meta)SPAdes | [2017](https://doi.org/10.1101/gr.213959.116)         | [Yes](https://anaconda.org/bioconda/spades)  | https://github.com/ablab/spades         | Yes          |
+| (Meta)Flye   | [2020](https://doi.org/10.1038/s41592-020-00971-x)    | [Yes](https://anaconda.org/bioconda/flye)    | https://github.com/mikolmogorov/Flye    | Yes          |
+| HyLight      | [2024](https://doi.org/10.1038/s41467-024-52907-0)    | [Yes](https://anaconda.org/bioconda/hylight) | https://github.com/LuoGroup2023/HyLight | Yes          |
 
 ## Assembly quality assessment
 
@@ -142,10 +142,11 @@ Human assembly for mapping:
 
 ## Taxonomic profiling
 
-| Tool      | First release                                      | Conda available?                               | Link                                    | Implemented? |
-| :-------- | :------------------------------------------------- | :--------------------------------------------- | :-------------------------------------- | :----------- |
-| MetaPhlAn | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan) | https://github.com/biobakery/MetaPhlAn  | Yes          |
-| Meteor2   | 2024                                               | [Yes](https://anaconda.org/bioconda/meteor)    | https://github.com/metagenopolis/meteor | Yes          |
+| Tool       | First release                                      | Conda available?                                | Link                                    | Implemented? |
+| :--------- | :------------------------------------------------- | :---------------------------------------------- | :-------------------------------------- | :----------- |
+| MetaPhlAn  | [2023](https://doi.org/10.1038/s41587-023-01688-w) | [Yes](https://anaconda.org/bioconda/metaphlan)  | https://github.com/biobakery/MetaPhlAn  | Yes          |
+| Meteor2    | 2024                                               | [Yes](https://anaconda.org/bioconda/meteor)     | https://github.com/metagenopolis/meteor | Yes          |
+| StrainScan | [2023](https://doi.org/10.1186/s40168-023-01615-w) | [Yes](https://anaconda.org/bioconda/strainscan) | https://github.com/liaoherui/StrainScan | Yes          |
 
 ## Strains profiling
 

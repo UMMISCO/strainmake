@@ -1,0 +1,9 @@
+name: strainscan
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - strainscan=1.0.14
+variables:
+  REFERENCE: data/strainscan # should be the path to the StrainScan database for the species
+                             # see https://github.com/liaoherui/StrainScan?tab=readme-ov-file#pre-built-databases-download for prebuilt databases

@@ -132,3 +132,29 @@ rule meteor_profiling_downsized:
             -l {params.downsize_int} \
             > {log.stdout} 2> {log.stderr}
         """
+
+rule strainscan_profiling:
+    input: 
+        r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz", # on short reads only
+        r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz" # on short reads only
+    output: "results/09_taxonomic_profiling/strainscan/{sample}/final_report.txt"
+    conda:
+        "../envs/strainscan.yaml"
+    log:
+        stdout = "logs/09_taxonomic_profiling/strainscan/{sample}.profile.stdout",
+        stderr = "logs/09_taxonomic_profiling/strainscan/{sample}.profile.stderr"
+    benchmark:
+        "benchmarks/09_taxonomic_profiling/strainscan/{sample}.profile.benchmark.txt"
+    params:
+        output_dir = lambda wildcards: f"results/09_taxonomic_profiling/strainscan/{wildcards.sample}"
+    wildcard_constraints:
+        sample = "|".join(SAMPLES)
+    shell:
+        """
+        strainscan \
+            -i {input.r1} \
+            -j {input.r2} \
+            -d $REFERENCE \
+            -o {params.output_dir} \
+        > {log.stdout} 2> {log.stderr}
+        """
