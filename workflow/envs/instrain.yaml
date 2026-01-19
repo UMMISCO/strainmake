@@ -4,4 +4,4 @@ channels:
   - conda-forge
 dependencies:
   - instrain=1.9.1
-  - samtools=1.19.*
+  - samtools=1.23
