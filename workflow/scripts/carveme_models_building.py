@@ -30,7 +30,7 @@ def list_mag(dir: str, ext: str, verbose: bool) -> list:
                     logging.info(f"Found MAG file: {mag_path}")
     return mag_list
 
-def carveme_carve(mag_list: list, out_dir: str, solver: str, cpu: int, verbose: bool, dryrun: bool = False) -> None:
+def carveme_carve(mag_list: list, out_dir: str, solver: str, cpu: int, verbose: bool, dryrun: bool = False, force: bool = False) -> None:
     """ 
     Function to infer metabolic models using CarveMe on 
     the genomes (MAG) given in the `mag_list`
@@ -41,6 +41,12 @@ def carveme_carve(mag_list: list, out_dir: str, solver: str, cpu: int, verbose: 
         mag_basename = os.path.basename(mag)
         # degining the output model file path
         output_file = os.path.join(out_dir, f"{mag_basename}.xml")
+
+        # checking if the model already exists
+        if os.path.exists(output_file) and not force:
+            if verbose:
+                logging.info(f"Model already exists, skipping: {output_file}")
+            return
 
         if verbose:
             logging.info(f"Processing MAG file: {mag}")
@@ -89,6 +95,7 @@ def main():
     parser_carve.add_argument("-e", "--extension", default=".fa", help="Extension of MAG files (default: .fa)")
     parser_carve.add_argument("-c", "--cpu", type=int, default=1, help="Number of CPU cores to use (default: 1)")
     parser_carve.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    parser_carve.add_argument("-f", "--force", action="store_true", help="Force regeneration of existing models")
 
     # Subcommand for carveme_merge_community
     parser_merge = subparsers.add_parser("merge", help="Merge individual metabolic models into a community model")
@@ -103,7 +110,7 @@ def main():
 
     if args.command == "carve":
         mag_list = list_mag(args.input_dir, args.extension, args.verbose)
-        carveme_carve(mag_list, args.output_dir, args.solver, args.cpu, args.verbose)
+        carveme_carve(mag_list, args.output_dir, args.solver, args.cpu, args.verbose, force=args.force)
     elif args.command == "merge":
         carveme_merge_community(args.input_dir, args.output_dir, args.verbose)
 
