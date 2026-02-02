@@ -291,9 +291,9 @@ rule coverage_in_mapping:
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
         """
-        checkm coverage -x fa {input.dereplicated_and_filtered_bins} {output} \
+        checkm coverage -x fa --threads {threads} \
+        {input.dereplicated_and_filtered_bins} {output} \
             {input.samples_mapped_on_dereplicated_and_filtered_bins} \
-            --threads {threads} \
             > {log.stdout} 2> {log.stderr}
         """
 
