@@ -331,7 +331,7 @@ rule instrain_profiling:
         sample = "|".join(SAMPLES),
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
-    threads: config['strains_profiling']['instrain']['threads']
+    threads: config['strains_profiling']['instrain']['profile']['threads']
     shell:
         """
         inStrain profile --output {output} -p {threads} \
@@ -358,11 +358,12 @@ rule instrain_comparing:
     wildcard_constraints:
         assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
-    threads: config['strains_profiling']['instrain']['threads']
+    threads: config['strains_profiling']['instrain']['compare']['threads']
     shell:
         """
         inStrain compare -i {input.instrain_results} --output {output} \
             --database_mode \
+            -p {threads} \
             -s {input.stb} \
             > {log.stdout} 2> {log.stderr}
         """
