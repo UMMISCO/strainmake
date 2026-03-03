@@ -192,6 +192,9 @@ strains_profiling:
     min_alternate_count: 1
     min_alternate_fraction: 0.01
   instrain:
-    threads: 20
+    profile:
+      threads: 20
+    compare:
+      threads: 20
   floria:
     threads: 20
