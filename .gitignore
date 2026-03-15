@@ -1,4 +1,5 @@
 .snakemake/
+strainmake.egg-info/
 logs/
 /results/
 *.fastq.gz
