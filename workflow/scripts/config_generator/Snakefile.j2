@@ -84,7 +84,6 @@ rule all:
             expand("results/02_preprocess/fastqc/{sample}_{read}.clean_fastqc.html", 
                 sample=SAMPLES, read=READS),
             {% endif %}
-
             {% if do_assembly %}
             # assembly part
             expand("results/03_assembly/{assembler}/{sample}/assembly.fa.gz", 
@@ -97,13 +96,11 @@ rule all:
             expand("results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}/report.html", 
                    assembler_lr=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             {% endif %}
-
             {% if do_assembly and config.get("representative_genes") %}
             # non redundant gene catalog
             expand("results/04_assembly_qc/gene_clustering/{assembler}/non_redundant_gene_catalog.fna.gz",
                    assembler = ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER),
             {% endif %}
-
             {% if do_binning %}
             # binning (step 05) + bins qc (step 06)
             expand("results/05_binning/{binner}/bins/{assembler}/{sample}",
@@ -116,7 +113,6 @@ rule all:
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR) if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else [],          
             {% endif %}
-
             {% if do_postprocessing %}
             # bins post-processing — dRep and quality filtration always present
             expand("results/08_bins_postprocessing/dRep/{ani}/{assembler}",
@@ -140,7 +136,6 @@ rule all:
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
             {% endif %}
             {% endif %}
-
             {% if do_taxo_profiling %}
             # taxonomic profiling
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
@@ -152,7 +147,6 @@ rule all:
             expand("results/09_taxonomic_profiling/strainscan/{sample}/final_report.txt",
                    sample=SAMPLES),
             {% endif %}
-
             {% if do_strain_profiling %}
             # strains profiling
             {% if sp_tools is none or 'instrain' in sp_tools %}
