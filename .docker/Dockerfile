@@ -11,7 +11,7 @@ ARG CONDA_ENV_NAME="snakemake${SNAKEMAKE_VERSION}"
 # installing Snakemake
 RUN conda create -n ${CONDA_ENV_NAME} -c bioconda -c conda-forge -y snakemake=${SNAKEMAKE_VERSION}
 # installing MultiQC for report building
-RUN conda install -n ${CONDA_ENV_NAME} -c bioconda -c conda-forge -y multiqc=1.31 typer
+RUN conda install -n ${CONDA_ENV_NAME} -c bioconda -c conda-forge -y multiqc=1.31 typer pip
 # making Snakemake conda env the default one
 RUN echo "source activate ${CONDA_ENV_NAME}" > ~/.bashrc
 
@@ -20,8 +20,10 @@ RUN git clone ${PIPELINE_REPO} /opt/strainmake
 WORKDIR /opt/strainmake
 # checkout the desired version tag
 RUN git checkout ${PIPELINE_VERSION}
+# install strainmake CLI into the same conda env
+RUN conda run -n ${CONDA_ENV_NAME} pip install .
 # where the results, logs, benchmarks, will be stored
 # the user should mount a volume to /opt/strainmake when running the container in order to keep the data
 RUN mkdir -p /opt/strainmake/results /opt/strainmake/logs /opt/strainmake/benchmarks
 
-ENTRYPOINT ["/opt/conda/envs/snakemake8.24.1/bin/snakemake"]
+ENTRYPOINT ["/opt/conda/envs/snakemake8.24.1/bin/strainmake"]
