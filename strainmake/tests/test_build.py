@@ -1,8 +1,6 @@
 """
 Tests for `strainmake build` - Snakefile generation from config YAML.
 """
-
-import pytest
 from typer.testing import CliRunner
 
 from strainmake.cli.main import app
@@ -87,10 +85,9 @@ class TestBuildCommand:
         )
         assert result.exit_code != 0
 
-    def test_missing_template_fails(self, tmp_path, sample_config_yaml, monkeypatch):
+    def test_missing_template_fails(self, tmp_path, sample_config_yaml):
         """Graceful error when template file is absent (e.g. wrong install)."""
         import strainmake.cli.build_cmd as _mod
-        from pathlib import Path
 
         original = _mod._TEMPLATE_FILE
         _mod._TEMPLATE_FILE = tmp_path / "nonexistent.j2"
@@ -201,6 +198,21 @@ class TestPerformOption:
         content = output.read_text()
         assert "gtdb_tk" in content
         assert "results/05_binning" in content
+
+    def test_taxonomic_profiling_tool_implicitly_activates_step(self, tmp_path, full_config_yaml):
+        """--taxonomic-profiling without --perform taxo_profiling should still render the block."""
+        output = tmp_path / "Snakefile"
+        result = runner.invoke(
+            app,
+            ["build", "--config", str(full_config_yaml), "--output", str(output),
+             "--perform", "assembly",
+             "--taxonomic-profiling", "metaphlan"],
+        )
+        assert result.exit_code == 0, result.output
+        content = output.read_text()
+        assert "results/09_taxonomic_profiling/metaphlan" in content
+        assert "results/09_taxonomic_profiling/meteor" not in content
+        assert "results/03_assembly" in content
 
 
 class TestPostProcessingTools:
@@ -315,3 +327,67 @@ class TestStrainProfilingTools:
         content = self._build_sp(full_config_yaml, tmp_path, "floria")
         assert "floria" in content
         assert "inStrain" not in content
+
+
+class TestTaxonomicProfilingTools:
+    """Tests for the --taxonomic-profiling sub-tool filter."""
+
+    def _build_tp(self, full_config_yaml, tmp_path, *tools):
+        """Helper to run `strainmake build` with given config and taxonomic profiling tools."""
+        args = ["--perform", "taxo_profiling"]
+        for tool in tools:
+            args += ["--taxonomic-profiling", tool]
+        output = tmp_path / "Snakefile"
+        result = runner.invoke(
+            app,
+            ["build", "--config", str(full_config_yaml), "--output", str(output)] + args,
+        )
+        assert result.exit_code == 0, result.output
+        return output.read_text()
+
+    def test_no_taxonomic_profiling_flag_renders_all_tools(self, tmp_path, full_config_yaml):
+        """When --taxonomic-profiling is not given, all taxonomic profiling tools should be included."""
+        output = tmp_path / "Snakefile"
+        result = runner.invoke(
+            app,
+            ["build", "--config", str(full_config_yaml), "--output", str(output),
+             "--perform", "taxo_profiling"],
+        )
+        assert result.exit_code == 0, result.output
+        content = output.read_text()
+        assert "metaphlan" in content
+        assert "results/09_taxonomic_profiling/meteor" in content
+        assert "strainscan" in content
+        assert "METEOR_RAREFACTION_LEVELS" in content
+
+    def test_meteor_only(self, tmp_path, full_config_yaml):
+        """When --taxonomic-profiling meteor is given, only Meteor targets should be included."""
+        content = self._build_tp(full_config_yaml, tmp_path, "meteor")
+        assert "results/09_taxonomic_profiling/meteor" in content
+        assert "METEOR_RAREFACTION_LEVELS" in content
+        assert "metaphlan/{sample}.profile.txt" not in content
+        assert "strainscan/{sample}/final_report.txt" not in content
+
+    def test_metaphlan_only(self, tmp_path, full_config_yaml):
+        """When --taxonomic-profiling metaphlan is given, Meteor config should not be rendered."""
+        content = self._build_tp(full_config_yaml, tmp_path, "metaphlan")
+        assert "metaphlan/{sample}.profile.txt" in content
+        assert "results/09_taxonomic_profiling/meteor" not in content
+        assert "METEOR_RAREFACTION_LEVELS" not in content
+        assert "strainscan/{sample}/final_report.txt" not in content
+
+    def test_strainscan_only(self, tmp_path, full_config_yaml):
+        """When --taxonomic-profiling strainscan is given, only StrainScan targets should be included."""
+        content = self._build_tp(full_config_yaml, tmp_path, "strainscan")
+        assert "strainscan/{sample}/final_report.txt" in content
+        assert "results/09_taxonomic_profiling/meteor" not in content
+        assert "metaphlan/{sample}.profile.txt" not in content
+        assert "METEOR_RAREFACTION_LEVELS" not in content
+
+    def test_multiple_taxonomic_profiling_tools(self, tmp_path, full_config_yaml):
+        """When multiple --taxonomic-profiling flags are given, the union should be included."""
+        content = self._build_tp(full_config_yaml, tmp_path, "meteor", "strainscan")
+        assert "results/09_taxonomic_profiling/meteor" in content
+        assert "strainscan/{sample}/final_report.txt" in content
+        assert "METEOR_RAREFACTION_LEVELS" in content
+        assert "metaphlan/{sample}.profile.txt" not in content

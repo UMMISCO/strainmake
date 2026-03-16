@@ -50,6 +50,12 @@ class StrainProfilingTool(str, Enum):
     floria = "floria"
 
 
+class TaxonomicProfilingTool(str, Enum):
+    meteor = "meteor"
+    metaphlan = "metaphlan"
+    strainscan = "strainscan"
+
+
 class PostProcessingTool(str, Enum):
     gtdbtk = "gtdbtk"
     coverage = "coverage"   # maps to the checkm1 rule
@@ -106,13 +112,24 @@ def build(
             "If omitted, all tools are included."
         ),
     ),
+    taxonomic_profiling_tools: Optional[List[TaxonomicProfilingTool]] = typer.Option(
+        None,
+        "--taxonomic-profiling",
+        help=(
+            "Taxonomic profiling tool(s) to include: meteor, metaphlan, strainscan. "
+            "Pass once per tool. Automatically activates 'taxo_profiling' "
+            "even without an explicit --perform flag. "
+            "If omitted, all tools are included."
+        ),
+    ),
 ) -> None:
     """
     Generate a [bold]Snakefile[/bold] from a StrainMake configuration YAML.
 
     By default all sections present in the config are rendered. Use [cyan]--perform[/cyan]
-    to restrict to specific pipeline steps, and [cyan]--post-processing[/cyan] /
-    [cyan]--strain-profiling[/cyan] for finer granularity within those steps.
+    to restrict to specific pipeline steps, and [cyan]--post-processing[/cyan],
+    [cyan]--taxonomic-profiling[/cyan], or [cyan]--strain-profiling[/cyan]
+    for finer granularity within those steps.
 
     \b
     Examples:
@@ -127,6 +144,10 @@ def build(
             --perform assembly --perform binning --perform postprocessing \\
             --post-processing gtdbtk --post-processing carveme
 
+        # Taxonomic profiling with Meteor only:
+        strainmake build --config config.yaml \\
+            --perform taxo_profiling --taxonomic-profiling meteor
+
         # Strain profiling with only inStrain:
         strainmake build --config config.yaml \\
             --perform assembly --perform binning --perform postprocessing \\
@@ -140,7 +161,7 @@ def build(
         )
         raise typer.Exit(1)
 
-    with open(config) as fh:
+    with open(config, encoding="utf-8") as fh:
         config_data = yaml.safe_load(fh)
 
     # converting option lists to sets (None = "not specified" → use config or render all)
@@ -150,12 +171,17 @@ def build(
     sp_tools: Optional[Set[str]] = (
         {t.value for t in strain_profiling_tools} if strain_profiling_tools else None
     )
+    tp_tools: Optional[Set[str]] = (
+        {t.value for t in taxonomic_profiling_tools} if taxonomic_profiling_tools else None
+    )
 
     # sub-tool flags implicitly activate their parent step even without --perform.
     perform_set: Optional[Set[str]] = {p.value for p in perform} if perform else None
     if perform_set is not None:
         if pp_tools is not None:
             perform_set.add("postprocessing")
+        if tp_tools is not None:
+            perform_set.add("taxo_profiling")
         if sp_tools is not None:
             perform_set.add("strain_profiling")
 
@@ -190,12 +216,13 @@ def build(
         do_taxo_profiling=_include("taxo_profiling"),
         do_strain_profiling=_include("strain_profiling"),
         pp_tools=pp_tools,   # None → render all post-processing tools
+        tp_tools=tp_tools,   # None → render all taxonomic profiling tools
         sp_tools=sp_tools,   # None → render all strain profiling tools
     )
 
     # writing the rendered Snakefile to disk
     output.parent.mkdir(parents=True, exist_ok=True)
-    with open(output, "w") as fh:
+    with open(output, "w", encoding="utf-8") as fh:
         fh.write(rendered)
 
     typer.echo(f"✅  Snakefile generated at [bold]{output}[/bold]")
