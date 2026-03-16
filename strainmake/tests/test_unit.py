@@ -30,6 +30,46 @@ FASTA_TEST = REPO_ROOT / "strainmake" / "tests" / "data" / "fasta" / "test.fa"
 HAS_SNAKEMAKE = shutil.which("snakemake") is not None
 
 
+def _get_gtdbtk_data_path() -> Path:
+    """Read GTDB-Tk reference path from the environment YAML used by workflow rules."""
+    gtdb_yaml = REPO_ROOT / "workflow" / "envs" / "gtdb_tk.yaml"
+    with open(gtdb_yaml, encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+
+    raw_path = Path(data["variables"]["GTDBTK_DATA_PATH"])
+    return raw_path if raw_path.is_absolute() else REPO_ROOT / raw_path
+
+
+@pytest.fixture(autouse=True)
+def ensure_gtdbtk_placeholder_path() -> None:
+    """
+    Create a lightweight placeholder GTDB path when the real DB is not present.
+
+    This avoids `MissingInputException` during DAG building in CI where the
+    full GTDB database is intentionally not shipped.
+    """
+    gtdb_path = _get_gtdbtk_data_path()
+    created = False
+
+    if not gtdb_path.exists():
+        gtdb_path.mkdir(parents=True, exist_ok=True)
+        created = True
+
+    try:
+        yield
+    finally:
+        if created:
+            shutil.rmtree(gtdb_path, ignore_errors=True)
+            # best effort cleanup of empty parents up to repo root
+            parent = gtdb_path.parent
+            while parent != REPO_ROOT:
+                try:
+                    parent.rmdir()
+                except OSError:
+                    break
+                parent = parent.parent
+
+
 @pytest.fixture(name="simulated_reads_dir")
 def _fixture_simulated_reads_dir(tmp_path: Path) -> Path:
     """Create minimal fake SR/LR files used to generate metadata tables."""
