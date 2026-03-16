@@ -201,7 +201,7 @@ def gather_assemblies(
         typer.echo(f"❌  {assembly_target} does not exist in the target directory.", err=True)
         raise typer.Exit(1)
 
-    typer.echo(f"📂  Gathering assemblies from {len(sources)} source(s) → {assembly_target}")
+    typer.echo(f"  Gathering assemblies from {len(sources)} source(s) → {assembly_target}")
     mod.gather_results(assembly_target, sources)
     typer.echo("✅  Assembly results gathered.")
 
@@ -255,7 +255,7 @@ def gather_binning(
             typer.echo(f"❌  {full} does not exist in the target directory.", err=True)
             raise typer.Exit(1)
 
-    typer.echo(f"📂  Gathering binning results from {len(sources)} source(s) → {target}")
+    typer.echo(f"  Gathering binning results from {len(sources)} source(s) → {target}")
     mod.gather_binning_results(target, sources, "05_binning")
     mod.gather_binning_results(target, sources, "07_bins_refinement")
     typer.echo("✅  Binning results gathered.")

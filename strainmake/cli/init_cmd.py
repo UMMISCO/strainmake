@@ -142,7 +142,7 @@ def init(
         typer.echo(f"❌  {exc}", err=True)
         raise typer.Exit(1) from exc
 
-    typer.echo("\n📄  Generating StrainMake configuration …\n")
+    typer.echo("\n  Generating StrainMake configuration …\n")
 
     config: dict = {
         "samples": str(samples),

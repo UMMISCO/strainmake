@@ -97,7 +97,7 @@ def run(
     if ctx.args:
         cmd.extend(ctx.args)
 
-    typer.echo(f"🚀  Running: {' '.join(cmd)}\n")
+    typer.echo(f"  Running: {' '.join(cmd)}\n")
 
-    result = subprocess.run(cmd)  # noqa: S603
+    result = subprocess.run(cmd)
     raise typer.Exit(code=result.returncode)
