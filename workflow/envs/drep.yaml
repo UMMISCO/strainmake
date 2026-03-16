@@ -5,3 +5,4 @@ channels:
 dependencies:
   - drep=3.5.0
   - numpy<2
+  - setuptools<81 # https://github.com/pypa/setuptools/pull/5007
