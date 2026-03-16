@@ -1,5 +1,6 @@
 .snakemake/
 strainmake.egg-info/
+.coverage
 logs/
 /results/
 *.fastq.gz
