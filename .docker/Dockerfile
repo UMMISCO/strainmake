@@ -20,8 +20,8 @@ RUN git clone ${PIPELINE_REPO} /opt/strainmake
 WORKDIR /opt/strainmake
 # checkout the desired version tag
 RUN git checkout ${PIPELINE_VERSION}
-# install strainmake CLI into the same conda env
-RUN conda run -n ${CONDA_ENV_NAME} pip install .
+# install strainmake CLI into the same conda env (editable so REPO_ROOT resolves to /opt/strainmake)
+RUN conda run -n ${CONDA_ENV_NAME} pip install -e .
 # where the results, logs, benchmarks, will be stored
 # the user should mount a volume to /opt/strainmake when running the container in order to keep the data
 RUN mkdir -p /opt/strainmake/results /opt/strainmake/logs /opt/strainmake/benchmarks
