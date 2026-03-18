@@ -13,22 +13,34 @@
 
 ## Local version
 
-You can just clone the repository where you will run the analysis:
+Clone the repository and install StrainMake:
 
 ```sh
 git clone https://github.com/UMMISCO/strainmake.git
+cd strainmake/
+pip install -e .
+strainmake --version
 ```
 
 Ensure to have at least [Snakemake](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) and [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) installed.
 
 ## Using Docker
 
-You can use the Docker image, and run everything via a Docker container (Snakemake is the entrypoint):
+You can use the Docker image and run everything via a Docker container (`strainmake` is the entrypoint):
 
 ```sh
 docker pull bapt931894/strainmake:latest
-# for example the following command will output the help of Snakemake (Snakemake is the workflow management system)
-docker run bapt931894/strainmake -h 
+# show CLI help
+docker run --rm bapt931894/strainmake --help
+
+# run the pipeline (example)
+docker run --rm bapt931894/strainmake run --cores 16
+```
+
+If you need raw Snakemake in the container, override the entrypoint:
+
+```sh
+docker run --rm --entrypoint /opt/conda/envs/snakemake8.24.1/bin/snakemake bapt931894/strainmake -h
 ```
 
 Note that you should mount [volumes](https://docs.docker.com/engine/storage/volumes/) for keeping the generated data:
@@ -224,70 +236,103 @@ options:
 
 ## Using preprocessed reads
 
-If your sequencing reads have already been preprocessed, you can use the [`already_preprocessed_seq.py`](workflow/scripts/prepare/already_preprocessed_seq.py) script to set up the `results` directory so that the pipeline starts directly from the assembly step, using your preprocessed FASTQ files.
+If your sequencing reads have already been preprocessed, you can use `strainmake prepare import-preprocessed` to set up the `results` directory so that the pipeline starts directly from the assembly step, using your preprocessed FASTQ files.
 
 To do this, provide a TSV file formatted like [`config_data.tsv`](data/config_data.tsv). The script will create symbolic links in the `results` folder that point to your preprocessed FASTQ files, saving storage space by avoiding unnecessary duplication.
 
 This approach ensures that the pipeline can use your preprocessed data without needing to process the FASTQ files again.
 
-
 ## Help with configuration file
 
-An interactive CLI for editing YAML configuration and including relevant pipeline sections is available at [`config_generator.py`](workflow/scripts/config_generator/config_generator.py).
+You can make use of `strainmake init` to build a YAML configuration.
 
 ```
- Usage: config_generator.py [OPTIONS]                                                                                                                                                        
-                                                                                                                                                                                             
- Generate a configuration YAML file for the pipeline.                                                                                                                                        
-                                                                                                                                                                                             
-╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  --samples                   PATH  Path to sample metadata file needed by the pipeline (TSV) [default: None] [required]                                                                 │
-│    --lr-seq-format             TEXT  Format of long reads: 'fastq' or 'fasta' [default: fastq]                                                                                            │
-│    --output                    PATH  Path to write the final YAML [default: config.yaml]                                                                                                  │
-│    --install-completion              Install completion for the current shell.                                                                                                            │
-│    --show-completion                 Show completion for the current shell, to copy it or customize the installation.                                                                     │
-│    --help                            Show this message and exit.                                                                                                                          │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+ Usage: strainmake init [OPTIONS]                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                               
+ Interactively generate a config.yaml for the StrainMake pipeline.                                                                                                                                                                                             
+                                                                                                                                                                                                                                                               
+ Walks through each pipeline section (preprocessing, assembly, …) and lets                                                                                                                                                                                     
+ you accept defaults, edit values, or skip a section entirely.                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                               
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  --samples    -s      PATH  Path to the sample metadata TSV (columns: sample, sample_id, type). [required]                                                                                                                                                │
+│    --lr-format          TEXT  Format of long-read sequences: 'fastq' or 'fasta'. [default: fastq]                                                                                                                                                           │
+│    --output     -o      PATH  Path to write the generated configuration YAML. [default: config.yaml]                                                                                                                                                        │
+│    --help                     Show this message and exit.                                                                                                                                                                                                   │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-Then, to generate the Snakefile with relevant data to be generated by the pipeline, based on the YAML, use [`snakefile_generator.py`](workflow/scripts/config_generator/snakefile_generator.py).
+Then, to generate the Snakefile with relevant data to be generated by the pipeline, based on the YAML, use `strainmake build`.
 
-```
- Usage: snakefile_generator.py [OPTIONS]                                                                                                                                                     
-                                                                                                                                                                                             
- Generate a configuration YAML file for the pipeline.                                                                                                                                        
-                                                                                                                                                                                             
-╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  --config                    PATH  Path to the generated YAML configuration file [default: None] [required]                                                                             │
-│    --output                    PATH  Path to write the Snakefile [default: Snakefile]                                                                                                     │
-│    --install-completion              Install completion for the current shell.                                                                                                            │
-│    --show-completion                 Show completion for the current shell, to copy it or customize the installation.                                                                     │
-│    --help                            Show this message and exit.                                                                                                                          │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```                                                                                     
+ Usage: strainmake build [OPTIONS]                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                               
+ Generate a Snakefile from a StrainMake configuration YAML.                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                               
+ By default all sections present in the config are rendered. Use --perform                                                                                                                                                                                     
+ to restrict to specific pipeline steps, and --post-processing,                                                                                                                                                                                                
+ --taxonomic-profiling, or --strain-profiling                                                                                                                                                                                                                  
+ for finer granularity within those steps.                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                               
+ Examples:                                                                                                                                                                                                                                                     
+     # All steps (config-driven, default):                                                                                                                                                                                                                     
+     strainmake build --config config.yaml                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                               
+     # Only assembly + binning:                                                                                                                                                                                                                                
+     strainmake build --config config.yaml --perform assembly --perform binning                                                                                                                                                                                
+                                                                                                                                                                                                                                                               
+     # Post-processing with a subset of tools:                                                                                                                                                                                                                 
+     strainmake build --config config.yaml \                                                                                                                                                                                                                   
+         --perform assembly --perform binning --perform postprocessing \                                                                                                                                                                                       
+         --post-processing gtdbtk --post-processing carveme                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                               
+     # Taxonomic profiling with Meteor only:                                                                                                                                                                                                                   
+     strainmake build --config config.yaml \                                                                                                                                                                                                                   
+         --perform taxo_profiling --taxonomic-profiling meteor                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                               
+     # Strain profiling with only inStrain:                                                                                                                                                                                                                    
+     strainmake build --config config.yaml \                                                                                                                                                                                                                   
+         --perform assembly --perform binning --perform postprocessing \                                                                                                                                                                                       
+         --perform strain_profiling --strain-profiling instrain                                                                                                                                                                                                
+                                                                                                                                                                                                                                                               
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  --config               -c      PATH                                                                             Path to the StrainMake configuration YAML (generated by `strainmake init`). [required]                                                   │
+│    --output               -o      PATH                                                                             Path to write the generated Snakefile. [default: Snakefile]                                                                              │
+│    --perform                      [preprocessing|assembly|binning|postprocessing|taxo_profiling|strain_profiling]  Pipeline step(s) to include. Pass once per step, e.g. `--perform assembly --perform binning`. If omitted, all steps present in the       │
+│                                                                                                                    config are included.                                                                                                                     │
+│    --strain-profiling             [instrain|floria]                                                                Strain profiling tool(s) to include: instrain, floria. Pass once per tool. Automatically activates 'strain_profiling' even without an    │
+│                                                                                                                    explicit --perform flag. If omitted, all tools are included.                                                                             │
+│    --post-processing              [gtdbtk|coverage|carveme|bakta]                                                  Post-processing tool(s) to include: gtdbtk, coverage (checkm1), carveme, bakta. Pass once per tool. Automatically activates              │
+│                                                                                                                    'postprocessing' even without an explicit --perform flag. If omitted, all tools are included.                                            │
+│    --taxonomic-profiling          [meteor|metaphlan|strainscan]                                                    Taxonomic profiling tool(s) to include: meteor, metaphlan, strainscan. Pass once per tool. Automatically activates 'taxo_profiling' even │
+│                                                                                                                    without an explicit --perform flag. If omitted, all tools are included.                                                                  │
+│    --help                                                                                                          Show this message and exit.                                                                                                              │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## MultiQC report
 
-Use the following CLI: [`generate_multiqc_report.py`](workflow/scripts/multiqc_results/generate_multiqc_report.py).
+Use `strainmake report`.
 
 ```
- Usage: generate_multiqc_report.py [OPTIONS]                                                                                                                                                    
-                                                                                                                                                                                                
- Generates MultiQC report(s) based on the pipeline results collected from the specified directories.                                                                                            
-                                                                                                                                                                                                
-                                                                                                                                                                                                
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  --results-dir                 TEXT     Directory containing the results of the pipeline. [default: None] [required]                                                                       │
-│ *  --log-dir                     TEXT     Directory containing the logs of the pipeline. [default: None] [required]                                                                          │
-│ *  --output-dir                  TEXT     Directory where the MultiQC report will be generated. [default: None] [required]                                                                   │
-│    --ani                         INTEGER  ANI threshold used for dereplicating MAGs. [default: 95]                                                                                           │
-│    --multiqc-config              TEXT     Path to the MultiQC configuration file. [default: multiqc_config.yaml]                                                                             │
-│    --dry-run             -d               If set, only prints the MultiQC command without executing it.                                                                                      │
-│    --install-completion                   Install completion for the current shell.                                                                                                          │
-│    --show-completion                      Show completion for the current shell, to copy it or customize the installation.                                                                   │
-│    --help                                 Show this message and exit.                                                                                                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
+ Usage: strainmake report [OPTIONS]                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                               
+ Generate MultiQC report(s) from StrainMake pipeline results.                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                               
+ Collects QC artefacts from preprocessing, assembly, binning and annotation                                                                                                                                                                                    
+ steps, then runs MultiQC.  One report is produced per assembler when                                                                                                                                                                                          
+ multiple assemblers were used.                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                               
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  --results         -r      DIRECTORY  Directory containing StrainMake pipeline results (the `results/` folder). [required]                                                                                                                                │
+│ *  --logs            -l      DIRECTORY  Directory containing pipeline logs (the `logs/` folder). [required]                                                                                                                                                 │
+│ *  --output          -o      PATH       Directory where the MultiQC report(s) will be written. [required]                                                                                                                                                   │
+│    --ani                     INTEGER    ANI threshold used for MAG dereplication (must match the pipeline run). [default: 95]                                                                                                                               │
+│    --multiqc-config          PATH       Path to the MultiQC YAML configuration file. [default: /path/to/strainmake/workflow/scripts/multiqc_results/multiqc_config.yaml]                                   │
+│    --dry-run         -n                 Print the MultiQC commands without executing them.                                                                                                                                                                  │
+│    --help                               Show this message and exit.                                                                                                                                                                                         │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 

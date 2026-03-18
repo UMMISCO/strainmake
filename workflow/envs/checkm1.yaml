@@ -3,5 +3,6 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
+  - python=3.9 # avoid '__workerThread' AttributeError on newer Python
   - checkm-genome=1.2.2 # https://github.com/Ecogenomics/CheckM/issues/401
-  - setuptools
+  - setuptools<81 # https://github.com/pypa/setuptools/pull/5007

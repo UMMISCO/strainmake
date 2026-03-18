@@ -4,4 +4,5 @@ channels:
   - conda-forge
 dependencies:
   - bakta=1.11.3
+  - pyhmmer=0.11.4 # https://github.com/oschwengers/bakta/issues/424
   - parallel

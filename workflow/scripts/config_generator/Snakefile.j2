@@ -28,7 +28,7 @@ FASTQ_FILES = SAMPLES_DF['sample'].tolist()
 FASTQ_FILES = [f[:-9] for f in FASTQ_FILES]
 
 READS = [1, 2]
-{% if config.get("assembly") %}
+{% if do_assembly %}
 ASSEMBLER = config['assembly']['assembler']
 LONG_READ_ASSEMBLER = config['assembly']['long_read_assembler']
 HYBRID_ASSEMBLER = config['assembly']['hybrid_assembler']
@@ -51,16 +51,22 @@ validate_assemblers(samples_table_df,
                     ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER)
 {% endif %}
 
-{% if config.get("binning") %}
+{% if do_binning %}
 SHORT_READ_BINNER = config['binning']['binner']
+if SHORT_READ_BINNER is None:
+    SHORT_READ_BINNER = []
 LONG_READ_BINNER = config['binning']['long_read_binner']
+if LONG_READ_BINNER is None:
+    LONG_READ_BINNER = []
+{% endif %}
 
+{% if do_postprocessing or do_strain_profiling %}
 # for dereplication, MAG profiling...
 ANI_THRESHOLD = [str(ani) for ani in config['bins_postprocessing']['drep']['ani']]
 DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE = str(config['bins_postprocessing']['genes_prediction']['prodigal']['ani'])
 {% endif %}
 
-{% if config.get("taxonomic_profiling") %}
+{% if do_taxo_profiling and (tp_tools is none or 'meteor' in tp_tools) %}
 # for taxonomic profiling
 METEOR_RAREFACTION_LEVELS = [convert_to_si_units(int(level)) for level in config['taxonomic_profiling']['meteor']['downsize']]
 {% endif %}
@@ -71,13 +77,14 @@ METEOR_RAREFACTION_LEVELS = [convert_to_si_units(int(level)) for level in config
 
 rule all:
         input:
+            {% if do_preprocessing %}
             # QC before preprocessing
             expand("results/01_qc/fastqc/{sample}/", sample=SAMPLES),
             # QC after preprocessing
             expand("results/02_preprocess/fastqc/{sample}_{read}.clean_fastqc.html", 
                 sample=SAMPLES, read=READS),
-
-            {% if config.get("assembly") %}
+            {% endif %}
+            {% if do_assembly %}
             # assembly part
             expand("results/03_assembly/{assembler}/{sample}/assembly.fa.gz", 
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
@@ -89,14 +96,12 @@ rule all:
             expand("results/04_assembly_qc/quast/{assembler_lr}/{sample_lr}/report.html", 
                    assembler_lr=LONG_READ_ASSEMBLER, sample_lr=SAMPLES_LR),
             {% endif %}
-
-            {% if config.get("representative_genes") %}
+            {% if do_assembly and config.get("representative_genes") %}
             # non redundant gene catalog
             expand("results/04_assembly_qc/gene_clustering/{assembler}/non_redundant_gene_catalog.fna.gz",
                    assembler = ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER),
             {% endif %}
-
-            {% if config.get("binning") %}
+            {% if do_binning %}
             # binning (step 05) + bins qc (step 06)
             expand("results/05_binning/{binner}/bins/{assembler}/{sample}",
                    binner = SHORT_READ_BINNER, assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES),
@@ -107,25 +112,57 @@ rule all:
             # bins refinement (only if multiple binning methods were used)
             expand("results/07_bins_refinement/binette/{assembler}/{sample}", 
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES + SAMPLES_LR) if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else [],          
-            # bins post-processing
+            {% endif %}
+            {% if do_postprocessing %}
+            # bins post-processing — dRep and quality filtration always present
             expand("results/08_bins_postprocessing/dRep/{ani}/{assembler}",
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = ANI_THRESHOLD),
             expand("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = ANI_THRESHOLD),
+            {% if pp_tools is none or 'gtdbtk' in pp_tools %}
             expand("results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}", 
                    assembler=ASSEMBLER + LONG_READ_ASSEMBLER + HYBRID_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
+            {% endif %}
+            {% if pp_tools is none or 'coverage' in pp_tools %}
             expand("results/08_bins_postprocessing/checkm1/{ani}/{assembler}/{sample}/profile.processed.tsv",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER, sample=SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
-            expand("results/08_bins_postprocessing/carveme/{ani}/{assembler}/community_model/community.xml",
+            {% endif %}
+            {% if pp_tools is none or 'carveme' in pp_tools %}
+            expand("results/08_bins_postprocessing/carveme/community_model/{ani}/{assembler}/community.xml.gz",
                    assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = ANI_THRESHOLD),
             {% endif %}
-
-            {% if config.get("taxonomic_profiling") %}
+            {% if pp_tools is none or 'bakta' in pp_tools %}
+            expand("results/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots_processed",
+                   assembler=ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
+            {% endif %}
+            {% endif %}
+            {% if do_taxo_profiling %}
             # taxonomic profiling
+            {% if tp_tools is none or 'metaphlan' in tp_tools %}
             expand("results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt",
                    sample=SAMPLES),
+            {% endif %}
+            {% if tp_tools is none or 'meteor' in tp_tools %}
             expand("results/09_taxonomic_profiling/meteor/{sample}/profiling",
                    sample=SAMPLES),
             expand("results/09_taxonomic_profiling/meteor/{sample}/profiling_downsized_{downsize}",
                    sample=SAMPLES, downsize=METEOR_RAREFACTION_LEVELS),
+            {% endif %}
+            {% if tp_tools is none or 'strainscan' in tp_tools %}
+            expand("results/09_taxonomic_profiling/strainscan/{sample}/final_report.txt",
+                   sample=SAMPLES),
+            {% endif %}
+            {% endif %}
+            {% if do_strain_profiling %}
+            # strains profiling
+            {% if sp_tools is none or 'instrain' in sp_tools %}
+            #      -> inStrain
+            expand("results/10_strain_profiling/inStrain/{ani}/{assembler}/compare",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER + LONG_READ_ASSEMBLER, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
+            {% endif %}
+            {% if sp_tools is none or 'floria' in sp_tools %}
+            #      -> Floria
+            expand("results/10_strain_profiling/floria/{ani}/{assembler}/{sample}/contig_ploidy_info.tsv",
+                   assembler = ASSEMBLER + HYBRID_ASSEMBLER, sample = SAMPLES, ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE),
+            {% endif %}
             {% endif %}
