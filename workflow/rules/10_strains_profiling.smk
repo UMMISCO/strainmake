@@ -293,9 +293,9 @@ rule variant_calling:
     conda:
         "../envs/freebayes.yaml"
     log:
-        stderr = "logs/10_strain_profiling/freeboys/{ani}/{assembler}/{sample}.variant_calling.stderr"
+        stderr = "logs/10_strain_profiling/freebayes/{ani}/{assembler}/{sample}.variant_calling.stderr"
     benchmark:
-        "benchmarks/10_strain_profiling/freeboys/{ani}/{assembler}/{sample}.variant_calling.benchmark.txt"
+        "benchmarks/10_strain_profiling/freebayes/{ani}/{assembler}/{sample}.variant_calling.benchmark.txt"
     params:
         min_alternate_count = config['strains_profiling'].get('freebayes', {}).get('min_alternate_count'),
         min_alternate_fraction = config['strains_profiling'].get('freebayes', {}).get('min_alternate_fraction')
