@@ -5,6 +5,7 @@ name: Conda env. health check
 # Runs on the 15th of every month.
 
 on:
+  pull_request:
   schedule:
     - cron: '0 4 15 * *'   # 04:00 UTC on the 15th of every month
   workflow_dispatch:
