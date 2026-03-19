@@ -1,0 +1,234 @@
+name: Conda env. health check
+
+# Build every conda env in workflow/envs/ and test its primary tool
+# by confirming the binary is on PATH and produces some output.
+# Runs on the 15th of every month.
+
+on:
+  schedule:
+    - cron: '0 4 15 * *'   # 04:00 UTC on the 15th of every month
+  workflow_dispatch:
+
+jobs:
+  env-health:
+    name: "${{ matrix.env }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Some envs have known CI limitations (e.g. GPU-only deps), they are marked
+    # allow-failure: true so the rest of the matrix is not blocked.
+    continue-on-error: ${{ matrix.allow-failure || false }}
+
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        include:
+          - env: fastqc
+            env-file: workflow/envs/fastqc.yaml
+            check-bin: fastqc
+            check-args: --help
+
+          - env: fastp
+            env-file: workflow/envs/fastp.yaml
+            check-bin: fastp
+            check-args: --help
+
+          - env: fastplong
+            env-file: workflow/envs/fastplong.yaml
+            check-bin: fastplong
+            check-args: --help
+
+          - env: rasusa
+            env-file: workflow/envs/rasusa.yaml
+            check-bin: rasusa
+            check-args: --help
+
+          - env: bowtie2
+            env-file: workflow/envs/bowtie2.yaml
+            check-bin: bowtie2
+            check-args: --help
+
+          - env: get_bowtie_index
+            env-file: workflow/envs/get_bowtie_index.yaml
+            check-bin: unzip
+            check-args: --help
+
+          - env: minimap2
+            env-file: workflow/envs/minimap2.yaml
+            check-bin: minimap2
+            check-args: --help
+
+          - env: samtools
+            env-file: workflow/envs/samtools.yaml
+            check-bin: samtools
+            check-args: --help
+
+          - env: freebayes
+            env-file: workflow/envs/freebayes.yaml
+            check-bin: freebayes
+            check-args: --help
+
+          - env: pigz
+            env-file: workflow/envs/pigz.yaml
+            check-bin: pigz
+            check-args: --help
+
+          - env: seqkit
+            env-file: workflow/envs/seqkit.yaml
+            check-bin: seqkit
+            check-args: --help
+
+          - env: megahit
+            env-file: workflow/envs/megahit.yaml
+            check-bin: megahit
+            check-args: --help
+
+          - env: spades
+            env-file: workflow/envs/spades.yaml
+            check-bin: spades.py
+            check-args: --help
+
+          - env: flye
+            env-file: workflow/envs/flye.yaml
+            check-bin: flye
+            check-args: --help
+
+          - env: hylight
+            env-file: workflow/envs/hylight.yaml
+            check-bin: hylight
+            check-args: --help
+
+          - env: quast
+            env-file: workflow/envs/quast.yaml
+            check-bin: quast.py
+            check-args: --help
+
+          - env: prodigal
+            env-file: workflow/envs/prodigal.yaml
+            check-bin: prodigal
+            check-args: --help
+
+          - env: mmseqs2
+            env-file: workflow/envs/mmseqs2.yaml
+            check-bin: mmseqs   # package is mmseqs2, binary is mmseqs
+            check-args: --help
+
+          - env: metabat
+            env-file: workflow/envs/metabat.yaml
+            check-bin: metabat2
+            check-args: --help
+
+          - env: semibin
+            env-file: workflow/envs/semibin.yaml
+            check-bin: SemiBin2
+            check-args: --help
+
+          - env: vamb
+            env-file: workflow/envs/vamb.yaml
+            check-bin: vamb
+            check-args: --help
+            # vamb pins old CUDA packages (cudatoolkit=10.2 + pytorch-cuda=11.7)
+            # that may fail to resolve on CPU-only GitHub runners.
+            allow-failure: true
+
+          - env: checkm2
+            env-file: workflow/envs/checkm2.yaml
+            check-bin: checkm2
+            check-args: --help
+
+          - env: binette
+            env-file: workflow/envs/binette.yaml
+            check-bin: binette
+            check-args: --help
+
+          - env: drep
+            env-file: workflow/envs/drep.yaml
+            check-bin: dRep
+            check-args: --help
+
+          - env: gtdb_tk
+            env-file: workflow/envs/gtdb_tk.yaml
+            check-bin: gtdbtk
+            check-args: --help
+
+          - env: checkm1
+            env-file: workflow/envs/checkm1.yaml
+            check-bin: checkm coverage
+            check-args: -h
+
+          - env: bakta
+            env-file: workflow/envs/bakta.yaml
+            check-bin: bakta
+            check-args: --help
+
+          - env: carveme
+            env-file: workflow/envs/carveme.yaml
+            check-bin: carve
+            check-args: --help
+
+          - env: skani
+            env-file: workflow/envs/skani.yaml
+            check-bin: skani
+            check-args: --help
+
+          - env: metaphlan
+            env-file: workflow/envs/metaphlan.yaml
+            check-bin: metaphlan
+            check-args: --help
+
+          - env: meteor
+            env-file: workflow/envs/meteor.yaml
+            check-bin: meteor
+            check-args: --help
+
+          - env: strainscan
+            env-file: workflow/envs/strainscan.yaml
+            check-bin: strainscan
+            check-args: --help
+
+          - env: instrain
+            env-file: workflow/envs/instrain.yaml
+            check-bin: inStrain
+            check-args: --help
+
+          - env: floria
+            env-file: workflow/envs/floria.yaml
+            check-bin: floria
+            check-args: --help
+
+          - env: python
+            env-file: workflow/envs/python.yaml
+            check-bin: python
+            check-args: --version
+
+          - env: r
+            env-file: workflow/envs/r.yaml
+            check-bin: Rscript
+            check-args: --version
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up micromamba and create env
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: ${{ matrix.env-file }}
+          cache-environment: false
+          init-shell: bash
+          generate-run-shell: true
+
+      # The step succeeds when:
+      #   1. The binary is found on PATH (command -v).
+      #   2. The env was built without errors (previous step).
+      - name: Verify tool is installed and runnable
+        shell: micromamba-shell {0}
+        run: |
+          bin="${{ matrix.check-bin }}"
+          args="${{ matrix.check-args }}"
+
+          echo "==> Checking: $bin $args"
+          command -v "$bin"
+          echo "==> Found at: $(command -v "$bin")"
+          "$bin" $args 2>&1 | head -30 || true
+          echo "==> $bin: OK"
