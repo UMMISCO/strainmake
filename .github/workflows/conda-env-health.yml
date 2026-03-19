@@ -153,8 +153,8 @@ jobs:
 
           - env: checkm1
             env-file: workflow/envs/checkm1.yaml
-            check-bin: checkm
-            check-args: --help
+            check-bin: checkm coverage
+            check-args: -h
 
           - env: bakta
             env-file: workflow/envs/bakta.yaml
