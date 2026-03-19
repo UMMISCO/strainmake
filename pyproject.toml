@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "strainmake"
-version = "0.1.0"
+version = "0.2.0-pre1"
 description = "StrainMake: reproducible hybrid metagenomics with MAG recovery and strain-level resolution "
 readme = "README.md"
 requires-python = ">=3.9"
