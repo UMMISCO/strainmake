@@ -10,6 +10,8 @@ Commands:
     run      Run the pipeline via Snakemake
     report   Generate a MultiQC report from pipeline results
     prepare  Prepare input data and results (subgroup)
+
+    fetch-databases  Download the reference databases (run where there is internet)
 """
 
 from typing import Optional
@@ -17,7 +19,14 @@ from typing import Optional
 import typer
 
 from strainmake import __version__
-from strainmake.cli import init_cmd, build_cmd, run_cmd, report_cmd, prepare_cmd
+from strainmake.cli import (
+    init_cmd,
+    build_cmd,
+    run_cmd,
+    report_cmd,
+    prepare_cmd,
+    fetch_databases_cmd,
+)
 
 # ---------------------------------------------------------------------------
 # Root application
@@ -60,6 +69,7 @@ app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )(run_cmd.run)
 app.command("report")(report_cmd.report)
+app.command("fetch-databases")(fetch_databases_cmd.fetch_databases)
 
 # ---------------------------------------------------------------------------
 # --version flag
