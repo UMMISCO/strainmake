@@ -35,7 +35,7 @@ rule host_decontamination:
     input:
         r1 = "results/02_preprocess/fastp/{sample}_1.fastq.gz",
         r2 = "results/02_preprocess/fastp/{sample}_2.fastq.gz",
-        index = "results/02_preprocess/bowtie2/index"
+        index = BOWTIE2_INDEX_DB
     output:
         r1 = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz",
         r2 = "results/02_preprocess/bowtie2/{sample}_2.clean.fastq.gz"
@@ -57,42 +57,8 @@ rule host_decontamination:
             > /dev/null 2> {log.stderr}
         """
 
-# get the bowtie2 index from the internet
-rule get_bowtie_index:
-    output:
-        directory("results/02_preprocess/bowtie2/index")
-    log:
-        wget_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.wget.stdout",
-        wget_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.wget.stderr",
-        unzip_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.unzip.stdout",
-        unzip_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.unzip.stderr",
-        mv_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.mv.stdout",
-        mv_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.mv.stderr",
-        rm_stdout = "logs/02_preprocess/bowtie2/get_bowtie_index.rm.stdout",
-        rm_stderr = "logs/02_preprocess/bowtie2/get_bowtie_index.rm.stderr"
-    conda:
-        "../envs/get_bowtie_index.yaml"
-    params:
-        organism_name = config['bowtie2']['index_name']
-    benchmark:
-        "benchmarks/02_preprocess/bowtie2/get_bowtie_index.benchmark.txt"
-    shell:
-    # downloading the already made index file and unzipping it. The indexes 
-    # will be in a folder of name "index"
-        """
-        mkdir -p results/02_preprocess/bowtie2 \
-        && wget -O results/02_preprocess/bowtie2/{params.organism_name}.zip \
-            https://genome-idx.s3.amazonaws.com/bt/{params.organism_name}.zip \
-            > {log.wget_stdout} 2> {log.wget_stderr} \
-        && unzip -d results/02_preprocess/bowtie2/index \
-            results/02_preprocess/bowtie2/{params.organism_name}.zip \
-            > {log.unzip_stdout} 2> {log.unzip_stderr} \
-        && mv results/02_preprocess/bowtie2/index/{params.organism_name}/* \
-            results/02_preprocess/bowtie2/index/ \
-            > {log.mv_stdout} 2> {log.mv_stderr} \
-        && rm -r results/02_preprocess/bowtie2/index/{params.organism_name} \
-            > {log.rm_stdout} 2> {log.rm_stderr}
-        """
+# the bowtie2 host index is fetched by `rule get_bowtie_index`, in
+# rules/00_databases.smk together with every other download of the pipeline
 
 rule fastqc_after_preprocessing:
     input:

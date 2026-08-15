@@ -43,10 +43,8 @@ if LONG_READ_BINNER == None:
 # we would have refined bins with Binette only if we used several binning methods
 refined = True if len(LONG_READ_BINNER) > 1 or len(SHORT_READ_BINNER) > 1 else False
 
-# path to GTDB reference data
-with open("workflow/envs/gtdb_tk.yaml") as f:
-    gtdbtk_yaml = yaml.safe_load(f)
-GTDBTK_DATA_PATH = gtdbtk_yaml['variables']['GTDBTK_DATA_PATH']
+# reference data locations now come from the `databases:` config section
+# (see rules/00_databases.smk), not from `variables:` in the conda env files
 
 wildcard_constraints:
     assembler = "|".join(ASSEMBLER + HYBRID_ASSEMBLER + ASSEMBLER_LR),
@@ -57,7 +55,7 @@ rule gtdb_tk_taxonomic_annotation:
     input:
         # folder with dereplicated and filtered bins (= MAG)
         refined_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
-        ref_data = GTDBTK_DATA_PATH
+        ref_data = GTDBTK_DB_MARKER
     output: directory("results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}")
     conda:
         "../envs/gtdb_tk.yaml"
@@ -67,13 +65,18 @@ rule gtdb_tk_taxonomic_annotation:
     benchmark:
         "benchmarks/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}/classify.benchmark.txt"
     params:
-        other_args = config['bins_postprocessing']['gtdbtk']['other_args']
+        other_args = config['bins_postprocessing']['gtdbtk']['other_args'],
+        ref_data_dir = GTDBTK_DB
     threads: config['bins_postprocessing']['gtdbtk']['threads']
     wildcard_constraints:
         ani = DEREPLICATED_GENOMES_THRESHOLD_TO_PROFILE
     shell:
+    # GTDB-Tk locates its reference data through this variable. It is exported
+    # here rather than baked into the conda env so that the same environment
+    # (and the same prebuilt container image) works with any database location
         """
-        gtdbtk classify_wf --genome_dir {input.refined_bins} --cpus {threads} --out_dir {output} \
+        export GTDBTK_DATA_PATH=$(realpath {params.ref_data_dir}) \
+        && gtdbtk classify_wf --genome_dir {input.refined_bins} --cpus {threads} --out_dir {output} \
             --extension ".fa" \
             --skip_ani_screen --pplacer_cpus 1 \
             {params.other_args} \
@@ -206,7 +209,7 @@ rule dereplicated_genomes_quality_and_filtering:
     input:
         # folder with dereplicated bins
         bins = "results/08_bins_postprocessing/dRep/{ani}/{assembler}", 
-        diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+        diamond_database = CHECKM2_DB_MARKER
     output:
         out_dir = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/checkm2"),
         selected_bins = directory("results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins")
@@ -349,12 +352,14 @@ rule carveme_models_building:
         ani = "|".join(ANI_THRESHOLD)
     params:
         launch_script = "workflow/scripts/carveme_models_building.py",
-        solver = config['bins_postprocessing']['carveme']['solver']
+        solver = config['bins_postprocessing']['carveme']['solver'],
+        gurobi_license = gurobi_license_path(config)
     threads:
         config['bins_postprocessing']['carveme']['threads']
     shell:
         """
-        mkdir -p results/08_bins_postprocessing/carveme/{wildcards.ani}/{wildcards.assembler} \
+        export GRB_LICENSE_FILE={params.gurobi_license} \
+        && mkdir -p results/08_bins_postprocessing/carveme/{wildcards.ani}/{wildcards.assembler} \
         && \
         python3 {params.launch_script} carve --cpu {threads} -i {input} -o {output} --solver {params.solver} -v > {log.stdout} 2> {log.stderr}
         """
@@ -387,22 +392,9 @@ rule carveme_merge_models:
         pigz {input}/*.xml {params.out_dir}/community.xml \
         """
 
-# annotating bacterial MAGs using Bakta
-# here, we get the database
-rule bakta_get_database:
-    output:
-        directory("results/08_bins_postprocessing/bakta/database")
-    conda:
-        "../envs/bakta.yaml"
-    log:
-        stdout = "logs/08_bins_postprocessing/bakta/database.stdout",
-        stderr = "logs/08_bins_postprocessing/bakta/database.stderr"
-    benchmark:
-        "benchmarks/08_bins_postprocessing/bakta/database.benchmark.txt"
-    shell:
-        """
-        bakta_db download --type full --output {output} > {log.stdout} 2> {log.stderr}
-        """
+# annotating bacterial MAGs using Bakta. The database is fetched by
+# `rule bakta_get_database`, in rules/00_databases.smk together with every
+# other download of the pipeline
 
 # here, we generate the commands to run Bakta (one command per MAG) and we run them in parallel
 rule bakta_annotation:
@@ -410,7 +402,7 @@ rule bakta_annotation:
         dereplicated_bins = "results/08_bins_postprocessing/dereplicated_genomes_filtered_by_quality/{ani}/{assembler}/bins",
         # needing GTDB-Tk annotation to know which MAGs are bacterial
         gtdb_tk_annotation = "results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}",
-        bakta_database = "results/08_bins_postprocessing/bakta/database"
+        bakta_database = BAKTA_DB_MARKER
     output:
         directory("results/08_bins_postprocessing/bakta/{ani}/{assembler}/annotation")
     conda:
@@ -422,6 +414,7 @@ rule bakta_annotation:
         bakta_threads_by_process = config['bins_postprocessing']['bakta']['threads'],
         bakta_gnu_parallel = config['bins_postprocessing']['bakta']['parallel_jobs'],
         gtdb_tk_annotation_bacterial = lambda wildcards: f"results/08_bins_postprocessing/gtdb_tk/{wildcards.ani}/{wildcards.assembler}/gtdbtk.bac120.summary.tsv", # constructing the precise path to the GTDB-Tk annotation file since we can't use input here
+        bakta_database_dir = BAKTA_DB_DIR
     benchmark:
         "benchmarks/08_bins_postprocessing/bakta/{ani}/{assembler}.benchmark.txt"
     wildcard_constraints:
@@ -432,7 +425,7 @@ rule bakta_annotation:
         python3 workflow/scripts/generate_bakta_commands.py bakta_annot \
             --gtdb_tk {params.gtdb_tk_annotation_bacterial} \
             --threads {params.bakta_threads_by_process} --extension ".fa" \
-            --bakta_database {input.bakta_database}/db \
+            --bakta_database {params.bakta_database_dir} \
             --genomes_dir {input.dereplicated_bins} \
             --output_commands {wildcards.ani}_{wildcards.assembler}_bakta_annotation.txt \
             --output_dir {output}  \
@@ -448,7 +441,7 @@ rule bakta_plot:
         bakta_annotation = "results/08_bins_postprocessing/bakta/{ani}/{assembler}/annotation",
         # needing GTDB-Tk annotation to know which MAGs are bacterial
         gtdb_tk_annotation = "results/08_bins_postprocessing/gtdb_tk/{ani}/{assembler}",
-        bakta_database = "results/08_bins_postprocessing/bakta/database"
+        bakta_database = BAKTA_DB_MARKER
     output:
         directory("results/08_bins_postprocessing/bakta/{ani}/{assembler}/genome_plots_processed")
     conda:

@@ -28,7 +28,7 @@ rule binette_refinement:
     input: 
         bins_dirs = expand("results/05_binning/{binner}/bins/{{assembler}}/{{sample}}", binner=SHORT_READ_BINNER),
         assembly = "results/03_assembly/{assembler}/{sample}/assembly.fa.gz",
-        checkm2_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+        checkm2_database = CHECKM2_DB_MARKER
     output: directory("results/07_bins_refinement/binette/{assembler}/{sample}") # bins will be in a "final_bins" folder
     conda:
         "../envs/binette.yaml"
@@ -63,7 +63,7 @@ rule binette_refinement_LR:
     input: 
         bins_dirs = expand("results/05_binning/{binner_lr}/bins/{{assembler_lr}}/{{sample_lr}}", binner_lr = LONG_READ_BINNER),
         assembly = "results/03_assembly/{assembler_lr}/{sample_lr}/assembly.fa.gz",
-        checkm2_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+        checkm2_database = CHECKM2_DB_MARKER
     output: directory("results/07_bins_refinement/binette/{assembler_lr}/{sample_lr}") # bins will be in a "final_bins" folder
     conda:
         "../envs/binette.yaml"

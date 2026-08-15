@@ -2,7 +2,9 @@ import os
 from utils import convert_to_si_units, convert_from_si_units_to_int
 
 rule metaphlan_profiling:
-    input: "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz" # on short reads only
+    input:
+        reads = "results/02_preprocess/bowtie2/{sample}_1.clean.fastq.gz", # on short reads only
+        database = METAPHLAN_DB_MARKER
     output: "results/09_taxonomic_profiling/metaphlan/{sample}.profile.txt"
     conda:
         "../envs/metaphlan.yaml"
@@ -11,11 +13,17 @@ rule metaphlan_profiling:
         stderr = "logs/09_taxonomic_profiling/metaphlan/{sample}.profile.stderr"
     benchmark:
         "benchmarks/09_taxonomic_profiling/metaphlan/{sample}.profile.benchmark.txt"
+    params:
+        database_dir = METAPHLAN_DB
     threads: config.get('taxonomic_profiling', {}).get('metaphlan', {}).get('threads', 0)
     shell:
+    # --db_dir is mandatory here: left to itself MetaPhlAn downloads its markers
+    # into its own conda environment, which needs network access and writes into
+    # an environment that may be shared with other projects
         """
         metaphlan --input_type fastq --nproc {threads} \
-            {input} {output} \
+            --db_dir {params.database_dir} \
+            {input.reads} {output} \
         > {log.stdout} 2> {log.stderr}
         """
 
@@ -62,7 +70,10 @@ rule meteor_fastq_indexing:
 
 rule meteor_mapping:
     input:
-       "results/09_taxonomic_profiling/meteor/{sample}/fastq_index"
+       fastq_index = "results/09_taxonomic_profiling/meteor/{sample}/fastq_index",
+       # the catalogue is only needed here: the profiling rules that also read it
+       # already depend on this rule's output
+       database = METEOR_DB_MARKER
     output:
         directory("results/09_taxonomic_profiling/meteor/{sample}/mapping")
     conda:
@@ -75,10 +86,11 @@ rule meteor_mapping:
     threads:
         config.get('taxonomic_profiling', {}).get('meteor', {}).get('threads', 0)
     params:
-        indexed_fastq_file_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/fastq_index", f"{wildcards.sample}")
+        indexed_fastq_file_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/fastq_index", f"{wildcards.sample}"),
+        reference = METEOR_REFERENCE
     shell:
         """
-        meteor mapping -i {params.indexed_fastq_file_with_sample} -o {output} -r $REFERENCE \
+        meteor mapping -i {params.indexed_fastq_file_with_sample} -o {output} -r {params.reference} \
             --trim 0 --ka --kf -t {threads} \
             > {log.stdout} 2> {log.stderr} 
         """
@@ -96,10 +108,11 @@ rule meteor_profiling:
     benchmark:
         "benchmarks/09_taxonomic_profiling/meteor/{sample}.profile.benchmark.txt"
     params:
-        mapping_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/mapping", f"{wildcards.sample}")
+        mapping_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/mapping", f"{wildcards.sample}"),
+        reference = METEOR_REFERENCE
     shell:
         """ 
-        meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \
+        meteor profile -i {params.mapping_with_sample} -o {output} -r {params.reference} \
             -n coverage \
             --seed 100 \
             > {log.stdout} 2> {log.stderr}
@@ -121,12 +134,13 @@ rule meteor_profiling_downsized:
         "benchmarks/09_taxonomic_profiling/meteor/{sample}.profile_downsized_{downsize}M.benchmark.txt"
     params:
         mapping_with_sample = lambda wildcards: os.path.join(f"results/09_taxonomic_profiling/meteor/{wildcards.sample}/mapping", f"{wildcards.sample}"),  
-        downsize_int = lambda wildcards: convert_from_si_units_to_int(wildcards.downsize)   
+        downsize_int = lambda wildcards: convert_from_si_units_to_int(wildcards.downsize),
+        reference = METEOR_REFERENCE
     wildcard_constraints:
         downsize = "|".join([convert_to_si_units(int(size)) for size in config.get('taxonomic_profiling', {}).get('meteor', {}).get('downsize', {})])
     shell:
         """
-        meteor profile -i {params.mapping_with_sample} -o {output} -r $REFERENCE \
+        meteor profile -i {params.mapping_with_sample} -o {output} -r {params.reference} \
             -n coverage \
             --seed 100 \
             -l {params.downsize_int} \
@@ -146,7 +160,8 @@ rule strainscan_profiling:
     benchmark:
         "benchmarks/09_taxonomic_profiling/strainscan/{sample}.profile.benchmark.txt"
     params:
-        output_dir = lambda wildcards: f"results/09_taxonomic_profiling/strainscan/{wildcards.sample}"
+        output_dir = lambda wildcards: f"results/09_taxonomic_profiling/strainscan/{wildcards.sample}",
+        reference = STRAINSCAN_DB
     wildcard_constraints:
         sample = "|".join(SAMPLES)
     shell:
@@ -154,7 +169,7 @@ rule strainscan_profiling:
         strainscan \
             -i {input.r1} \
             -j {input.r2} \
-            -d $REFERENCE \
+            -d {params.reference} \
             -o {params.output_dir} \
         > {log.stdout} 2> {log.stderr}
         """

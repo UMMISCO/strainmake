@@ -32,30 +32,14 @@ wildcard_constraints:
     assembler_sr_hybrid = "|".join(ASSEMBLER + HYBRID_ASSEMBLER) if ASSEMBLER + HYBRID_ASSEMBLER != [] else "none",
     assembler_lr = "|".join(ASSEMBLER_LR) if ASSEMBLER_LR != [] else "none"
 
-# download the database for CheckM2
-rule checkm2_database:
-    output:
-        "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
-    conda:
-        "../envs/checkm2.yaml"
-    log:
-        stdout = "logs/06_binning_qc/checkm2/checkm2.db.stdout",
-        stderr = "logs/06_binning_qc/checkm2/checkm2.db.stderr"
-    benchmark:
-        "benchmarks/06_binning_qc/checkm2/checkm2.db.benchmark.txt"
-    params:
-        output_path = "results/06_binning_qc/checkm2/database"
-    shell:
-        """
-        checkm2 database --download --path {params.output_path} \
-            > {log.stdout} 2> {log.stderr}
-        """
+# the CheckM2 database is fetched by `rule checkm2_database`, in
+# rules/00_databases.smk together with every other download of the pipeline
 
 rule checkm2_assessment:
     input:
         # folder with bins created in step 05. One folder per binning program
         bins = "results/05_binning/{binner}/bins/{assembler_sr_hybrid}/{sample}", 
-        diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+        diamond_database = CHECKM2_DB_MARKER
     output:
         "results/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}/quality_report.tsv",
         out_dir = directory("results/06_binning_qc/checkm2/{binner}/{assembler_sr_hybrid}/{sample}")
@@ -83,7 +67,7 @@ rule checkm2_assessment_LR:
     input:
         # folder with bins created in step 05. One folder per binning program
         bins = "results/05_binning/{long_read_binner}/bins/{assembler_lr}/{sample_lr}", 
-        diamond_database = "results/06_binning_qc/checkm2/database/CheckM2_database/uniref100.KO.1.dmnd"
+        diamond_database = CHECKM2_DB_MARKER
     output:
         "results/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}/quality_report.tsv",
         out_dir = directory("results/06_binning_qc/checkm2/{long_read_binner}/{assembler_lr}/{sample_lr}")

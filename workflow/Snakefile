@@ -1,5 +1,6 @@
 configfile: "config/template_config.yaml"
 
+include: "rules/00_databases.smk"
 include: "rules/01_qc.smk"
 include: "rules/02_prepocess.smk"
 include: "rules/02_preprocess_LR.smk"
