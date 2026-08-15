@@ -1,3 +1,4 @@
+# database locations are set in the StrainMake config file (`databases:` section)
 name: gtdbtk
 channels:
   - bioconda
@@ -6,5 +7,3 @@ dependencies:
   - gtdbtk=2.4.1
   - pigz=2.*
   - python=3.8
-variables:
-  GTDBTK_DATA_PATH: data/gtdb_tk/release220

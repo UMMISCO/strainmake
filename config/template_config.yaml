@@ -2,6 +2,65 @@ samples: data/config_data.tsv
 lr_seq_format: fastq # depending on the format of the long reads to use (can be 'fastq', 'fasta')
 
 ################################################################################
+#                             Software deployment                              #
+################################################################################
+
+deployment:
+  # Where Snakemake keeps the conda environments it builds for the pipeline.
+  #
+  # Leave it empty and Snakemake uses `.snakemake/conda` in the working
+  # directory, rebuilding every environment for every project. Point it at a
+  # shared directory instead and the environments can be built once, from a
+  # machine that has internet access:
+  #
+  #   strainmake run --config config.yaml --create-envs-only
+  #
+  # and then reused.
+  #
+  # Use an absolute path. Snakemake includes the *resolved* path of this
+  # directory in each environment's identity, so it has to resolve to the same
+  # thing everywhere: check `realpath` agrees on a node and on a another
+  # node, since automounted or symlinked paths sometimes differ.
+  conda_prefix: ""
+  # when true, rules that would download reference data abort immediately with
+  # an actionable message instead of retrying against unreachable hosts.
+  # `strainmake run --offline` sets this for you.
+  offline: false
+
+################################################################################
+#                             Reference databases                              #
+################################################################################
+
+databases:
+  # Each database is located on its own, because in practice they may not be kept
+  # together. Give each one an absolute path to a copy that
+  # already exists, or leave it empty to use the default shown in the
+  # comment, which is also where `strainmake fetch-databases` will put it.
+  #
+  # Set an entry to `false` instead to declare that this run does not use that
+  # database at all: `bowtie2_index: false` when starting from
+  # already-preprocessed reads, for instance, since the host index is then never
+  # read. A database marked `false` is neither downloaded by
+  # `strainmake fetch-databases` nor checked before a run.
+  bowtie2_index: ""  # default: data/databases/bowtie2
+  checkm2: ""        # default: data/databases/checkm2
+  bakta: ""          # default: data/databases/bakta
+  metaphlan: ""      # default: data/databases/metaphlan
+  gtdbtk: ""         # default: data/databases/gtdb_tk
+  meteor: ""         # default: data/databases/meteor
+  strainscan: ""     # default: data/databases/strainscan
+  # GTDB release fetched by `strainmake fetch-databases` (~105 GiB for r220).
+  # must match the release GTDB-Tk expects, see
+  # https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data
+  gtdbtk_release_url: "https://data.gtdb.ecogenomic.org/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz"
+  # gene catalogue downloaded by `meteor download` (see `meteor download --help` for the full list)
+  meteor_catalogue: hs_10_4_gut
+  # StrainScan has no unattended download: its prebuilt databases are published
+  # as per-species Google Drive links. Download the one matching your species
+  # from https://github.com/liaoherui/StrainScan#pre-built-databases-download, or build one,
+  # and put it at the `strainscan` path above.
+
+################################################################################
 #                                Preprocessing                                 #        
 ################################################################################ 
 
@@ -164,7 +223,9 @@ bins_postprocessing:
       threads: 5
   carveme:
     threads: 5
-    solver: gurobi # or scip. If using gurobi, ensure you have a valid license file at the path specified in the conda environment
+    solver: gurobi # or scip. If using gurobi, ensure you have a valid license file at the path below
+    # https://support.gurobi.com/hc/en-us/articles/360013417211-Where-do-I-place-the-Gurobi-license-file-gurobi-lic
+    gurobi_license: config/gurobi.lic
   bakta:
     threads: 10
     parallel_jobs: 2 # number of Bakta processes to run in parallel
@@ -173,6 +234,9 @@ bins_postprocessing:
 #                             Taxonomic profiling                              #
 ################################################################################
 
+# a tool listed here has its reference database checked before a run starts, and
+# fetched by `strainmake fetch-databases`. Delete a section to declare that you
+# do not use that tool.
 taxonomic_profiling:
   metaphlan:
     threads: 4
@@ -180,6 +244,11 @@ taxonomic_profiling:
     threads: 10
     downsize:
       - 10000000 # number of reads to downsize to (in millions) (can pass more values)
+  # StrainScan is species-specific and StrainMake cannot download its database
+  # for you: pick the one matching your species from
+  # https://github.com/liaoherui/StrainScan#pre-built-databases-download, or build one,
+  # and put it at the `databases: strainscan:` path.
+  strainscan:
 
 ################################################################################
 #                              Strains profiling                               #
