@@ -24,6 +24,17 @@ import os
 
 from utils import *
 
+# Offline-ness reaches the download rules as an environment variable, which the
+# shell jobs launched by this Snakemake process inherit.
+#
+# It deliberately does not reach them as a rule parameter. `params` is one of
+# Snakemake's default rerun triggers, so a guard that read differently online
+# and offline would mark every download rule out of date the moment a run went
+# offline, and re-running a download rule offline fails, even when its
+# database is already in place. See `offline_guard` in rules/utils.py.
+if is_offline(config):
+    os.environ["STRAINMAKE_OFFLINE"] = "1"
+
 # resolved once, at parse time, so every consuming rule agrees on the locations
 BOWTIE2_INDEX_DB = database_path(config, "bowtie2_index")
 CHECKM2_DB = database_path(config, "checkm2")

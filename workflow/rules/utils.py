@@ -256,23 +256,31 @@ def offline_guard(config: dict, database_label: str, key: str) -> str:
     about what the user should do. With it, the rule stops immediately and says
     which command to run on a machine that does have network access.
 
+    The offline state is tested at run time, through `$STRAINMAKE_OFFLINE`, and
+    is deliberately *not* baked into this string. Rule parameters are one of
+    Snakemake's default rerun triggers: a guard whose text differed between an
+    online and an offline run would mark every download rule out of date the
+    moment a run went offline, and re-running a download rule offline fails,
+    even when the database it would fetch is already on disk. The text therefore
+    varies only with the database's location, which is what genuinely
+    invalidates a previous download.
+
+    See `00_databases.smk` for where the variable is set.
+
     Parameters:
     config (dict): the pipeline configuration
     database_label (str): human-readable database name, e.g. 'CheckM2'
     key (str): the `databases:` config key holding this database's path
 
     Returns:
-    str: shell code to prefix the download command with (empty when online)
+    str: shell code to prefix the download command with
     """
-
-    if not is_offline(config):
-        return ""
 
     path = database_path(config, key)
 
     message = (
-        f"StrainMake is running in offline mode and the {database_label} database "
-        f"is missing from '{path}'."
+        f"the {database_label} database is missing from '{path}', and StrainMake "
+        "is running without network access."
     )
     hint = (
         "Run 'strainmake fetch-databases' on a machine with internet access "
@@ -280,7 +288,12 @@ def offline_guard(config: dict, database_label: str, key: str) -> str:
     )
 
     # `>&2` so the message lands in the rule's stderr log next to the failure
-    return f'echo "ERROR: {message}" >&2; echo "{hint}" >&2; exit 1; '
+    return (
+        f'if [ -n "${{STRAINMAKE_OFFLINE:-}}" ]; then '
+        f'echo "ERROR: {message}" >&2; '
+        f'echo "{hint}" >&2; '
+        "exit 1; fi; "
+    )
 
 
 def gurobi_license_path(config: dict) -> str:
