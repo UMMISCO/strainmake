@@ -16,6 +16,7 @@ from strainmake import REPO_ROOT
 from strainmake.cli._snakemake import run_snakemake
 from strainmake.databases import (
     DATABASE_KEYS,
+    ConfigError,
     conda_prefix,
     inspect_databases,
     load_config,
@@ -86,7 +87,12 @@ def fetch_databases(
         # see what is missing without downloading
         strainmake fetch-databases --config config.yaml --dry-run
     """
-    config_data = load_config(config)
+    try:
+        config_data = load_config(config)
+    except ConfigError as error:
+        typer.echo(f"❌  {error}", err=True)
+        raise typer.Exit(1)
+
     statuses = inspect_databases(config_data)
 
     if only:

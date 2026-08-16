@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -69,6 +70,63 @@ DATABASE_KEYS: List[str] = list(_utils.DATABASE_DEFAULT_PATHS)
 # ---------------------------------------------------------------------------
 
 
+class ConfigError(Exception):
+    """A configuration file that cannot be used, described for a human."""
+
+
+def _describe_yaml_error(
+    config_path: Path, text: str, error: yaml.YAMLError
+) -> str:
+    """
+    Turn a YAML parser error into something a user can act on.
+
+    The parser reports where it gave up, which is often not where the mistake
+    is: a `key:value` written without a space is not a mapping entry at all but
+    a plain scalar, so it swallows the following lines and the complaint lands
+    on whichever later line first contains a colon. Quoting the reported line
+    and naming that cause is usually enough to spot it.
+
+    Parameters:
+    config_path (Path): the file being read
+    text (str): its contents
+    error (yaml.YAMLError): what the parser raised
+
+    Returns:
+    str: a message naming the file, the line, and the likely cause
+    """
+
+    message = [f"{config_path} is not valid YAML."]
+
+    mark = getattr(error, "problem_mark", None)
+    problem = getattr(error, "problem", None)
+
+    if problem:
+        message.append(f"  {problem}")
+
+    if mark is not None:
+        lines = text.splitlines()
+        message.append(f"  at line {mark.line + 1}, column {mark.column + 1}:")
+        if 0 <= mark.line < len(lines):
+            message.append(f"    {lines[mark.line]}")
+            message.append("    " + " " * mark.column + "^")
+
+        culprits = [
+            (number, line)
+            for number, line in enumerate(lines[: mark.line + 1], start=1)
+            if re.match(r"^\s*[A-Za-z_][\w-]*:(?!//)\S", line)
+        ]
+        if culprits:
+            number, line = culprits[-1]
+            message.append(
+                f"\n  Line {number} is missing a space after the colon, which makes"
+                "\n  it a single string rather than a setting:"
+                f"\n    {line.strip()}"
+                f"\n  YAML needs `key: value`, not `key:value`."
+            )
+
+    return "\n".join(message)
+
+
 @dataclass(frozen=True)
 class DatabaseStatus:
     """The state of one reference database for a given configuration."""
@@ -94,15 +152,38 @@ def load_config(config_path: Path) -> dict:
     """
     Read a StrainMake configuration YAML.
 
+    A syntax error here is a typo in a file the user wrote, so it is reported as
+    such (with the line, the offending text and the most common cause) rather
+    than as a traceback through the YAML parser's internals.
+
     Parameters:
     config_path (Path): path to the configuration file
 
     Returns:
     dict: the parsed configuration
+
+    Raises:
+    ConfigError: when the file is not valid YAML, or is not a mapping
     """
 
     with open(config_path, encoding="utf-8") as fh:
-        return yaml.safe_load(fh) or {}
+        text = fh.read()
+
+    try:
+        config = yaml.safe_load(text)
+    except yaml.YAMLError as error:
+        raise ConfigError(_describe_yaml_error(config_path, text, error)) from None
+
+    if config is None:
+        return {}
+
+    if not isinstance(config, dict):
+        raise ConfigError(
+            f"{config_path} does not describe a configuration.\n"
+            f"  Expected a mapping of settings, found {type(config).__name__}."
+        )
+
+    return config
 
 
 def database_status(config: dict, key: str) -> DatabaseStatus:

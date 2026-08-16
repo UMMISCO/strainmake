@@ -15,6 +15,7 @@ import typer
 from strainmake import REPO_ROOT
 from strainmake.cli._snakemake import run_snakemake
 from strainmake.databases import (
+    ConfigError,
     conda_prefix,
     inspect_databases,
     load_config,
@@ -258,7 +259,11 @@ def run(
         )
         raise typer.Exit(1)
 
-    config_data = load_config(config_source) if config_source else {}
+    try:
+        config_data = load_config(config_source) if config_source else {}
+    except ConfigError as error:
+        typer.echo(f"❌  {error}", err=True)
+        raise typer.Exit(1)
 
     # --create-envs-only builds conda environments and stops; it reads no
     # database, so checking for them here would block the very command a user
