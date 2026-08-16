@@ -57,43 +57,17 @@ Configuration, paths, etc., should also be consistent with the container file co
 
 ## Reference databases
 
-StrainMake needs a number of reference databases. Each one is declared
-independently in the `databases:` section, because in practice they may not be kept
-together:
-
-```yaml
-databases:
-  gtdbtk: /shared/refdata/gtdb/release220
-  bakta: /scratch/$USER/bakta
-  checkm2: ""            # left empty: defaults to data/databases/checkm2
-  bowtie2_index: false   # declared unused: this run never reads it
-```
-
-An entry can be:
-
-* **a path**: use the copy that is already there, wherever it is;
-* **empty**: fall back to a default under `data/databases/`, which is also
-  where `strainmake fetch-databases` will put it;
-* **`false`**: declare that this run does not use that database at all, so it
-  is neither downloaded nor checked for.
-
-Nothing in these directories is project-specific, so pointing several projects
-at the same copy is normal.
-
-Download everything the configuration calls for with:
+StrainMake needs several reference databases (CheckM2, GTDB-Tk...). Each
+is declared independently in the `databases:` section of your configuration, see
+[`config/template_config.yaml`](config/template_config.yaml) for the keys and
+their defaults. 
+To download the ones your configuration calls for:
 
 ```sh
 strainmake fetch-databases --config path/to/config.yaml
 ```
 
-StrainScan publishes its prebuilt databases only as per-species Google Drive
-links, which cannot be downloaded unattended. Pick the one for your species from
-[the StrainScan README](https://github.com/liaoherui/StrainScan#pre-built-databases-download), 
-or build it, and put it at the `databases: strainscan:` path.
-
-If you do not use a given tool, delete its section from the configuration
-(`taxonomic_profiling: strainscan:`, for example). StrainMake then stops
-checking for, and downloading, its database.
+See details on the [wiki](https://github.com/UMMISCO/strainmake/wiki/Reference-databases).
 
 ### Coming from an earlier version
 
@@ -130,57 +104,11 @@ An experimental fix is to do both network-dependent things (building the conda
 environments and downloading the databases) ahead of time, from a machine that
 does have access, into locations the compute nodes can read.
 
-## 1. Point the configuration at shared storage
-
-```yaml
-deployment:
-  # absolute path, on a filesystem the compute nodes can see
-  conda_prefix: /shared/strainmake/envs
-
-databases:
-  # likewise: wherever each one lives, it has to be readable from the nodes
-  gtdbtk: /shared/refdata/gtdb/release220
-  checkm2: /shared/refdata/checkm2
-  bakta: /shared/refdata/bakta
-```
-
-## 2. Prepare, from a node with internet access
-
-```sh
-strainmake run --config config.yaml --create-envs-only
-strainmake fetch-databases --config path/to/config.yaml
-```
-
-The first builds every conda environment the pipeline uses into `conda_prefix`
-and stops. The second downloads the reference databases. Both are one-off: they
-are reusable by every subsequent run, and by other projects sharing the same
-paths.
-
-## 3. Run on the compute nodes
-
-```sh
-strainmake run --config path/to/config.yaml --offline --cores <CORES>
-```
-
-`--offline` reuses the prepared environments, tells the workflow it has no
-network so that anything still trying to download fails immediately, and checks before
-starting that the environments and every required database are actually there.
-
-## Notes
-
-- **`conda_prefix` must resolve to the same path on both sides.** Snakemake
-  includes the *resolved* path of the environment directory in each
-  environment's identity, so if it resolves differently on a compute node every
-  environment is considered missing and rebuilt. 
-  `strainmake run --create-envs-only` prints the resolved path.
-  Compare it with `realpath /shared/strainmake/envs` on a compute node.
-  Automounted or symlinked home and scratch directories are the usual culprits.
-- **Prepare from a node of the same architecture** as the one that will run the
-  jobs, because conda environments contain compiled binaries.
+See details on the [wiki](https://github.com/UMMISCO/strainmake/wiki/Running-on-nodes-without-access-to-the-Internet).
 
 # How to run
 
-A step by step example of use is available on the [wiki](https://github.com/baptwr/metageno-pipeline/wiki/An-example-of-using-the-pipeline).
+A step by step example of use is available on the [wiki](https://github.com/UMMISCO/strainmake/wiki/An-example-of-using-the-pipeline).
 
 # Overview of integrated tools
 
