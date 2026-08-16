@@ -75,24 +75,7 @@ Reference databases used to live in a few different places: inside `results/`
 for the ones the pipeline downloaded, and at paths written into the conda
 environment files for the ones you provided. They are now all declared in the
 `databases:` section instead, one entry each. If you already have them, point
-the configuration at where they are rather than downloading them again:
-
-| Database | Where it used to be | Configuration key |
-| :------- | :------------------ | :---------------- |
-| bowtie2 host index | `results/02_preprocess/bowtie2/index` | `databases: bowtie2_index:` |
-| CheckM2 | `results/06_binning_qc/checkm2/database` | `databases: checkm2:` |
-| Bakta | `results/08_bins_postprocessing/bakta/database` | `databases: bakta:` |
-| GTDB-Tk | `GTDBTK_DATA_PATH` in `workflow/envs/gtdb_tk.yaml` (default `data/gtdb_tk/release220`) | `databases: gtdbtk:` |
-| Meteor | `REFERENCE` in `workflow/envs/meteor.yaml` (default `data/meteor_db`) | `databases: meteor:` |
-| StrainScan | `REFERENCE` in `workflow/envs/strainscan.yaml` (default `data/strainscan`) | `databases: strainscan:` |
-| MetaPhlAn | inside the conda environment | `databases: metaphlan:` |
-
-The Gurobi licence CarveMe uses moved the same way, from `GRB_LICENSE_FILE` in
-`workflow/envs/carveme.yaml` to `bins_postprocessing: carveme: gurobi_license:`
-(same default, `config/gurobi.lic`).
-
-StrainMake lists what it will use, and what is missing, before a run starts, so
-a misconfigured path will show up immediately.
+the configuration at where they are rather than downloading them again, as detailed in the [wiki](https://github.com/UMMISCO/strainmake/wiki/Reference-databases#coming-from-an-earlier-version).
 
 # Running without internet access
 
