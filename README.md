@@ -335,5 +335,6 @@ Use `strainmake report`.
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
+# Citation
 
-
+Hennecart, B., Belda, E., de Lahondès, R., Zucker, J.-D., & Prifti, E. (2026). StrainMake: reproducible hybrid metagenomics with MAG recovery and strain-level resolution. *Bioinformatics*, 42(5). https://doi.org/10.1093/bioinformatics/btag212
