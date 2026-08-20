@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: Please cite the following works when using this software.
+preferred-citation:
+  authors:
+    - family-names: Hennecart
+      given-names: Baptiste
+      orcid: https://orcid.org/0009-0000-5945-9359
+    - family-names: Belda
+      given-names: Eugeni
+      orcid: https://orcid.org/0000-0003-4307-5072
+    - family-names: de Lahondès
+      given-names: Raynald
+      orcid: https://orcid.org/0009-0000-2862-9589
+    - family-names: Zucker
+      given-names: Jean-Daniel
+      orcid: https://orcid.org/0000-0002-5597-7922
+    - family-names: Prifti
+      given-names: Edi
+      orcid: https://orcid.org/0000-0001-8861-1305
+  doi: 10.1093/bioinformatics/btag212
+  identifiers:
+    - type: doi
+      value: 10.1093/bioinformatics/btag212
+    - type: url
+      value: http://dx.doi.org/10.1093/bioinformatics/btag212
+    - type: other
+      value: urn:issn:1367-4803
+  title: >-
+    StrainMake: reproducible hybrid metagenomics with MAG recovery and
+    strain-level resolution
+  url: http://dx.doi.org/10.1093/bioinformatics/btag212
+  database: Crossref
+  date-published: 2026-05-01
+  year: 2026
+  month: 5
+  editors:
+    - family-names: Martelli
+      given-names: Pier Luigi
+  issn: 1367-4803
+  issue: '5'
+  journal: Bioinformatics
+  languages:
+    - en
+  publisher:
+    name: Oxford University Press (OUP)
+  type: article
+  volume: '42'
